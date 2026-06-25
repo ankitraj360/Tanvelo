@@ -1,5 +1,6 @@
 import { motion, useScroll, useTransform } from "motion/react";
 import { useRef } from "react";
+import showcaseImage from "../assets/images/tanvelo_macro_close_1782358396531.jpg";
 
 export function ProductShowcase() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -21,14 +22,9 @@ export function ProductShowcase() {
         >
           <motion.img 
             style={{ y }}
-            src="product_render.jpg" 
+            src={showcaseImage} 
             alt="Tanvelo Product" 
             className="absolute inset-0 w-full h-[120%] object-cover -top-[10%]"
-            onError={(e) => {
-              // Fallback placeholder if image not found
-              e.currentTarget.style.display = 'none';
-              e.currentTarget.nextElementSibling?.classList.remove('hidden');
-            }}
           />
           {/* Fallback View */}
           <div className="hidden absolute inset-0 flex flex-col items-center justify-center bg-gray-50 text-gray-400">

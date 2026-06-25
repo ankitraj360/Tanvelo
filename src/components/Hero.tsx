@@ -1,5 +1,6 @@
 import { motion } from "motion/react";
 import { ChevronDown } from "lucide-react";
+import heroImage from "../assets/images/tanvelo_hero_angle_1782358377046.jpg";
 
 export function Hero() {
   return (
@@ -56,14 +57,9 @@ export function Hero() {
           <motion.img 
             animate={{ y: [0, -15, 0] }}
             transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
-            src="https://photos.app.goo.gl/z1sbMfKPiVDYmkkA9" 
+            src={heroImage} 
             alt="Tanvelo Device"
-            className="w-full h-full object-contain drop-shadow-2xl z-10"
-            onError={(e) => {
-              // Fallback for google photos URL that might not embed
-              e.currentTarget.style.display = 'none';
-              e.currentTarget.nextElementSibling?.classList.remove('hidden');
-            }}
+            className="w-full h-full object-cover rounded-3xl mix-blend-multiply drop-shadow-2xl z-10"
           />
           {/* Fallback image if google photos URL fails to embed directly */}
           <div className="hidden absolute inset-0 flex items-center justify-center">
