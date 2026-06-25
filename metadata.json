@@ -1,0 +1,6 @@
+{
+  "name": "Tanvelo",
+  "description": "Landing page for Tanvelo, an AI memory companion.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
