@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  # Redis is required for atomic distributed sliding-window rate limiting
+  redis:
+    image: redis:7-alpine
+    container_name: tanvelo-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+  # Optional: Local Postgres fallback container if Neon is not in use
+  # postgres:
+  #   image: postgres:16-alpine
+  #   container_name: tanvelo-postgres
+  #   restart: always
+  #   environment:
+  #     POSTGRES_USER: tanvelo
+  #     POSTGRES_PASSWORD: tanvelo_dev_password
+  #     POSTGRES_DB: tanvelo
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - pgdata:/var/lib/postgresql/data
+
+volumes:
+  redisdata:
+  # pgdata:

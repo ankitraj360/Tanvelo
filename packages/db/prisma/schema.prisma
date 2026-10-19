@@ -1,0 +1,330 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  environments         Environment[]
+  apiKeys              GatewayApiKey[]
+  providerConnections  ProviderConnection[]
+  modelConfigs         ModelConfig[]
+  routingRules         RoutingRule[]
+  rateLimitPolicies    RateLimitPolicy[]
+  gatewayRequests      GatewayRequest[]
+  usageRecords         UsageRecord[]
+  budgets              Budget[]
+  alerts               Alert[]
+  webhooks             Webhook[]
+  configurationChanges ConfigurationChange[]
+
+  @@index([slug])
+}
+
+model Environment {
+  id        String   @id @default(cuid())
+  projectId String
+  name      String
+  slug      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project           Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  apiKeys           GatewayApiKey[]
+  routingRules      RoutingRule[]
+  rateLimitPolicies RateLimitPolicy[]
+  gatewayRequests   GatewayRequest[]
+  usageRecords      UsageRecord[]
+  budgets           Budget[]
+  alerts            Alert[]
+  webhooks          Webhook[]
+
+  @@unique([projectId, slug])
+  @@index([projectId])
+}
+
+model ProviderConnection {
+  id              String    @id @default(cuid())
+  projectId       String
+  provider        String    // "openai" | "anthropic" | "gemini" | "groq" | "deepseek" | "mistral" | "openrouter" | "cohere" | "ollama" | "custom-*"
+  customName      String?
+  isCustom        Boolean   @default(false)
+  apiKeyEncrypted String
+  apiKeyPreview   String
+  apiBaseUrl      String?
+  status          String    @default("unconfigured") // "unconfigured" | "connected" | "error"
+  lastTestedAt    DateTime?
+  lastError       String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, provider])
+  @@index([projectId, provider])
+}
+
+model ModelConfig {
+  id                    String   @id @default(cuid())
+  projectId             String
+  modelId               String   // "gpt-4o", "claude-3-5-sonnet", etc.
+  name                  String
+  provider              String   // "openai" | "anthropic" | "gemini"
+  isEnabled             Boolean  @default(true)
+  inputPricePerMillion  Float    // in USD
+  outputPricePerMillion Float    // in USD
+  contextWindow         Int      @default(128000)
+  supportsStreaming     Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, modelId])
+  @@index([projectId, modelId])
+  @@index([provider])
+}
+
+model GatewayApiKey {
+  id            String    @id @default(cuid())
+  name          String
+  keyPrefix     String    // e.g. "tv-live-a1b2..."
+  keyHash       String    @unique // SHA-256 of the raw token
+  projectId     String
+  environmentId String
+  permissions   Json      @default("[\"chat:completions\"]")
+  status        String    @default("active") // "active" | "revoked"
+  lastUsedAt    DateTime?
+  expiresAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  project     Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  environment Environment      @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  requests    GatewayRequest[]
+
+  @@index([keyHash])
+  @@index([projectId, environmentId])
+}
+
+model RoutingRule {
+  id                 String   @id @default(cuid())
+  projectId          String
+  environmentId      String
+  modelPattern       String   // e.g. "*", "gpt-4o", "claude-*"
+  primaryProvider    String
+  primaryModel       String
+  secondaryProvider  String?
+  secondaryModel     String?
+  fallbackOnTimeout  Boolean  @default(true)
+  fallbackOnRateLimit Boolean @default(true)
+  fallbackOnError    Boolean  @default(true)
+  timeoutMs          Int      @default(30000)
+  maxRetries         Int      @default(2)
+  priority           Int      @default(0)
+  isEnabled          Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  environment Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, environmentId])
+  @@index([priority])
+}
+
+model RateLimitPolicy {
+  id                String   @id @default(cuid())
+  projectId         String
+  environmentId     String?
+  keyId             String?
+  requestsPerMinute Int?
+  requestsPerHour   Int?
+  requestsPerDay    Int?
+  tokensPerMinute   Int?
+  isEnabled         Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  environment Environment? @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, environmentId])
+  @@index([keyId])
+}
+
+model GatewayRequest {
+  id                    String   @id @default(cuid())
+  requestId             String   @unique
+  projectId             String
+  environmentId         String
+  keyId                 String?
+  provider              String
+  model                 String
+  status                String   // "success" | "error" | "rate_limited" | "budget_exceeded"
+  statusCode            Int
+  totalLatencyMs        Int
+  providerLatencyMs     Int
+  inputTokens           Int      @default(0)
+  outputTokens          Int      @default(0)
+  totalTokens           Int      @default(0)
+  estimatedCost         Float    @default(0.0)
+  errorCategory         String?
+  errorMessage          String?
+  requestBodySanitized  Json?
+  responseBodySanitized Json?
+  clientIp              String?
+  userAgent             String?
+  createdAt             DateTime @default(now())
+
+  project     Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  environment Environment       @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  apiKey      GatewayApiKey?    @relation(fields: [keyId], references: [id], onDelete: SetNull)
+  attempts    ProviderAttempt[]
+
+  @@index([projectId, environmentId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([provider, model])
+  @@index([errorCategory])
+}
+
+model ProviderAttempt {
+  id               String   @id @default(cuid())
+  requestId        String
+  gatewayRequestId String?
+  provider         String
+  model            String
+  attemptNumber    Int
+  statusCode       Int
+  latencyMs        Int
+  isSuccess        Boolean
+  errorCategory    String?
+  errorMessage     String?
+  createdAt        DateTime @default(now())
+
+  gatewayRequest GatewayRequest? @relation(fields: [gatewayRequestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+  @@index([gatewayRequestId])
+}
+
+model UsageRecord {
+  id            String   @id @default(cuid())
+  projectId     String
+  environmentId String
+  keyId         String?
+  provider      String
+  model         String
+  inputTokens   Int
+  outputTokens  Int
+  totalTokens   Int
+  cost          Float
+  recordedAt    DateTime @default(now())
+
+  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  environment Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, environmentId])
+  @@index([recordedAt])
+  @@index([provider, model])
+}
+
+model Budget {
+  id                      String    @id @default(cuid())
+  projectId               String
+  environmentId           String?
+  maxBudgetUsd            Float
+  warningThresholdPercent Float     @default(80.0)
+  hardLimitEnabled        Boolean   @default(false)
+  currentSpendUsd         Float     @default(0.0)
+  period                  String    @default("monthly") // "monthly" | "daily" | "total"
+  resetAt                 DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  environment Environment? @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, environmentId])
+}
+
+model Alert {
+  id            String   @id @default(cuid())
+  projectId     String
+  environmentId String?
+  alertType     String   // "budget_warning" | "budget_exceeded" | "provider_error" | "rate_limit"
+  title         String
+  message       String
+  severity      String   @default("info") // "info" | "warning" | "critical"
+  isResolved    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  environment Environment? @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, environmentId])
+  @@index([isResolved])
+  @@index([createdAt])
+}
+
+model Webhook {
+  id            String   @id @default(cuid())
+  projectId     String
+  environmentId String?
+  url           String
+  secret        String
+  events        String[] // Array of event strings e.g. ["request.failed", "rate_limit.exceeded"]
+  isEnabled     Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  project     Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  environment Environment?      @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  deliveries  WebhookDelivery[]
+
+  @@index([projectId, environmentId])
+}
+
+model WebhookDelivery {
+  id            String   @id @default(cuid())
+  webhookId     String
+  eventType     String
+  payload       Json
+  statusCode    Int?
+  responseBody  String?
+  attemptNumber Int      @default(1)
+  isSuccess     Boolean
+  errorMessage  String?
+  createdAt     DateTime @default(now())
+
+  webhook Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId])
+  @@index([createdAt])
+}
+
+model ConfigurationChange {
+  id         String   @id @default(cuid())
+  projectId  String
+  entityType String   // "routing_rule", "provider_connection", "api_key", etc.
+  entityId   String
+  changeType String   // "created", "updated", "deleted", "revoked"
+  details    Json?
+  createdAt  DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([createdAt])
+}
