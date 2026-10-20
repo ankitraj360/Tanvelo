@@ -26,6 +26,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Logo } from '@/components/ui/Logo';
 import { useMobileNav } from '@/context/MobileNavContext';
+import { UserButton } from '@clerk/nextjs';
 
 const navGroups = [
   {
@@ -138,8 +139,24 @@ function NavContent({ onClose }: { onClose?: () => void }) {
         ))}
       </nav>
 
-      {/* Security Status Footer */}
-      <div className="p-3.5 border-t border-slate-100 bg-slate-50/60 flex-shrink-0">
+      {/* Security & User Footer */}
+      <div className="p-3.5 border-t border-slate-100 bg-slate-50/60 flex-shrink-0 space-y-2">
+        <div className="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200 shadow-2xs">
+          <div className="flex items-center gap-2 min-w-0 w-full">
+            <UserButton
+              showName
+              appearance={{
+                elements: {
+                  rootBox: 'w-full',
+                  userButtonBox: 'flex-row-reverse gap-2 w-full justify-start text-xs font-medium text-slate-700',
+                  userButtonOuterIdentifier: 'truncate text-xs font-medium text-slate-800 max-w-[130px]',
+                  avatarBox: 'w-6 h-6 rounded-md',
+                },
+              }}
+            />
+          </div>
+        </div>
+
         <div className="p-2.5 rounded-lg border border-slate-200 bg-white shadow-2xs">
           <div className="flex items-center justify-between text-[11px] mb-1">
             <span className="flex items-center gap-1.5 text-slate-800 font-medium">

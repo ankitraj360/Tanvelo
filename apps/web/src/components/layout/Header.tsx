@@ -6,6 +6,7 @@ import { useMobileNav } from '@/context/MobileNavContext';
 import { FolderGit2, Layers, KeyRound, Cpu, Menu } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 import Link from 'next/link';
+import { UserButton } from '@clerk/nextjs';
 
 export function Header() {
   const { projects, currentProject, currentEnvironment, setCurrentProject, setCurrentEnvironment } = useProject();
@@ -118,6 +119,16 @@ export function Header() {
           <KeyRound className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">API Key</span>
         </Link>
+
+        <div className="flex items-center pl-1 sm:pl-1.5 border-l border-slate-200">
+          <UserButton
+            appearance={{
+              elements: {
+                avatarBox: 'w-7 h-7 sm:w-8 sm:h-8 rounded-lg ring-1 ring-slate-200 hover:ring-slate-300 transition',
+              },
+            }}
+          />
+        </div>
       </div>
     </header>
   );

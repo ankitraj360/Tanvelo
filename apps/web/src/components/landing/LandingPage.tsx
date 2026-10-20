@@ -16,12 +16,42 @@ import {
   FileCode2,
   Menu,
   X,
+  Mail,
 } from 'lucide-react';
 import { LandingThreeGate } from './LandingThreeGate';
+import { Show, UserButton } from '@clerk/nextjs';
+
+function WhatsAppIcon({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M17.472 14.382c-.301-.15-1.78-.879-2.056-.979-.276-.1-.476-.15-.676.15-.2.3-.776.98-.952 1.18-.175.2-.351.225-.652.075-.3-.15-1.267-.467-2.414-1.49-1.026-.914-1.72-2.043-1.921-2.388-.201-.345-.021-.532.129-.681.136-.134.301-.351.451-.527.151-.175.201-.3.301-.5.1-.2.05-.375-.025-.525-.075-.15-.676-1.63-.927-2.235-.245-.589-.493-.509-.676-.519-.175-.01-.376-.01-.577-.01-.2 0-.527.075-.803.375-.276.3-1.053 1.03-1.053 2.511 0 1.482 1.078 2.912 1.229 3.113.15.2 2.121 3.24 5.138 4.542.718.31 1.278.496 1.716.635.72.229 1.376.197 1.895.12.578-.087 1.78-.727 2.03-1.43.251-.703.251-1.306.175-1.43-.075-.125-.276-.2-.577-.35z" />
+      <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.98-1.39A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.167c-1.584 0-3.08-.456-4.354-1.246l-.312-.193-2.955.825.836-2.88-.21-.334A8.136 8.136 0 013.833 12c0-4.503 3.664-8.167 8.167-8.167 4.503 0 8.167 3.664 8.167 8.167 0 4.503-3.664 8.167-8.167 8.167z" />
+    </svg>
+  );
+}
+
+function InstagramIcon({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+    </svg>
+  );
+}
+
+function XSocialIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
+  );
+}
 
 export function LandingPage() {
   const [activeTab, setActiveTab] = useState<'python' | 'typescript' | 'curl'>('python');
   const [copied, setCopied] = useState(false);
+  const [copiedEmail, setCopiedEmail] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -111,16 +141,40 @@ for await (const chunk of stream) {
             <a href="#capabilities" className="hover:text-slate-900 transition-colors">Capabilities</a>
             <a href="#quickstart" className="hover:text-slate-900 transition-colors">Quickstart</a>
             <a href="#trust" className="hover:text-slate-900 transition-colors">Security</a>
+            <a href="#contact" className="hover:text-slate-900 transition-colors">Contact</a>
             <Link href="/docs" className="hover:text-slate-900 transition-colors">Docs</Link>
           </nav>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <Link
-              href="/overview"
-              className="inline-flex items-center justify-center h-9 px-3.5 sm:px-4 text-xs font-medium bg-slate-900 hover:bg-black text-white rounded-full transition-all shadow-sm hover:shadow"
-            >
-              Dashboard
-            </Link>
+            <Show when="signed-out">
+              <Link
+                href="/sign-in"
+                className="hidden sm:inline-flex items-center justify-center h-9 px-3.5 text-xs font-medium text-slate-700 hover:text-slate-900 transition-colors"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/sign-up"
+                className="inline-flex items-center justify-center h-9 px-3.5 sm:px-4 text-xs font-medium bg-slate-900 hover:bg-black text-white rounded-full transition-all shadow-sm hover:shadow"
+              >
+                Get Started
+              </Link>
+            </Show>
+            <Show when="signed-in">
+              <Link
+                href="/overview"
+                className="inline-flex items-center justify-center h-9 px-3.5 sm:px-4 text-xs font-medium bg-slate-900 hover:bg-black text-white rounded-full transition-all shadow-sm hover:shadow"
+              >
+                Dashboard
+              </Link>
+              <UserButton
+                appearance={{
+                  elements: {
+                    avatarBox: 'w-7 h-7 sm:w-8 sm:h-8 rounded-full ring-1 ring-slate-200',
+                  },
+                }}
+              />
+            </Show>
 
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -164,6 +218,13 @@ for await (const chunk of stream) {
               >
                 Security & Trust
               </a>
+              <a
+                href="#contact"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50 px-3 py-2 rounded-lg transition"
+              >
+                Contact Us
+              </a>
               <Link
                 href="/docs"
                 onClick={() => setMobileMenuOpen(false)}
@@ -171,6 +232,34 @@ for await (const chunk of stream) {
               >
                 API Documentation & SDK
               </Link>
+            </div>
+
+            <div className="pt-2 border-t border-slate-100 space-y-2">
+              <Show when="signed-out">
+                <Link
+                  href="/sign-in"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block text-center w-full py-2 text-sm font-medium text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-lg transition"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/sign-up"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block text-center w-full py-2 text-sm font-medium text-white bg-slate-900 hover:bg-black rounded-lg transition"
+                >
+                  Get Started
+                </Link>
+              </Show>
+              <Show when="signed-in">
+                <Link
+                  href="/overview"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block text-center w-full py-2 text-sm font-medium text-white bg-slate-900 hover:bg-black rounded-lg transition"
+                >
+                  Open Dashboard
+                </Link>
+              </Show>
             </div>
 
             <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 px-3">
@@ -521,6 +610,157 @@ for await (const chunk of stream) {
         </div>
       </section>
 
+      {/* 06 / Contact Us */}
+      <section id="contact" className="py-20 md:py-28 border-b border-slate-100 bg-slate-50/60">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="font-mono text-xs uppercase tracking-wider text-slate-400 font-medium mb-3">
+            06 / Contact Us
+          </div>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-semibold tracking-[-0.03em] text-slate-900 mb-3">
+                Connect with our team.
+              </h2>
+              <p className="text-slate-600 text-base md:text-lg max-w-xl">
+                Have questions about deployment topologies, custom model fallbacks, enterprise SLAs, or integration assistance? We are here to help.
+              </p>
+            </div>
+            <div className="inline-flex items-center gap-2 text-xs font-mono text-emerald-700 bg-emerald-50 border border-emerald-200/80 rounded-full px-3.5 py-1.5 self-start md:self-auto shadow-xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              Fast response • Mon-Sat 9AM-8PM IST
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Email Card */}
+            <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+                  <Mail className="w-5 h-5" />
+                </div>
+                <div className="text-xs font-mono uppercase tracking-wider text-slate-400 font-medium mb-1">
+                  Email
+                </div>
+                <div className="font-semibold text-slate-900 text-sm mb-1 break-all select-all font-mono">
+                  tanvelo@zohomail.in
+                </div>
+                <p className="text-slate-500 text-xs leading-relaxed mb-6">
+                  For enterprise inquiries, architecture advice, and security verification.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 pt-4 border-t border-slate-100">
+                <a
+                  href="mailto:tanvelo@zohomail.in"
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 h-8 px-3 text-xs font-medium bg-slate-900 hover:bg-black text-white rounded-lg transition"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  <span>Send Email</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText('tanvelo@zohomail.in');
+                    setCopiedEmail(true);
+                    setTimeout(() => setCopiedEmail(false), 2000);
+                  }}
+                  className="inline-flex items-center justify-center h-8 px-2.5 text-xs font-medium border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg transition"
+                  title="Copy email address"
+                >
+                  {copiedEmail ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+            </div>
+
+            {/* WhatsApp Card */}
+            <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+                  <WhatsAppIcon className="w-5 h-5" />
+                </div>
+                <div className="text-xs font-mono uppercase tracking-wider text-slate-400 font-medium mb-1">
+                  WhatsApp Support
+                </div>
+                <div className="font-semibold text-slate-900 text-sm mb-1 font-mono">
+                  +91 9771370409
+                </div>
+                <p className="text-slate-500 text-xs leading-relaxed mb-6">
+                  Direct instant chat for quick developer troubleshooting and setup assistance.
+                </p>
+              </div>
+              <div className="pt-4 border-t border-slate-100">
+                <a
+                  href="https://wa.me/919771370409?text=Hi%20Tanvelo%20team%2C%20I%20would%20like%20to%20learn%20more%20about%20Tanvelo%20LLM%20Gateway."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full inline-flex items-center justify-center gap-1.5 h-8 px-3 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition shadow-xs"
+                >
+                  <WhatsAppIcon className="w-3.5 h-3.5" />
+                  <span>Chat on WhatsApp</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Instagram Card */}
+            <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+                  <InstagramIcon className="w-5 h-5" />
+                </div>
+                <div className="text-xs font-mono uppercase tracking-wider text-slate-400 font-medium mb-1">
+                  Instagram
+                </div>
+                <div className="font-semibold text-slate-900 text-sm mb-1 font-mono">
+                  @tanvelo_in
+                </div>
+                <p className="text-slate-500 text-xs leading-relaxed mb-6">
+                  Follow product features, engineering culture, and community spotlights.
+                </p>
+              </div>
+              <div className="pt-4 border-t border-slate-100">
+                <a
+                  href="https://instagram.com/tanvelo_in"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full inline-flex items-center justify-center gap-1.5 h-8 px-3 text-xs font-medium border border-slate-200 hover:border-pink-300 hover:bg-pink-50/50 text-slate-800 hover:text-pink-600 rounded-lg transition"
+                >
+                  <InstagramIcon className="w-3.5 h-3.5" />
+                  <span>Follow @tanvelo_in</span>
+                </a>
+              </div>
+            </div>
+
+            {/* X (formerly Twitter) Card */}
+            <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+                  <XSocialIcon className="w-4 h-4" />
+                </div>
+                <div className="text-xs font-mono uppercase tracking-wider text-slate-400 font-medium mb-1">
+                  X (formerly Twitter)
+                </div>
+                <div className="font-semibold text-slate-900 text-sm mb-1 font-mono">
+                  @tanvelo_in
+                </div>
+                <p className="text-slate-500 text-xs leading-relaxed mb-6">
+                  Changelogs, gateway benchmarks, and real-time infrastructure releases.
+                </p>
+              </div>
+              <div className="pt-4 border-t border-slate-100">
+                <a
+                  href="https://x.com/tanvelo_in"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full inline-flex items-center justify-center gap-1.5 h-8 px-3 text-xs font-medium border border-slate-200 hover:border-slate-400 hover:bg-slate-100 text-slate-800 rounded-lg transition"
+                >
+                  <XSocialIcon className="w-3.5 h-3.5" />
+                  <span>Follow @tanvelo_in</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Final CTA */}
       <section className="py-24 text-center">
         <div className="max-w-xl mx-auto px-6">
@@ -548,22 +788,123 @@ for await (const chunk of stream) {
         </div>
       </section>
 
-      {/* Minimal Footer */}
-      <footer className="py-8 border-t border-slate-100 bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 text-center sm:text-left">
-          <div className="flex items-center gap-2">
-            <img src="/assets/logo.svg" alt="Tanvelo Logo" className="w-4 h-4" />
-            <span className="font-semibold text-slate-900">tanvelo</span>
-            <span>© 2026. All rights reserved.</span>
+      {/* Comprehensive Footer */}
+      <footer className="pt-16 pb-12 border-t border-slate-200 bg-slate-950 text-slate-300">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-slate-800">
+            {/* Col 1: Brand & Description */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2.5 text-white font-semibold tracking-tight text-lg">
+                <img src="/assets/logo.svg" alt="Tanvelo Logo" className="w-6 h-6 brightness-200" />
+                <span>tanvelo</span>
+              </div>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                One controlled endpoint for OpenAI, Anthropic, and Google Gemini with deterministic routing, atomic rate limits, and real-time telemetry.
+              </p>
+              <div className="pt-1 text-[11px] font-mono text-slate-500">
+                Built for mission-critical LLM infrastructure.
+              </div>
+            </div>
+
+            {/* Col 2: Architecture & Product */}
+            <div>
+              <div className="font-mono text-xs uppercase tracking-wider text-slate-200 font-semibold mb-4">
+                Platform
+              </div>
+              <ul className="space-y-2.5 text-xs text-slate-400">
+                <li><a href="#difference" className="hover:text-white transition">Architecture</a></li>
+                <li><a href="#capabilities" className="hover:text-white transition">Capabilities</a></li>
+                <li><a href="#quickstart" className="hover:text-white transition">Quickstart & SDK</a></li>
+                <li><a href="#trust" className="hover:text-white transition">Security Controls</a></li>
+                <li><a href="#faq" className="hover:text-white transition">FAQ</a></li>
+                <li><Link href="/docs" className="hover:text-white transition">Documentation</Link></li>
+                <li><Link href="/overview" className="hover:text-white transition">Web Dashboard</Link></li>
+              </ul>
+            </div>
+
+            {/* Col 3: Direct Contact */}
+            <div>
+              <div className="font-mono text-xs uppercase tracking-wider text-slate-200 font-semibold mb-4">
+                Contact Us
+              </div>
+              <ul className="space-y-3.5 text-xs text-slate-400">
+                <li>
+                  <span className="block text-[11px] font-mono uppercase text-slate-500">Email</span>
+                  <a href="mailto:tanvelo@zohomail.in" className="hover:text-white transition text-slate-200 font-mono text-xs flex items-center gap-1.5 mt-1">
+                    <Mail className="w-3.5 h-3.5 text-sky-400" />
+                    <span>tanvelo@zohomail.in</span>
+                  </a>
+                </li>
+                <li>
+                  <span className="block text-[11px] font-mono uppercase text-slate-500">WhatsApp</span>
+                  <a
+                    href="https://wa.me/919771370409"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-white transition text-slate-200 font-mono text-xs flex items-center gap-1.5 mt-1"
+                  >
+                    <WhatsAppIcon className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>+91 9771370409</span>
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Col 4: Socials & Legal */}
+            <div>
+              <div className="font-mono text-xs uppercase tracking-wider text-slate-200 font-semibold mb-4">
+                Social & Community
+              </div>
+              <ul className="space-y-3 text-xs text-slate-400">
+                <li>
+                  <a
+                    href="https://x.com/tanvelo_in"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 hover:text-white transition text-slate-200"
+                  >
+                    <span className="w-6 h-6 rounded-md bg-slate-900 border border-slate-700 flex items-center justify-center text-white">
+                      <XSocialIcon className="w-3 h-3" />
+                    </span>
+                    <span className="font-mono">X: @tanvelo_in</span>
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://instagram.com/tanvelo_in"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 hover:text-white transition text-slate-200"
+                  >
+                    <span className="w-6 h-6 rounded-md bg-slate-900 border border-slate-700 text-pink-400 flex items-center justify-center">
+                      <InstagramIcon className="w-3.5 h-3.5" />
+                    </span>
+                    <span className="font-mono">Instagram: @tanvelo_in</span>
+                  </a>
+                </li>
+                <li className="pt-3">
+                  <div className="flex items-center gap-3 text-xs text-slate-400">
+                    <Link href="/privacy" className="hover:text-white transition">Privacy Policy</Link>
+                    <span>•</span>
+                    <Link href="/terms" className="hover:text-white transition">Terms of Service</Link>
+                  </div>
+                </li>
+              </ul>
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
-            <a href="#difference" className="hover:text-slate-900 transition">Architecture</a>
-            <a href="#capabilities" className="hover:text-slate-900 transition">Capabilities</a>
-            <Link href="/docs" className="hover:text-slate-900 transition">Docs & SDK</Link>
-            <Link href="/overview" className="hover:text-slate-900 transition">Dashboard</Link>
-            <Link href="/privacy" className="hover:text-slate-900 transition font-medium">Privacy Policy</Link>
-            <Link href="/terms" className="hover:text-slate-900 transition font-medium">Terms of Service</Link>
+          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 text-center sm:text-left">
+            <div className="flex items-center gap-2">
+              <img src="/assets/logo.svg" alt="Tanvelo Logo" className="w-4 h-4 brightness-200" />
+              <span className="font-semibold text-slate-300">tanvelo</span>
+              <span>© 2026. All rights reserved.</span>
+            </div>
+            <div className="flex items-center gap-4 text-slate-400">
+              <span className="inline-flex items-center gap-1.5 font-mono text-[11px]">
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                Gateway Engine Active
+              </span>
+            </div>
           </div>
         </div>
       </footer>

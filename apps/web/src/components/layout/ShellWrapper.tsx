@@ -9,9 +9,14 @@ import { MobileNavProvider } from '@/context/MobileNavContext';
 
 export function ShellWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isLandingPage = pathname === '/';
+  const isStandalonePage =
+    pathname === '/' ||
+    pathname?.startsWith('/sign-in') ||
+    pathname?.startsWith('/sign-up') ||
+    pathname === '/privacy' ||
+    pathname === '/terms';
 
-  if (isLandingPage) {
+  if (isStandalonePage) {
     return <>{children}</>;
   }
 

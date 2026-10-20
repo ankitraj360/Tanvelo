@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { ClerkProvider } from '@clerk/nextjs';
 import './globals.css';
 import { ShellWrapper } from '@/components/layout/ShellWrapper';
 
@@ -9,10 +10,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen antialiased bg-white">
-        <ShellWrapper>{children}</ShellWrapper>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body className="min-h-screen antialiased bg-white">
+          <ShellWrapper>{children}</ShellWrapper>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
