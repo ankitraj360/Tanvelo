@@ -14,6 +14,8 @@ import {
   Lock,
   Radio,
   FileCode2,
+  Menu,
+  X,
 } from 'lucide-react';
 import { LandingThreeGate } from './LandingThreeGate';
 
@@ -21,6 +23,7 @@ export function LandingPage() {
   const [activeTab, setActiveTab] = useState<'python' | 'typescript' | 'curl'>('python');
   const [copied, setCopied] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const codeSnippets = {
     python: `from openai import OpenAI
@@ -96,8 +99,8 @@ for await (const chunk of stream) {
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans antialiased selection:bg-sky-100 selection:text-sky-900">
       {/* Minimal Header */}
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100 transition-all">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100 transition-all">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5 text-slate-900 font-semibold tracking-tight text-lg">
             <img src="/assets/logo.svg" alt="Tanvelo Logo" className="w-6 h-6" />
             <span>tanvelo</span>
@@ -111,37 +114,98 @@ for await (const chunk of stream) {
             <Link href="/docs" className="hover:text-slate-900 transition-colors">Docs</Link>
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Link
               href="/overview"
-              className="inline-flex items-center justify-center h-9 px-4 text-xs font-medium bg-slate-900 hover:bg-black text-white rounded-full transition-all shadow-sm hover:shadow"
+              className="inline-flex items-center justify-center h-9 px-3.5 sm:px-4 text-xs font-medium bg-slate-900 hover:bg-black text-white rounded-full transition-all shadow-sm hover:shadow"
             >
-              Open Dashboard
+              Dashboard
             </Link>
+
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg md:hidden transition"
+              aria-label="Toggle Navigation Menu"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Navigation Dropdown */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-b border-slate-200 bg-white px-5 py-4 space-y-3 shadow-lg">
+            <div className="space-y-1">
+              <a
+                href="#difference"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50 px-3 py-2 rounded-lg transition"
+              >
+                Architecture
+              </a>
+              <a
+                href="#capabilities"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50 px-3 py-2 rounded-lg transition"
+              >
+                Capabilities
+              </a>
+              <a
+                href="#quickstart"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50 px-3 py-2 rounded-lg transition"
+              >
+                Quickstart
+              </a>
+              <a
+                href="#trust"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50 px-3 py-2 rounded-lg transition"
+              >
+                Security & Trust
+              </a>
+              <Link
+                href="/docs"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50 px-3 py-2 rounded-lg transition"
+              >
+                API Documentation & SDK
+              </Link>
+            </div>
+
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 px-3">
+              <Link href="/privacy" onClick={() => setMobileMenuOpen(false)} className="hover:text-slate-900">
+                Privacy Policy
+              </Link>
+              <span>·</span>
+              <Link href="/terms" onClick={() => setMobileMenuOpen(false)} className="hover:text-slate-900">
+                Terms of Service
+              </Link>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Hero Section */}
-      <section className="pt-20 pb-16 md:pt-28 md:pb-24 overflow-hidden border-b border-slate-100">
-        <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div className="max-w-xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-600 font-mono text-[11px] tracking-wider uppercase mb-6">
+      <section className="pt-12 pb-12 sm:pt-16 sm:pb-16 md:pt-24 md:pb-20 overflow-hidden border-b border-slate-100">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+          <div className="max-w-xl mx-auto lg:mx-0 text-center lg:text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-600 font-mono text-[11px] tracking-wider uppercase mb-5">
               <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
               <span>Unified LLM Gateway v1.0</span>
             </div>
 
-            <h1 className="text-5xl md:text-6xl font-semibold tracking-[-0.04em] text-slate-900 leading-[1.02] mb-5">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-[-0.04em] text-slate-900 leading-[1.05] mb-4 sm:mb-5">
               Every model<span className="text-sky-500">.</span><br />
               One gateway<span className="text-sky-500">.</span><br />
               Total control<span className="text-sky-500">.</span>
             </h1>
 
-            <p className="text-slate-600 text-lg leading-relaxed mb-8 max-w-lg">
+            <p className="text-slate-600 text-base sm:text-lg leading-relaxed mb-6 sm:mb-8 max-w-lg mx-auto lg:mx-0">
               Tanvelo routes OpenAI, Anthropic, Gemini, DeepSeek, Groq, Mistral, Ollama, and custom models through one OpenAI-compatible API — with deterministic fallbacks, atomic rate limits, and auditable telemetry.
             </p>
 
-            <div className="flex flex-wrap items-center gap-3 mb-6">
+            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 mb-6">
               <a
                 href="#quickstart"
                 className="inline-flex items-center gap-2 h-11 px-5 rounded-full bg-slate-900 hover:bg-black text-white text-sm font-medium transition-all shadow-sm hover:shadow"
@@ -151,13 +215,13 @@ for await (const chunk of stream) {
               </a>
               <Link
                 href="/overview"
-                className="inline-flex items-center justify-center h-11 px-5 rounded-full bg-white hover:bg-slate-50 text-slate-900 text-sm font-medium border border-slate-200 transition-all"
+                className="inline-flex items-center justify-center h-11 px-5 rounded-full bg-white hover:bg-slate-50 text-slate-900 text-sm font-medium border border-slate-200 transition-all shadow-2xs"
               >
                 Open Dashboard
               </Link>
             </div>
 
-            <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
+            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 text-xs font-mono text-slate-400">
               <span>OpenAI SDK Compatible</span>
               <span>·</span>
               <span>Streaming SSE</span>
@@ -166,12 +230,12 @@ for await (const chunk of stream) {
             </div>
           </div>
 
-          {/* 3D Canvas Visual */}
-          <div className="relative w-full h-[440px] md:h-[500px] flex items-center justify-center">
+          {/* 3D Canvas Visual (Responsive on all screen heights/widths) */}
+          <div className="relative w-full h-[300px] sm:h-[400px] md:h-[480px] flex items-center justify-center overflow-hidden rounded-2xl bg-slate-50/50 border border-slate-100">
             <LandingThreeGate />
 
             {/* Subtle Overlay Chip */}
-            <div className="absolute bottom-4 left-4 bg-white/95 border border-slate-200/80 rounded-xl p-3 shadow-md backdrop-blur-sm pointer-events-none font-mono text-xs">
+            <div className="absolute bottom-3 left-3 right-3 sm:right-auto sm:left-4 sm:bottom-4 bg-white/95 border border-slate-200/90 rounded-xl p-2.5 sm:p-3 shadow-md backdrop-blur-sm pointer-events-none font-mono text-[10px] sm:text-xs">
               <div className="flex items-center justify-between gap-4 mb-1">
                 <span className="text-[10px] text-slate-400 tracking-wider">DETERMINISTIC ROUTE</span>
                 <span className="flex items-center gap-1 text-[10px] text-emerald-600 font-medium">
@@ -179,14 +243,14 @@ for await (const chunk of stream) {
                   Active 60fps
                 </span>
               </div>
-              <div className="text-slate-800 flex items-center gap-1.5 font-medium">
+              <div className="text-slate-800 flex items-center gap-1 sm:gap-1.5 font-medium flex-wrap">
                 <span>gpt-4o</span>
                 <span className="text-sky-500">→</span>
-                <span>claude-3-5-sonnet</span>
+                <span>claude-3-5</span>
                 <span className="text-sky-500">→</span>
                 <span>deepseek-v3</span>
                 <span className="text-sky-500">→</span>
-                <span>gemini-2.0-flash</span>
+                <span>gemini-2</span>
               </div>
             </div>
           </div>
@@ -486,18 +550,20 @@ for await (const chunk of stream) {
 
       {/* Minimal Footer */}
       <footer className="py-8 border-t border-slate-100 bg-white">
-        <div className="max-w-6xl mx-auto px-6 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 text-center sm:text-left">
           <div className="flex items-center gap-2">
             <img src="/assets/logo.svg" alt="Tanvelo Logo" className="w-4 h-4" />
             <span className="font-semibold text-slate-900">tanvelo</span>
-            <span>© 2026. Fastify · PostgreSQL · Redis · Next.js.</span>
+            <span>© 2026. All rights reserved.</span>
           </div>
 
-          <div className="flex items-center gap-6">
-            <a href="#difference" className="hover:text-slate-900">Architecture</a>
-            <a href="#capabilities" className="hover:text-slate-900">Capabilities</a>
-            <Link href="/docs" className="hover:text-slate-900">Docs</Link>
-            <Link href="/overview" className="hover:text-slate-900">Dashboard</Link>
+          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
+            <a href="#difference" className="hover:text-slate-900 transition">Architecture</a>
+            <a href="#capabilities" className="hover:text-slate-900 transition">Capabilities</a>
+            <Link href="/docs" className="hover:text-slate-900 transition">Docs & SDK</Link>
+            <Link href="/overview" className="hover:text-slate-900 transition">Dashboard</Link>
+            <Link href="/privacy" className="hover:text-slate-900 transition font-medium">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-slate-900 transition font-medium">Terms of Service</Link>
           </div>
         </div>
       </footer>

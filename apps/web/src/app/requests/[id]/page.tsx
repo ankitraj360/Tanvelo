@@ -109,7 +109,7 @@ export default function RequestInspectorPage() {
       </div>
 
       {/* Latency & Cost Breakdown Banner */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
             <span className="text-[11px] text-slate-500 block font-medium">Total Latency</span>
