@@ -173,9 +173,10 @@ export async function createServers() {
 }
 
 async function main() {
+  const isUnified = process.env.UNIFIED_SERVER === 'true' || process.env.RENDER === 'true';
   const { publicGateway, managementServer, safeHost } = await createServers();
 
-  const gatewayPort = parseInt(process.env.GATEWAY_PORT || '4000', 10);
+  const gatewayPort = parseInt(process.env.GATEWAY_PORT || process.env.PORT || '4000', 10);
   const gatewayHost = process.env.GATEWAY_HOST || '0.0.0.0';
 
   const managementPort = parseInt(process.env.MANAGEMENT_PORT || '4001', 10);
@@ -185,8 +186,12 @@ async function main() {
     console.log(`🚀 Tanvelo LLM Gateway (Public) running on http://${gatewayHost}:${gatewayPort}`);
     console.log(`📡 Unified Endpoint: POST http://${gatewayHost}:${gatewayPort}/v1/chat/completions`);
 
-    await managementServer.listen({ port: managementPort, host: safeHost });
-    console.log(`🔒 Tanvelo Management API (Private) running on http://${safeHost}:${managementPort}/api/...`);
+    if (!isUnified) {
+      await managementServer.listen({ port: managementPort, host: safeHost });
+      console.log(`🔒 Tanvelo Management API (Private) running on http://${safeHost}:${managementPort}/api/...`);
+    } else {
+      console.log(`⚡ Cloud Unified Server active: Gateway & Management routes running on port ${gatewayPort}`);
+    }
   } catch (err) {
     console.error('Failed to start servers:', err);
     process.exit(1);
