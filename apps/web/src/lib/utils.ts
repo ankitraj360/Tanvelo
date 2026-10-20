@@ -20,3 +20,22 @@ export function formatLatency(ms: number): string {
   if (ms < 1000) return `${ms}ms`;
   return `${(ms / 1000).toFixed(2)}s`;
 }
+
+/**
+ * Safely parse JSON from fetch Response, handling HTML/text error fallbacks
+ */
+export async function parseApiResponse<T = any>(res: Response): Promise<T> {
+  const text = await res.text();
+  try {
+    const data = JSON.parse(text);
+    if (!res.ok) {
+      throw new Error(data.error || data.message || `Request failed with status ${res.status}`);
+    }
+    return data;
+  } catch (err: any) {
+    if (!res.ok) {
+      throw new Error(text || `Request failed with status ${res.status}`);
+    }
+    throw err;
+  }
+}

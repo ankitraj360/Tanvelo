@@ -16,15 +16,15 @@ export function Button({
   children,
   ...props
 }: ButtonProps) {
-  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 cursor-pointer active:scale-[0.98] select-none';
+  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white cursor-pointer active:scale-[0.98] select-none';
 
   const variants = {
-    primary: 'bg-blue-600 hover:bg-blue-500 text-white shadow-sm shadow-blue-900/30 focus:ring-blue-500 active:bg-blue-700',
-    secondary: 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/80 focus:ring-slate-600',
-    outline: 'border border-slate-700/80 hover:border-slate-600 bg-transparent text-slate-300 hover:bg-slate-800/60 focus:ring-slate-600',
-    danger: 'bg-rose-600 hover:bg-rose-500 text-white focus:ring-rose-500 active:bg-rose-700',
-    ghost: 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 focus:ring-slate-700',
-    emerald: 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm shadow-emerald-950/50 focus:ring-emerald-500 active:bg-emerald-700',
+    primary: 'bg-slate-900 hover:bg-black text-white shadow-xs focus:ring-slate-900',
+    secondary: 'bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 shadow-2xs focus:ring-slate-400',
+    outline: 'border border-slate-200 hover:border-slate-300 bg-white text-slate-700 hover:bg-slate-50 focus:ring-slate-400',
+    danger: 'bg-rose-600 hover:bg-rose-700 text-white shadow-xs focus:ring-rose-500',
+    ghost: 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:ring-slate-300',
+    emerald: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs focus:ring-emerald-500',
   };
 
   const sizes = {

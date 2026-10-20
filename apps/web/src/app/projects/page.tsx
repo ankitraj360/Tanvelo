@@ -8,6 +8,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Badge } from '@/components/ui/Badge';
 import { FolderGit2, Plus, ArrowRight, Trash2, Edit3, Check } from 'lucide-react';
 import Link from 'next/link';
+import { parseApiResponse } from '@/lib/utils';
 
 export default function ProjectsPage() {
   const { projects, currentProject, setCurrentProject, refreshProjects } = useProject();
@@ -33,17 +34,13 @@ export default function ProjectsPage() {
         body: JSON.stringify({ name: name.trim(), description: description.trim() }),
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to create project');
-      }
-
+      await parseApiResponse(res);
       await refreshProjects();
       setIsCreateOpen(false);
       setName('');
       setDescription('');
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Failed to create project');
     } finally {
       setLoading(false);
     }
@@ -62,16 +59,12 @@ export default function ProjectsPage() {
         body: JSON.stringify({ name: name.trim(), description: description.trim() }),
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to update project');
-      }
-
+      await parseApiResponse(res);
       await refreshProjects();
       setIsEditOpen(false);
       setEditingProject(null);
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Failed to update project');
     } finally {
       setLoading(false);
     }
@@ -84,11 +77,7 @@ export default function ProjectsPage() {
 
     try {
       const res = await fetch(`/api/projects/${proj.id}`, { method: 'DELETE' });
-      if (!res.ok) {
-        const data = await res.json();
-        alert(data.error || 'Failed to delete project');
-        return;
-      }
+      await parseApiResponse(res);
       await refreshProjects();
     } catch (err: any) {
       alert(`Delete error: ${err.message}`);
@@ -100,8 +89,8 @@ export default function ProjectsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-100">Projects</h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Projects</h1>
+          <p className="text-xs text-slate-500 mt-1">
             Manage projects, multi-tenant environment isolation, and associated gateway configurations
           </p>
         </div>
@@ -120,23 +109,23 @@ export default function ProjectsPage() {
             <Card
               key={proj.id}
               className={`flex flex-col justify-between transition-all ${
-                isSelected ? 'border-blue-500/50 bg-[#0F172A]' : 'hover:border-slate-700'
+                isSelected ? 'border-sky-500 bg-sky-50/20 shadow-xs' : 'hover:border-slate-300'
               }`}
             >
-              <CardHeader className="pb-3">
+              <CardHeader className="pb-3 border-b border-slate-100">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2.5">
                     <div
                       className={`w-9 h-9 rounded-lg flex items-center justify-center ${
                         isSelected
-                          ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
-                          : 'bg-slate-800 text-slate-400 border border-slate-700'
+                          ? 'bg-sky-100 text-sky-700 border border-sky-200'
+                          : 'bg-slate-100 text-slate-600 border border-slate-200'
                       }`}
                     >
                       <FolderGit2 className="w-4 h-4" />
                     </div>
                     <div>
-                      <CardTitle className="text-sm font-semibold">{proj.name}</CardTitle>
+                      <CardTitle className="text-sm font-semibold text-slate-900">{proj.name}</CardTitle>
                       <p className="text-[11px] text-slate-500 font-mono">slug: {proj.slug}</p>
                     </div>
                   </div>
@@ -149,37 +138,37 @@ export default function ProjectsPage() {
                 </div>
 
                 {proj.description && (
-                  <CardDescription className="line-clamp-2 mt-2">{proj.description}</CardDescription>
+                  <CardDescription className="line-clamp-2 mt-2 text-slate-600">{proj.description}</CardDescription>
                 )}
               </CardHeader>
 
               <CardContent className="py-2">
-                <div className="grid grid-cols-3 gap-2 py-3 border-y border-slate-800/80 text-center">
+                <div className="grid grid-cols-3 gap-2 py-3 border-y border-slate-100 text-center">
                   <div>
-                    <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Envs</span>
-                    <span className="text-xs font-semibold text-slate-200">
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-medium">Envs</span>
+                    <span className="text-xs font-semibold text-slate-800">
                       {proj.environments?.length || 0}
                     </span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-slate-500 uppercase tracking-wider block">API Keys</span>
-                    <span className="text-xs font-semibold text-slate-200">
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-medium">API Keys</span>
+                    <span className="text-xs font-semibold text-slate-800">
                       {proj._count?.apiKeys || 0}
                     </span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Requests</span>
-                    <span className="text-xs font-semibold text-slate-200">
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-medium">Requests</span>
+                    <span className="text-xs font-semibold text-slate-800">
                       {proj._count?.gatewayRequests || 0}
                     </span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 mt-3">
+                <div className="flex items-center gap-1.5 mt-3 flex-wrap">
                   {proj.environments?.map((env) => (
                     <span
                       key={env.id}
-                      className="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-900 border border-slate-800 text-slate-400"
+                      className="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-100 border border-slate-200 text-slate-700"
                     >
                       {env.name}
                     </span>
@@ -187,7 +176,7 @@ export default function ProjectsPage() {
                 </div>
               </CardContent>
 
-              <div className="px-6 py-3 border-t border-slate-800/80 flex items-center justify-between bg-slate-950/40 rounded-b-xl">
+              <div className="px-6 py-3 border-t border-slate-100 flex items-center justify-between bg-slate-50/60 rounded-b-xl">
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => {
@@ -196,7 +185,7 @@ export default function ProjectsPage() {
                       setDescription(proj.description || '');
                       setIsEditOpen(true);
                     }}
-                    className="p-1.5 text-slate-400 hover:text-slate-200 rounded hover:bg-slate-800 transition"
+                    className="p-1.5 text-slate-500 hover:text-slate-900 rounded hover:bg-slate-200/60 transition"
                     title="Edit Project"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
@@ -205,7 +194,7 @@ export default function ProjectsPage() {
                   {projects.length > 1 && (
                     <button
                       onClick={() => handleDelete(proj)}
-                      className="p-1.5 text-rose-400 hover:text-rose-300 rounded hover:bg-rose-950/40 transition"
+                      className="p-1.5 text-rose-500 hover:text-rose-700 rounded hover:bg-rose-50 transition"
                       title="Delete Project"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -215,13 +204,13 @@ export default function ProjectsPage() {
 
                 <div className="flex items-center gap-2">
                   {!isSelected && (
-                    <Button size="sm" variant="ghost" onClick={() => setCurrentProject(proj)}>
+                    <Button size="sm" variant="outline" onClick={() => setCurrentProject(proj)}>
                       Select
                     </Button>
                   )}
                   <Link
                     href={`/projects/${proj.id}`}
-                    className="text-xs text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1"
+                    className="text-xs text-sky-600 hover:text-sky-700 font-medium flex items-center gap-1"
                   >
                     Details <ArrowRight className="w-3 h-3" />
                   </Link>
@@ -241,36 +230,36 @@ export default function ProjectsPage() {
       >
         <form onSubmit={handleCreate} className="space-y-4">
           {error && (
-            <div className="p-3 rounded-lg bg-rose-950/60 border border-rose-800 text-rose-300 text-xs">
+            <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
               {error}
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Project Name</label>
+            <label className="block text-xs font-medium text-slate-700 mb-1">Project Name</label>
             <input
               type="text"
               required
               placeholder="e.g. Production Mobile App"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 shadow-2xs"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Description (Optional)</label>
+            <label className="block text-xs font-medium text-slate-700 mb-1">Description (Optional)</label>
             <textarea
               rows={3}
               placeholder="Brief description of this project and workloads"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 shadow-2xs"
             />
           </div>
 
-          <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-400 space-y-1">
-            <span className="font-medium text-slate-300 block">Default Setup:</span>
+          <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-1">
+            <span className="font-semibold text-slate-800 block">Default Setup:</span>
             <p>• Automatically creates Production, Staging, and Development environments.</p>
             <p>• Configures default OpenAI, Anthropic, and Gemini model pricing definitions.</p>
           </div>
@@ -295,29 +284,29 @@ export default function ProjectsPage() {
       >
         <form onSubmit={handleEdit} className="space-y-4">
           {error && (
-            <div className="p-3 rounded-lg bg-rose-950/60 border border-rose-800 text-rose-300 text-xs">
+            <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
               {error}
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Project Name</label>
+            <label className="block text-xs font-medium text-slate-700 mb-1">Project Name</label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 shadow-2xs"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Description</label>
+            <label className="block text-xs font-medium text-slate-700 mb-1">Description</label>
             <textarea
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 shadow-2xs"
             />
           </div>
 

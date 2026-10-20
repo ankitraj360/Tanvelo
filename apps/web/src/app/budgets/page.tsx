@@ -7,36 +7,63 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { formatCurrency } from '@/lib/utils';
-import { Coins, AlertTriangle, ShieldCheck, Settings, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { formatCurrency, parseApiResponse } from '@/lib/utils';
+import { Settings, ShieldCheck, CheckCircle2 } from 'lucide-react';
+
+interface Budget {
+  id: string;
+  projectId: string;
+  maxBudgetUsd: number;
+  currentSpendUsd: number;
+  warningThresholdPercent: number;
+  hardLimitEnabled: boolean;
+  period: string;
+  resetDayOfMonth: number;
+}
+
+interface Alert {
+  id: string;
+  projectId: string;
+  alertType: string;
+  severity: string;
+  title: string;
+  message: string;
+  metadata?: any;
+  createdAt: string;
+}
 
 export default function BudgetsPage() {
   const { currentProject } = useProject();
-  const [budget, setBudget] = useState<any>(null);
-  const [alerts, setAlerts] = useState<any[]>([]);
+  const [budget, setBudget] = useState<Budget | null>(null);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Edit budget modal
+  // Configure Modal
   const [isOpen, setIsOpen] = useState(false);
   const [maxBudget, setMaxBudget] = useState('100');
   const [warningThreshold, setWarningThreshold] = useState('80');
-  const [hardLimit, setHardLimit] = useState(false);
+  const [hardLimit, setHardLimit] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  const fetchBudgetData = async () => {
+  const fetchBudgetAndAlerts = async () => {
     if (!currentProject) return;
-    setLoading(true);
     try {
-      const res = await fetch(`/api/budgets?projectId=${currentProject.id}`);
-      if (res.ok) {
-        const data = await res.json();
-        setBudget(data.budget);
-        setAlerts(data.alerts || []);
-        if (data.budget) {
-          setMaxBudget(data.budget.maxBudgetUsd.toString());
-          setWarningThreshold(data.budget.warningThresholdPercent.toString());
-          setHardLimit(data.budget.hardLimitEnabled);
+      const [bRes, aRes] = await Promise.all([
+        fetch(`/api/budgets?projectId=${currentProject.id}`),
+        fetch(`/api/budgets/alerts?projectId=${currentProject.id}&limit=10`),
+      ]);
+
+      if (bRes.ok) {
+        const bData = await parseApiResponse(bRes);
+        setBudget(bData);
+        if (bData) {
+          setMaxBudget(bData.maxBudgetUsd.toString());
+          setWarningThreshold(bData.warningThresholdPercent.toString());
+          setHardLimit(bData.hardLimitEnabled);
         }
+      }
+      if (aRes.ok) {
+        setAlerts(await parseApiResponse(aRes));
       }
     } catch (e) {
       console.error(e);
@@ -46,7 +73,7 @@ export default function BudgetsPage() {
   };
 
   useEffect(() => {
-    fetchBudgetData();
+    fetchBudgetAndAlerts();
   }, [currentProject]);
 
   const handleSaveBudget = async (e: React.FormEvent) => {
@@ -60,18 +87,18 @@ export default function BudgetsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectId: currentProject.id,
-          maxBudgetUsd: parseFloat(maxBudget),
-          warningThresholdPercent: parseFloat(warningThreshold),
+          maxBudgetUsd: parseFloat(maxBudget) || 100,
+          warningThresholdPercent: parseInt(warningThreshold) || 80,
           hardLimitEnabled: hardLimit,
+          period: 'monthly',
         }),
       });
 
-      if (res.ok) {
-        await fetchBudgetData();
-        setIsOpen(false);
-      }
-    } catch (e) {
-      console.error(e);
+      await parseApiResponse(res);
+      setIsOpen(false);
+      await fetchBudgetAndAlerts();
+    } catch (e: any) {
+      alert(e.message || 'Failed to save budget settings');
     } finally {
       setSubmitting(false);
     }
@@ -88,8 +115,8 @@ export default function BudgetsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-100">Usage & Budgets</h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Usage & Budgets</h1>
+          <p className="text-xs text-slate-500 mt-1">
             Enforce spending limits, automated alerts, and hard cutoffs on LLM gateway consumption.
           </p>
         </div>
@@ -101,7 +128,7 @@ export default function BudgetsPage() {
 
       {/* Budget Progress Card */}
       <Card>
-        <CardHeader>
+        <CardHeader className="border-b border-slate-100">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Current Spend vs Monthly Limit</CardTitle>
@@ -121,42 +148,42 @@ export default function BudgetsPage() {
         <CardContent className="space-y-4">
           <div className="flex items-baseline justify-between">
             <div>
-              <span className="text-3xl font-bold text-slate-100 font-mono">
+              <span className="text-3xl font-bold text-slate-900 font-mono">
                 {formatCurrency(spend)}
               </span>
-              <span className="text-xs text-slate-400 ml-2">of {formatCurrency(limit)} limit</span>
+              <span className="text-xs text-slate-500 ml-2">of {formatCurrency(limit)} limit</span>
             </div>
-            <span className="font-mono text-sm font-semibold text-slate-300">
+            <span className="font-mono text-sm font-semibold text-slate-700">
               {percentUsed.toFixed(1)}%
             </span>
           </div>
 
           {/* Progress bar */}
-          <div className="w-full h-3 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+          <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
             <div
               className={`h-full rounded-full transition-all duration-500 ${
-                isExceeded ? 'bg-rose-500' : isWarning ? 'bg-amber-500' : 'bg-blue-500'
+                isExceeded ? 'bg-rose-500' : isWarning ? 'bg-amber-500' : 'bg-sky-500'
               }`}
               style={{ width: `${percentUsed}%` }}
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-800 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-100 text-xs">
             <div>
-              <span className="text-slate-500 block text-[11px]">Warning Threshold</span>
-              <span className="font-mono text-slate-300 font-medium">
+              <span className="text-slate-400 block text-[11px] font-medium uppercase">Warning Threshold</span>
+              <span className="font-mono text-slate-800 font-medium">
                 {budget?.warningThresholdPercent || 80}% ({formatCurrency((limit * (budget?.warningThresholdPercent || 80)) / 100)})
               </span>
             </div>
             <div>
-              <span className="text-slate-500 block text-[11px]">Hard Cutoff</span>
-              <span className="font-mono text-slate-300 font-medium">
+              <span className="text-slate-400 block text-[11px] font-medium uppercase">Hard Cutoff</span>
+              <span className="font-mono text-slate-800 font-medium">
                 {budget?.hardLimitEnabled ? 'Enabled (Blocks at 100%)' : 'Disabled'}
               </span>
             </div>
             <div>
-              <span className="text-slate-500 block text-[11px]">Billing Cycle</span>
-              <span className="font-mono text-slate-300 font-medium capitalize">
+              <span className="text-slate-400 block text-[11px] font-medium uppercase">Billing Cycle</span>
+              <span className="font-mono text-slate-800 font-medium capitalize">
                 {budget?.period || 'Monthly'}
               </span>
             </div>
@@ -166,7 +193,7 @@ export default function BudgetsPage() {
 
       {/* Alert History Table */}
       <Card>
-        <CardHeader>
+        <CardHeader className="border-b border-slate-100">
           <CardTitle>Budget Alert History</CardTitle>
           <CardDescription>Logged threshold notifications and enforcement actions</CardDescription>
         </CardHeader>
@@ -181,29 +208,29 @@ export default function BudgetsPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="border-b border-slate-800 text-slate-400">
-                    <th className="pb-3 font-medium">Type</th>
-                    <th className="pb-3 font-medium">Severity</th>
-                    <th className="pb-3 font-medium">Title & Message</th>
-                    <th className="pb-3 font-medium text-right">Timestamp</th>
+                  <tr className="border-b border-slate-200 text-slate-500 font-mono bg-slate-50/50">
+                    <th className="py-2.5 px-3 font-medium">Type</th>
+                    <th className="py-2.5 px-3 font-medium">Severity</th>
+                    <th className="py-2.5 px-3 font-medium">Title & Message</th>
+                    <th className="py-2.5 px-3 font-medium text-right">Timestamp</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60">
+                <tbody className="divide-y divide-slate-100">
                   {alerts.map((alt) => (
-                    <tr key={alt.id} className="hover:bg-slate-900/40 transition">
-                      <td className="py-3 font-mono capitalize text-slate-300">
+                    <tr key={alt.id} className="hover:bg-slate-50 transition">
+                      <td className="py-3 px-3 font-mono capitalize text-slate-800 font-medium">
                         {alt.alertType.replace('_', ' ')}
                       </td>
-                      <td className="py-3">
+                      <td className="py-3 px-3">
                         <Badge variant={alt.severity === 'critical' ? 'destructive' : 'warning'}>
                           {alt.severity}
                         </Badge>
                       </td>
-                      <td className="py-3">
-                        <div className="font-semibold text-slate-200">{alt.title}</div>
-                        <div className="text-[11px] text-slate-400">{alt.message}</div>
+                      <td className="py-3 px-3">
+                        <div className="font-semibold text-slate-900">{alt.title}</div>
+                        <div className="text-[11px] text-slate-500">{alt.message}</div>
                       </td>
-                      <td className="py-3 text-slate-500 text-right">
+                      <td className="py-3 px-3 text-slate-500 text-right">
                         {new Date(alt.createdAt).toLocaleString()}
                       </td>
                     </tr>
@@ -224,7 +251,7 @@ export default function BudgetsPage() {
       >
         <form onSubmit={handleSaveBudget} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">
+            <label className="block text-xs font-medium text-slate-700 mb-1">
               Max Monthly Budget (USD)
             </label>
             <input
@@ -233,12 +260,12 @@ export default function BudgetsPage() {
               required
               value={maxBudget}
               onChange={(e) => setMaxBudget(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-blue-500"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 shadow-2xs"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">
+            <label className="block text-xs font-medium text-slate-700 mb-1">
               Warning Threshold (%)
             </label>
             <input
@@ -248,20 +275,20 @@ export default function BudgetsPage() {
               required
               value={warningThreshold}
               onChange={(e) => setWarningThreshold(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-blue-500"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 shadow-2xs"
             />
           </div>
 
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-900 border border-slate-800">
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 border border-slate-200">
             <input
               type="checkbox"
               id="hardLimit"
               checked={hardLimit}
               onChange={(e) => setHardLimit(e.target.checked)}
-              className="w-4 h-4 rounded text-blue-600 focus:ring-0 bg-slate-800 border-slate-700 cursor-pointer"
+              className="w-4 h-4 rounded text-sky-600 focus:ring-0 bg-white border-slate-300 cursor-pointer"
             />
-            <label htmlFor="hardLimit" className="text-xs text-slate-300 cursor-pointer">
-              <span className="font-semibold block text-slate-200">Enforce Hard Limit</span>
+            <label htmlFor="hardLimit" className="text-xs text-slate-700 cursor-pointer">
+              <span className="font-semibold block text-slate-900">Enforce Hard Limit</span>
               Prevent all new gateway requests with HTTP 429 when budget reaches 100%.
             </label>
           </div>

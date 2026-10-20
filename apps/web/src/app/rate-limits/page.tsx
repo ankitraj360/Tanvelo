@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
-import { Gauge, Plus, ShieldCheck, Info, CheckCircle2, Zap, Trash2, Cpu } from 'lucide-react';
+import { Plus, Trash2, Info } from 'lucide-react';
+import { parseApiResponse } from '@/lib/utils';
 
 interface RateLimitPolicy {
   id: string;
@@ -17,22 +18,21 @@ interface RateLimitPolicy {
   requestsPerHour?: number | null;
   requestsPerDay?: number | null;
   tokensPerMinute?: number | null;
-  isEnabled: boolean;
   createdAt: string;
-  environment?: { name: string } | null;
+  environment?: { name: string };
 }
 
 export default function RateLimitsPage() {
-  const { currentProject } = useProject();
+  const { currentProject, currentEnvironment } = useProject();
   const [policies, setPolicies] = useState<RateLimitPolicy[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Modal
+  // Create Modal
   const [isOpen, setIsOpen] = useState(false);
   const [rpm, setRpm] = useState('60');
+  const [tpm, setTpm] = useState('100000');
   const [rph, setRph] = useState('1000');
   const [rpd, setRpd] = useState('10000');
-  const [tpm, setTpm] = useState('100000');
   const [submitting, setSubmitting] = useState(false);
 
   const fetchPolicies = async () => {
@@ -40,7 +40,7 @@ export default function RateLimitsPage() {
     try {
       const res = await fetch(`/api/rate-limits?projectId=${currentProject.id}`);
       if (res.ok) {
-        setPolicies(await res.json());
+        setPolicies(await parseApiResponse(res));
       }
     } catch (e) {
       console.error(e);
@@ -51,7 +51,7 @@ export default function RateLimitsPage() {
 
   useEffect(() => {
     fetchPolicies();
-  }, [currentProject]);
+  }, [currentProject, currentEnvironment]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,23 +64,19 @@ export default function RateLimitsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectId: currentProject.id,
-          requestsPerMinute: parseInt(rpm) || null,
-          requestsPerHour: parseInt(rph) || null,
-          requestsPerDay: parseInt(rpd) || null,
-          tokensPerMinute: parseInt(tpm) || null,
+          environmentId: currentEnvironment?.id || null,
+          requestsPerMinute: rpm ? parseInt(rpm) : null,
+          tokensPerMinute: tpm ? parseInt(tpm) : null,
+          requestsPerHour: rph ? parseInt(rph) : null,
+          requestsPerDay: rpd ? parseInt(rpd) : null,
         }),
       });
 
-      if (res.ok) {
-        await fetchPolicies();
-        setIsOpen(false);
-        setRpm('60');
-        setRph('1000');
-        setRpd('10000');
-        setTpm('100000');
-      }
-    } catch (e) {
-      console.error(e);
+      await parseApiResponse(res);
+      setIsOpen(false);
+      await fetchPolicies();
+    } catch (e: any) {
+      alert(e.message || 'Failed to create rate limit policy');
     } finally {
       setSubmitting(false);
     }
@@ -90,11 +86,10 @@ export default function RateLimitsPage() {
     if (!confirm('Are you sure you want to delete this rate limit policy?')) return;
     try {
       const res = await fetch(`/api/rate-limits/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        await fetchPolicies();
-      }
-    } catch (e) {
-      console.error(e);
+      await parseApiResponse(res);
+      await fetchPolicies();
+    } catch (e: any) {
+      alert(e.message || 'Failed to delete policy');
     }
   };
 
@@ -103,10 +98,10 @@ export default function RateLimitsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
             <span>Rate Limiting & Token Throttling</span>
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Configure atomic rate and token throughput limits enforced by Redis across gateway nodes.
           </p>
         </div>
@@ -117,19 +112,19 @@ export default function RateLimitsPage() {
       </div>
 
       {/* Info Notice */}
-      <div className="p-4 rounded-xl border border-blue-900/50 bg-blue-950/20 flex items-start gap-3 text-xs text-blue-300">
-        <Info className="w-4 h-4 flex-shrink-0 mt-0.5 text-blue-400" />
+      <div className="p-4 rounded-xl border border-sky-200 bg-sky-50/60 flex items-start gap-3 text-xs text-slate-700 shadow-2xs">
+        <Info className="w-4 h-4 shrink-0 mt-0.5 text-sky-600" />
         <div className="space-y-1">
-          <span className="font-semibold text-slate-100">Gateway-Enforced vs Upstream Limits:</span>
-          <p className="text-[11px] leading-relaxed text-slate-300">
-            Tanvelo returns HTTP 429 with standard headers (<code className="text-cyan-300 font-mono">X-RateLimit-Limit</code>, <code className="text-cyan-300 font-mono">X-RateLimit-Remaining</code>, <code className="text-cyan-300 font-mono">X-RateLimit-Reset</code>) when gateway request or token limits are exceeded. Policy precedence is strictly key-specific &gt; environment &gt; project-wide.
+          <span className="font-semibold text-slate-900">Gateway-Enforced vs Upstream Limits:</span>
+          <p className="text-[11px] leading-relaxed text-slate-600">
+            Tanvelo returns HTTP 429 with standard headers (<code className="text-sky-700 font-mono bg-white px-1 py-0.5 rounded border border-sky-200">X-RateLimit-Limit</code>, <code className="text-sky-700 font-mono bg-white px-1 py-0.5 rounded border border-sky-200">X-RateLimit-Remaining</code>, <code className="text-sky-700 font-mono bg-white px-1 py-0.5 rounded border border-sky-200">X-RateLimit-Reset</code>) when gateway request or token limits are exceeded. Policy precedence is strictly key-specific &gt; environment &gt; project-wide.
           </p>
         </div>
       </div>
 
       {/* Policies List Card */}
       <Card>
-        <CardHeader>
+        <CardHeader className="border-b border-slate-100">
           <CardTitle>Active Rate Limit Policies</CardTitle>
           <CardDescription>Policies applied to incoming Bearer token requests</CardDescription>
         </CardHeader>
@@ -144,22 +139,22 @@ export default function RateLimitsPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="border-b border-slate-800 text-slate-400 font-mono">
-                    <th className="pb-3 font-medium">Policy ID</th>
-                    <th className="pb-3 font-medium">Scope</th>
-                    <th className="pb-3 font-medium">Req / Min</th>
-                    <th className="pb-3 font-medium">Tokens / Min</th>
-                    <th className="pb-3 font-medium">Req / Hour</th>
-                    <th className="pb-3 font-medium">Req / Day</th>
-                    <th className="pb-3 font-medium">Status</th>
-                    <th className="pb-3 font-medium text-right">Actions</th>
+                  <tr className="border-b border-slate-200 text-slate-500 font-mono bg-slate-50/50">
+                    <th className="py-2.5 px-3 font-medium">Policy ID</th>
+                    <th className="py-2.5 px-3 font-medium">Scope</th>
+                    <th className="py-2.5 px-3 font-medium">Req / Min</th>
+                    <th className="py-2.5 px-3 font-medium">Tokens / Min</th>
+                    <th className="py-2.5 px-3 font-medium">Req / Hour</th>
+                    <th className="py-2.5 px-3 font-medium">Req / Day</th>
+                    <th className="py-2.5 px-3 font-medium">Status</th>
+                    <th className="py-2.5 px-3 font-medium text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60">
+                <tbody className="divide-y divide-slate-100">
                   {policies.map((p) => (
-                    <tr key={p.id} className="hover:bg-slate-900/40 transition">
-                      <td className="py-3.5 font-mono text-slate-300">{p.id.slice(0, 14)}...</td>
-                      <td className="py-3.5 text-slate-200">
+                    <tr key={p.id} className="hover:bg-slate-50 transition">
+                      <td className="py-3 px-3 font-mono text-slate-700">{p.id.slice(0, 14)}...</td>
+                      <td className="py-3 px-3 text-slate-800">
                         {p.keyId ? (
                           <Badge variant="purple" className="font-mono text-[10px]">Key Specific</Badge>
                         ) : p.environment?.name ? (
@@ -168,25 +163,25 @@ export default function RateLimitsPage() {
                           <Badge variant="outline" className="font-mono text-[10px]">Project-Wide</Badge>
                         )}
                       </td>
-                      <td className="py-3.5 font-mono text-cyan-400">
+                      <td className="py-3 px-3 font-mono text-sky-700 font-medium">
                         {p.requestsPerMinute ? `${p.requestsPerMinute} req/m` : 'Unlimited'}
                       </td>
-                      <td className="py-3.5 font-mono text-purple-400">
+                      <td className="py-3 px-3 font-mono text-indigo-700 font-medium">
                         {p.tokensPerMinute ? `${p.tokensPerMinute.toLocaleString()} tok/m` : 'Unlimited'}
                       </td>
-                      <td className="py-3.5 font-mono text-slate-300">
+                      <td className="py-3 px-3 font-mono text-slate-700">
                         {p.requestsPerHour ? `${p.requestsPerHour.toLocaleString()} req/h` : 'Unlimited'}
                       </td>
-                      <td className="py-3.5 font-mono text-slate-300">
+                      <td className="py-3 px-3 font-mono text-slate-700">
                         {p.requestsPerDay ? `${p.requestsPerDay.toLocaleString()} req/d` : 'Unlimited'}
                       </td>
-                      <td className="py-3.5">
+                      <td className="py-3 px-3">
                         <Badge variant="success">Active</Badge>
                       </td>
-                      <td className="py-3.5 text-right">
+                      <td className="py-3 px-3 text-right">
                         <button
                           onClick={() => handleDelete(p.id)}
-                          className="p-1.5 text-rose-400 hover:text-rose-300 rounded hover:bg-rose-950/40 transition cursor-pointer"
+                          className="p-1.5 text-rose-500 hover:text-rose-700 rounded hover:bg-rose-50 transition cursor-pointer"
                           title="Delete Policy"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -210,7 +205,7 @@ export default function RateLimitsPage() {
       >
         <form onSubmit={handleCreate} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">
+            <label className="block text-xs font-medium text-slate-700 mb-1">
               Requests Per Minute (RPM)
             </label>
             <input
@@ -218,12 +213,12 @@ export default function RateLimitsPage() {
               placeholder="e.g. 60"
               value={rpm}
               onChange={(e) => setRpm(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-blue-500 font-mono"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 font-mono shadow-2xs"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">
+            <label className="block text-xs font-medium text-slate-700 mb-1">
               Tokens Per Minute (TPM)
             </label>
             <input
@@ -231,7 +226,7 @@ export default function RateLimitsPage() {
               placeholder="e.g. 100000 (tokens/minute)"
               value={tpm}
               onChange={(e) => setTpm(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-blue-500 font-mono"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 font-mono shadow-2xs"
             />
             <p className="text-[10px] text-slate-500 mt-1">
               Limits the combined prompt and completion token throughput per rolling 60 seconds.
@@ -239,24 +234,24 @@ export default function RateLimitsPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Requests Per Hour</label>
+            <label className="block text-xs font-medium text-slate-700 mb-1">Requests Per Hour</label>
             <input
               type="number"
               placeholder="e.g. 1000"
               value={rph}
               onChange={(e) => setRph(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-blue-500 font-mono"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 font-mono shadow-2xs"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Requests Per Day</label>
+            <label className="block text-xs font-medium text-slate-700 mb-1">Requests Per Day</label>
             <input
               type="number"
               placeholder="e.g. 10000"
               value={rpd}
               onChange={(e) => setRpd(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-blue-500 font-mono"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 font-mono shadow-2xs"
             />
           </div>
 

@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tanvelo — Minimalist LLM Gateway</title>
+  <meta name="description" content="One controlled endpoint for OpenAI, Anthropic, and Google Gemini with deterministic fallbacks, atomic rate limits, and real-time telemetry." />
+  
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  
+  <!-- Modern Clean Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/styles.css" />
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "./js/vendor/three.module.js"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="scroll-progress-bar" aria-hidden="true"></div>
+
+  <!-- Minimal Nav -->
+  <header class="navbar" id="navbar">
+    <div class="container nav-container">
+      <a href="#" class="brand-link" aria-label="Tanvelo Home">
+        <img src="assets/logo.svg" alt="Tanvelo Logo" class="brand-logo-img" />
+        <span class="brand-wordmark">tanvelo</span>
+      </a>
+
+      <nav aria-label="Main Navigation">
+        <ul class="nav-links">
+          <li><a href="#difference" class="nav-link">Architecture</a></li>
+          <li><a href="#capabilities" class="nav-link">Capabilities</a></li>
+          <li><a href="#quickstart" class="nav-link">Quickstart</a></li>
+          <li><a href="#trust" class="nav-link">Security</a></li>
+          <li><a href="#faq" class="nav-link">FAQ</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <a href="#quickstart" class="btn-primary btn-sm">Get Started</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Minimal Hero -->
+    <section class="section hero-section" id="hero">
+      <div class="container hero-grid">
+        <div class="hero-content">
+          <div class="section-label">
+            <span class="pulse-dot"></span>
+            <span>UNIFIED LLM GATEWAY v1.0</span>
+          </div>
+
+          <h1 class="hero-h1">
+            Every model<span class="period">.</span><br />
+            One gateway<span class="period">.</span><br />
+            Total control<span class="period">.</span>
+          </h1>
+
+          <p class="hero-subhead">
+            Tanvelo routes OpenAI, Anthropic, Gemini, DeepSeek, Groq, Mistral, Ollama, and custom models through one OpenAI-compatible endpoint — with deterministic fallbacks, atomic rate limits, and audit telemetry you can defend.
+          </p>
+
+          <div class="hero-cta-group">
+            <a href="#quickstart" class="btn-primary">
+              Read the quickstart
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </a>
+            <a href="#difference" class="btn-secondary">See architecture</a>
+          </div>
+
+          <div class="hero-microcopy">
+            <span>OpenAI SDK Compatible</span>
+            <span>·</span>
+            <span>Streaming SSE</span>
+            <span>·</span>
+            <span>Zero SDK Rewrite</span>
+          </div>
+        </div>
+
+        <!-- Silky 60 FPS 3D Key Visual -->
+        <div class="hero-3d-wrapper">
+          <div id="hero-3d-canvas" class="hero-canvas" title="Interactive 3D Gateway: drag to rotate"></div>
+
+          <!-- Floating Route Telemetry Pill -->
+          <div class="hero-route-chip">
+            <div class="chip-header">
+              <span class="chip-title">DETERMINISTIC ROUTE</span>
+              <span class="chip-status">
+                <span class="chip-dot"></span>
+                <span>Active 60fps</span>
+              </span>
+            </div>
+            <div class="chip-route-path">
+              <span>gpt-4o</span>
+              <span class="arrow">→</span>
+              <span>claude-3-5-sonnet</span>
+              <span class="arrow">→</span>
+              <span>deepseek-v3</span>
+              <span class="arrow">→</span>
+              <span>gemini-2.0-flash</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Provider Ecosystem Strip -->
+    <div class="provider-strip" aria-label="Supported Providers">
+      <div class="container provider-flex">
+        <span class="provider-label">ONE API · 10+ PROVIDERS & LOCAL MODELS</span>
+        <div class="provider-names">
+          <span class="provider-item">OpenAI</span>
+          <span class="provider-item">Anthropic Claude</span>
+          <span class="provider-item">Google Gemini</span>
+          <span class="provider-item">DeepSeek</span>
+          <span class="provider-item">Groq</span>
+          <span class="provider-item">Mistral AI</span>
+          <span class="provider-item">Ollama / Local</span>
+          <span class="provider-item">OpenRouter</span>
+          <span class="provider-item">Cohere</span>
+        </div>
+        <div class="provider-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span>OpenAI SDK Drop-in</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 01 / Architecture Difference -->
+    <section class="section" id="difference">
+      <div class="container">
+        <div class="section-label">
+          <span>01</span>
+          <span>/</span>
+          <span>THE PROBLEM</span>
+        </div>
+
+        <h2 class="section-title">Provider sprawl is a reliability problem.</h2>
+        <p class="section-subhead">
+          Multiple provider SDKs mean fragmented keys, silent 429 cascades, and unexpected invoices. Tanvelo consolidates everything into one controlled path.
+        </p>
+
+        <div class="comparison-grid">
+          <!-- Without Tanvelo -->
+          <div class="comp-card">
+            <div class="comp-badge danger">WITHOUT TANVELO</div>
+            <ul class="comp-list">
+              <li class="comp-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E11D48" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="15" y1="9" x2="9" y2="15"></line>
+                  <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>
+                <span><strong>Silent 429 Failures:</strong> Upstream rate limits crash client requests without a backup path.</span>
+              </li>
+              <li class="comp-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E11D48" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="15" y1="9" x2="9" y2="15"></line>
+                  <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>
+                <span><strong>Three Divergent SDKs:</strong> Inconsistent error models, authentication keys, and wrapper glue code.</span>
+              </li>
+              <li class="comp-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E11D48" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="15" y1="9" x2="9" y2="15"></line>
+                  <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>
+                <span><strong>Uncapped Spend:</strong> Budget runaway discovered weeks later on provider billing dashboards.</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- With Tanvelo -->
+          <div class="comp-card active">
+            <div class="comp-badge success">WITH TANVELO</div>
+            <ul class="comp-list">
+              <li class="comp-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0284C7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="16 10 11 15 8 12"></polyline>
+                </svg>
+                <span><strong>184ms Automated Failover:</strong> Rate limits and 5xx errors automatically fail over to Claude or Gemini.</span>
+              </li>
+              <li class="comp-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0284C7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="16 10 11 15 8 12"></polyline>
+                </svg>
+                <span><strong>One Unified Endpoint:</strong> Standard OpenAI SDK drop-in. Change only <code>base_url</code> and key.</span>
+              </li>
+              <li class="comp-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0284C7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="16 10 11 15 8 12"></polyline>
+                </svg>
+                <span><strong>Atomic Limits & Budgets:</strong> Enforce strict spend caps with standard <code>X-RateLimit</code> headers.</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 02 / Three Core Capabilities -->
+    <section class="section" id="capabilities" style="background-color: var(--bg-subtle);">
+      <div class="container">
+        <div class="section-label">
+          <span>02</span>
+          <span>/</span>
+          <span>CAPABILITIES</span>
+        </div>
+
+        <h2 class="section-title">Production controls, not an opaque proxy.</h2>
+        <p class="section-subhead">
+          Three fundamental capabilities engineered for teams shipping LLMs to real users.
+        </p>
+
+        <div class="cap-grid">
+          <!-- Card 1 -->
+          <div class="cap-card">
+            <span class="cap-number">01</span>
+            <h3 class="cap-title">Deterministic Routing</h3>
+            <p class="cap-desc">
+              Declare primary models, retries, and ordered fallbacks per project. Tanvelo executes deterministic rules — never an unpredictable AI black box.
+            </p>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="cap-card">
+            <span class="cap-number">02</span>
+            <h3 class="cap-title">Atomic Redis Limits</h3>
+            <p class="cap-desc">
+              Token-bucket rate limits per key and project. Hard monthly budget cutoffs prevent recursive agent loops from draining capital.
+            </p>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="cap-card">
+            <span class="cap-number">03</span>
+            <h3 class="cap-title">Request Audit Ledger</h3>
+            <p class="cap-desc">
+              Every request records an auditable trail: latency waterfall, upstream attempt status, token metrics, and estimated costs.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03 / Quickstart -->
+    <section class="section" id="quickstart">
+      <div class="container">
+        <div class="section-label">
+          <span>03</span>
+          <span>/</span>
+          <span>QUICKSTART</span>
+        </div>
+
+        <h2 class="section-title">From zero to first request in 60 seconds.</h2>
+        <p class="section-subhead">
+          Keep your existing OpenAI SDK. Point the base URL at Tanvelo.
+        </p>
+
+        <div class="code-box">
+          <div class="code-header">
+            <div class="code-tabs">
+              <button class="code-tab-btn active" data-lang="python">Python</button>
+              <button class="code-tab-btn" data-lang="typescript">TypeScript</button>
+              <button class="code-tab-btn" data-lang="curl">cURL</button>
+            </div>
+            <button class="btn-copy" id="copy-btn">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span>Copy</span>
+            </button>
+          </div>
+
+          <pre class="code-panel active" data-lang="python" id="code-sample"><code><span class="kw">from</span> openai <span class="kw">import</span> OpenAI
+
+client = OpenAI(
+    base_url=<span class="str">"https://api.tanvelo.com/v1"</span>,
+    api_key=<span class="str">"tv_live_948f2b..."</span>,
+)
+
+response = client.chat.completions.create(
+    model=<span class="str">"gpt-4o"</span>,
+    messages=[{<span class="str">"role"</span>: <span class="str">"user"</span>, <span class="str">"content"</span>: <span class="str">"Ship to production."</span>}],
+    stream=<span class="kw">True</span>,
+)
+
+<span class="kw">for</span> chunk <span class="kw">in</span> response:
+    <span class="fn">print</span>(chunk.choices[<span class="kw">0</span>].delta.content <span class="kw">or</span> <span class="str">""</span>, end=<span class="str">""</span>)</code></pre>
+
+          <pre class="code-panel" data-lang="typescript"><code><span class="kw">import</span> OpenAI <span class="kw">from</span> <span class="str">"openai"</span>;
+
+<span class="kw">const</span> client = <span class="kw">new</span> OpenAI({
+  baseURL: <span class="str">"https://api.tanvelo.com/v1"</span>,
+  apiKey: process.env.TANVELO_API_KEY,
+});
+
+<span class="kw">const</span> stream = <span class="kw">await</span> client.chat.completions.create({
+  model: <span class="str">"gpt-4o"</span>,
+  messages: [{ role: <span class="str">"user"</span>, content: <span class="str">"Ship to production."</span> }],
+  stream: <span class="kw">true</span>,
+});
+
+<span class="kw">for</span> <span class="kw">await</span> (<span class="kw">const</span> chunk <span class="kw">of</span> stream) {
+  process.stdout.write(chunk.choices[<span class="kw">0</span>]?.delta?.content || <span class="str">""</span>);
+}</code></pre>
+
+          <pre class="code-panel" data-lang="curl"><code>curl https://api.tanvelo.com/v1/chat/completions \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -H <span class="str">"Authorization: Bearer $TANVELO_API_KEY"</span> \
+  -d <span class="str">'{
+    "model": "gpt-4o",
+    "messages": [{"role": "user", "content": "Ship to production."}],
+    "stream": true
+  }'</span></code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- 04 / Security & Integrity -->
+    <section class="section" id="trust">
+      <div class="container">
+        <div class="section-label">
+          <span>04</span>
+          <span>/</span>
+          <span>SECURITY</span>
+        </div>
+
+        <h2 class="section-title">Guardrails you can inspect.</h2>
+        <p class="section-subhead">
+          Security is not a badge at the bottom of the page. It is a verifiable set of architectural controls.
+        </p>
+
+        <div class="trust-strip">
+          <div>
+            <div class="trust-item-title">Gateway Keys</div>
+            <p class="trust-item-desc">Cryptographically random, displayed once, stored exclusively as SHA-256 hashes.</p>
+          </div>
+          <div>
+            <div class="trust-item-title">Provider Secrets</div>
+            <p class="trust-item-desc">Master keys are encrypted at rest with AES-256-GCM. Never exposed to browsers.</p>
+          </div>
+          <div>
+            <div class="trust-item-title">Webhooks & SSRF</div>
+            <p class="trust-item-desc">HMAC-SHA256 signatures with bounded retries and RFC1918 egress protections.</p>
+          </div>
+          <div>
+            <div class="trust-item-title">Zero Prompt Retention</div>
+            <p class="trust-item-desc">Bodies sanitized by default; full body storage is strictly opt-in and off by default.</p>
+          </div>
+        </div>
+
+        <div style="margin-top: 24px; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 8px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span>Honesty by default: No invented uptime metrics, fake logos, or synthetic charts.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 05 / Minimal FAQ -->
+    <section class="section" id="faq">
+      <div class="container">
+        <div class="section-label">
+          <span>05</span>
+          <span>/</span>
+          <span>QUESTIONS</span>
+        </div>
+
+        <h2 class="section-title">Common questions.</h2>
+
+        <div class="faq-grid">
+          <div class="faq-row">
+            <button class="faq-btn">
+              <span>Is Tanvelo a proxy or a gateway?</span>
+              <span>+</span>
+            </button>
+            <div class="faq-body">
+              <p class="faq-text">
+                A complete API gateway and control plane. It provides unified routing rules, Redis-backed rate limiting, project spend caps, and an auditable request ledger.
+              </p>
+            </div>
+          </div>
+
+          <div class="faq-row">
+            <button class="faq-btn">
+              <span>Do I have to rewrite my application code?</span>
+              <span>+</span>
+            </button>
+            <div class="faq-body">
+              <p class="faq-text">
+                No. Keep your existing OpenAI client. Set <code>base_url="https://api.tanvelo.com/v1"</code> and provide your Tanvelo key.
+              </p>
+            </div>
+          </div>
+
+          <div class="faq-row">
+            <button class="faq-btn">
+              <span>What happens when OpenAI rate-limits (429)?</span>
+              <span>+</span>
+            </button>
+            <div class="faq-body">
+              <p class="faq-text">
+                Tanvelo immediately shifts the in-flight request to your configured fallback provider (Claude or Gemini) within ~180ms without dropping the client connection.
+              </p>
+            </div>
+          </div>
+
+          <div class="faq-row">
+            <button class="faq-btn">
+              <span>Can I enforce hard monthly budget caps?</span>
+              <span>+</span>
+            </button>
+            <div class="faq-body">
+              <p class="faq-text">
+                Yes. Hard cutoffs reject requests with standard 429 errors when monthly spend thresholds are reached, guarding against recursive agent loops.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="section final-cta">
+      <div class="container final-cta-box">
+        <h2 style="font-size: 44px; font-weight: 600; letter-spacing: -0.04em; color: var(--text-primary); margin-bottom: 14px;">
+          Make reliability your default.
+        </h2>
+        <p style="font-size: 16px; color: var(--text-secondary); margin-bottom: 28px;">
+          Put every model behind one controlled endpoint in under five minutes.
+        </p>
+        <a href="#quickstart" class="btn-primary">
+          Read the quickstart
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <!-- Minimal Footer -->
+  <footer class="footer">
+    <div class="container footer-flex">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <img src="assets/logo.svg" alt="Tanvelo Logo" width="18" height="18" />
+        <span style="font-weight: 600; color: var(--text-primary);">tanvelo</span>
+        <span>© 2026. Fastify · Redis · PostgreSQL.</span>
+      </div>
+      <ul class="footer-nav">
+        <li><a href="#difference">Architecture</a></li>
+        <li><a href="#capabilities">Capabilities</a></li>
+        <li><a href="#quickstart">Docs</a></li>
+        <li><a href="#trust">Security</a></li>
+      </ul>
+    </div>
+  </footer>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

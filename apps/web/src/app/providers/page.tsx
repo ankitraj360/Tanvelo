@@ -553,18 +553,18 @@ export default function ProvidersPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-16">
       {/* Top Header Strip with Prominent Connect Button on Top-Right */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl font-extrabold tracking-tight text-white flex items-center gap-2.5">
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2.5">
               <span>Provider Connections</span>
             </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-medium bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 shadow-xs">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-xs">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
               AES-256-GCM Secure
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-1 max-w-2xl leading-relaxed">
+          <p className="text-xs text-slate-500 mt-1 max-w-2xl leading-relaxed">
             Connect frontier cloud providers or local on-prem inference engines. Credentials are isolated inside a zero-knowledge hardware enclave and never logged.
           </p>
         </div>
@@ -574,7 +574,7 @@ export default function ProvidersPage() {
           <Button
             size="md"
             onClick={openConnectModal}
-            className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold shadow-lg shadow-blue-600/25 border border-blue-400/30 active:scale-[0.98] transition-all px-4 py-2"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md active:scale-[0.98] transition-all px-4 py-2"
           >
             <Plus className="w-4 h-4 mr-1.5" />
             Connect Provider
@@ -588,17 +588,17 @@ export default function ProvidersPage() {
         <div className="lg:col-span-5 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-slate-200 tracking-tight flex items-center gap-2">
+              <h2 className="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-2">
                 <span>Connected Providers</span>
               </h2>
-              <span className="px-2 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-slate-800/90 text-slate-300 border border-slate-700">
+              <span className="px-2 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-slate-100 text-slate-700 border border-slate-200">
                 {connectedProviders.length}
               </span>
             </div>
 
             {connectedProviders.length > 0 && (
-              <span className="flex items-center gap-1.5 text-[11px] text-emerald-400 font-mono">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="flex items-center gap-1.5 text-[11px] text-emerald-600 font-mono">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 Active Gateway
               </span>
             )}
@@ -607,13 +607,13 @@ export default function ProvidersPage() {
           {/* Search bar if there are providers */}
           {connectedProviders.length > 2 && (
             <div className="relative">
-              <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 placeholder="Search connected providers..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 bg-slate-900/90 border border-slate-800 rounded-lg text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-sm"
               />
             </div>
           )}
@@ -621,25 +621,25 @@ export default function ProvidersPage() {
           {/* Connected Providers List Cards */}
           <div className="space-y-2.5">
             {loading ? (
-              <div className="p-8 text-center rounded-xl border border-slate-800/80 bg-slate-900/30 text-xs text-slate-400 flex flex-col items-center justify-center gap-2">
+              <div className="p-8 text-center rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-500 flex flex-col items-center justify-center gap-2">
                 <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                 <span>Loading secure connections...</span>
               </div>
             ) : connectedProviders.length === 0 ? (
               /* High-Trust Zero State */
-              <div className="p-6 rounded-2xl border border-slate-800/80 bg-gradient-to-b from-[#0F172A]/70 to-[#0A101D]/70 backdrop-blur-sm text-center space-y-4 shadow-sm">
-                <div className="w-12 h-12 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex items-center justify-center mx-auto text-slate-400">
-                  <ShieldCheck className="w-6 h-6 text-emerald-400" />
+              <div className="p-6 rounded-2xl border border-slate-200 bg-white text-center space-y-4 shadow-sm">
+                <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center mx-auto text-slate-500">
+                  <ShieldCheck className="w-6 h-6 text-emerald-600" />
                 </div>
                 <div className="space-y-1">
-                  <h3 className="text-sm font-bold text-slate-200">No Providers Connected Yet</h3>
-                  <p className="text-xs text-slate-400 leading-relaxed max-w-xs mx-auto">
-                    Click the <strong className="text-slate-200">Connect Provider</strong> button in the top right to link OpenAI, Claude, Gemini, OpenRouter, or local models.
+                  <h3 className="text-sm font-bold text-slate-900">No Providers Connected Yet</h3>
+                  <p className="text-xs text-slate-500 leading-relaxed max-w-xs mx-auto">
+                    Click the <strong className="text-slate-800">Connect Provider</strong> button in the top right to link OpenAI, Claude, Gemini, OpenRouter, or local models.
                   </p>
                 </div>
 
                 {/* Quick-Connect Preset Chips */}
-                <div className="pt-2 border-t border-slate-800/80 text-left">
+                <div className="pt-2 border-t border-slate-200 text-left">
                   <p className="text-[10px] font-mono uppercase tracking-wider text-slate-500 mb-2">
                     Quick Connect Presets:
                   </p>
@@ -648,9 +648,9 @@ export default function ProvidersPage() {
                       <button
                         key={preset.id}
                         onClick={() => openConnectModalWithPreset(preset)}
-                        className="px-2.5 py-1 rounded-md text-[11px] font-medium bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 transition flex items-center gap-1 cursor-pointer"
+                        className="px-2.5 py-1 rounded-md text-[11px] font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-200 transition flex items-center gap-1 cursor-pointer"
                       >
-                        <Plus className="w-3 h-3 text-cyan-400" />
+                        <Plus className="w-3 h-3 text-blue-600" />
                         {preset.name.replace(/ Gateway| Primary/, '')}
                       </button>
                     ))}
@@ -671,8 +671,8 @@ export default function ProvidersPage() {
                     onClick={() => setSelectedProviderId(conn.provider)}
                     className={`p-3.5 rounded-xl border transition-all cursor-pointer relative group ${
                       isSelected
-                        ? 'border-blue-500/70 bg-gradient-to-r from-blue-950/40 via-[#0F172A] to-[#0F172A] shadow-md ring-1 ring-blue-500/30'
-                        : 'border-slate-800/80 bg-[#0F172A]/50 hover:bg-slate-900/70 hover:border-slate-700'
+                        ? 'border-blue-500 bg-blue-50/70 shadow-sm ring-1 ring-blue-400/40'
+                        : 'border-slate-200 bg-white hover:bg-slate-50/80 hover:border-slate-300 shadow-xs'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -687,16 +687,16 @@ export default function ProvidersPage() {
                         {/* Name & Details */}
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <h3 className="text-xs font-bold text-slate-100 truncate">
+                            <h3 className="text-xs font-bold text-slate-900 truncate">
                               {conn.customName || meta.label}
                             </h3>
                             {conn.isCustom && (
-                              <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-purple-950/80 text-purple-300 border border-purple-800/60">
+                              <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-purple-50 text-purple-700 border border-purple-200">
                                 custom
                               </span>
                             )}
                           </div>
-                          <p className="text-[11px] text-slate-400 font-mono truncate max-w-[200px]">
+                          <p className="text-[11px] text-slate-500 font-mono truncate max-w-[200px]">
                             {conn.apiBaseUrl ? conn.apiBaseUrl.replace(/^https?:\/\//, '') : conn.provider}
                           </p>
                         </div>
@@ -705,22 +705,22 @@ export default function ProvidersPage() {
                       {/* Status indicator */}
                       <div className="flex flex-col items-end gap-1 flex-shrink-0">
                         {isOnline ? (
-                          <span className="flex items-center gap-1.5 text-[10px] text-emerald-400 font-medium px-2 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-800/50">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          <span className="flex items-center gap-1.5 text-[10px] text-emerald-700 font-medium px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
                             Connected
                           </span>
                         ) : conn.status === 'error' ? (
-                          <span className="text-[10px] text-rose-400 font-medium px-2 py-0.5 rounded-full bg-rose-950/60 border border-rose-800/50">
+                          <span className="text-[10px] text-rose-700 font-medium px-2 py-0.5 rounded-full bg-rose-50 border border-rose-200">
                             Error
                           </span>
                         ) : (
-                          <span className="text-[10px] text-slate-400 font-medium px-2 py-0.5 rounded-full bg-slate-800/60 border border-slate-700">
+                          <span className="text-[10px] text-slate-600 font-medium px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200">
                             Idle
                           </span>
                         )}
 
                         {testResult?.latencyMs ? (
-                          <span className="text-[10px] text-cyan-400 font-mono">
+                          <span className="text-[10px] text-blue-600 font-mono font-medium">
                             ⚡ {formatLatency(testResult.latencyMs)}
                           </span>
                         ) : null}
@@ -728,9 +728,9 @@ export default function ProvidersPage() {
                     </div>
 
                     {/* Bottom strip: key preview & actions */}
-                    <div className="mt-2.5 pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-400">
-                      <div className="flex items-center gap-1 text-slate-400 font-mono text-[10px]">
-                        <Key className="w-3 h-3 text-slate-500" />
+                    <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                      <div className="flex items-center gap-1 text-slate-500 font-mono text-[10px]">
+                        <Key className="w-3 h-3 text-slate-400" />
                         <span>{conn.apiKeyPreview || '••••••••'}</span>
                       </div>
 
@@ -741,10 +741,10 @@ export default function ProvidersPage() {
                             runConnectionTest(conn.provider, conn.apiBaseUrl);
                           }}
                           disabled={isTesting}
-                          className="text-[10px] font-medium text-slate-400 hover:text-cyan-400 flex items-center gap-1 transition cursor-pointer"
+                          className="text-[10px] font-medium text-slate-500 hover:text-blue-600 flex items-center gap-1 transition cursor-pointer"
                           title="Test Connection Ping"
                         >
-                          <Play className="w-2.5 h-2.5 text-cyan-400" />
+                          <Play className="w-2.5 h-2.5 text-blue-600" />
                           {isTesting ? 'Testing...' : 'Ping'}
                         </button>
 
@@ -753,7 +753,7 @@ export default function ProvidersPage() {
                             e.stopPropagation();
                             openEditModal(conn);
                           }}
-                          className="text-[10px] font-medium text-slate-400 hover:text-slate-200 flex items-center gap-1 transition cursor-pointer"
+                          className="text-[10px] font-medium text-slate-500 hover:text-slate-800 flex items-center gap-1 transition cursor-pointer"
                           title="Edit Credentials"
                         >
                           <Edit3 className="w-2.5 h-2.5" />
@@ -768,10 +768,10 @@ export default function ProvidersPage() {
           </div>
 
           {/* Quick Presets Drawer for easy discovery */}
-          <div className="p-4 rounded-xl border border-slate-800/80 bg-slate-900/30 space-y-2.5">
+          <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-xs space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-blue-600" />
                 Popular Provider Presets
               </span>
               <span className="text-[10px] text-slate-500">1-Click Setup</span>
@@ -781,10 +781,10 @@ export default function ProvidersPage() {
                 <button
                   key={preset.id}
                   onClick={() => openConnectModalWithPreset(preset)}
-                  className="px-2.5 py-1.5 rounded-lg text-left bg-slate-900/70 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 hover:border-slate-700 transition flex items-center justify-between group cursor-pointer"
+                  className="px-2.5 py-1.5 rounded-lg text-left bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 hover:border-slate-300 transition flex items-center justify-between group cursor-pointer"
                 >
                   <span className="truncate text-[11px] font-medium">{preset.name}</span>
-                  <Plus className="w-3 h-3 text-slate-500 group-hover:text-cyan-400 flex-shrink-0 ml-1" />
+                  <Plus className="w-3 h-3 text-slate-400 group-hover:text-blue-600 flex-shrink-0 ml-1" />
                 </button>
               ))}
             </div>
@@ -802,26 +802,26 @@ export default function ProvidersPage() {
               return (
                 <div className="space-y-5">
                   {/* Active Provider Header Banner */}
-                  <Card className="border-slate-800/90 bg-gradient-to-br from-[#0F172A] via-[#0C1222] to-[#0A0F1D] shadow-lg">
+                  <Card className="border-slate-200 bg-white shadow-sm">
                     <CardHeader className="pb-4">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div className="flex items-center gap-3.5">
                           <div
-                            className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm tracking-wide ${meta.accentBg} ${meta.accentBorder} ${meta.accentText} border shadow-lg ${meta.glow}`}
+                            className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm tracking-wide ${meta.accentBg} ${meta.accentBorder} ${meta.accentText} border shadow-sm ${meta.glow}`}
                           >
                             {meta.symbol}
                           </div>
 
                           <div>
                             <div className="flex items-center gap-2">
-                              <h2 className="text-lg font-bold text-white tracking-tight">
+                              <h2 className="text-lg font-bold text-slate-900 tracking-tight">
                                 {selectedConnection.customName || meta.label}
                               </h2>
                               <Badge variant={meta.badgeColor as any} className="font-mono text-[10px]">
                                 {selectedConnection.provider}
                               </Badge>
                             </div>
-                            <p className="text-xs text-slate-400 mt-0.5">
+                            <p className="text-xs text-slate-500 mt-0.5">
                               Hardware AES-256-GCM encrypted provider link
                             </p>
                           </div>
@@ -836,9 +836,9 @@ export default function ProvidersPage() {
                             onClick={() =>
                               runConnectionTest(selectedConnection.provider, selectedConnection.apiBaseUrl)
                             }
-                            className="bg-slate-800/90 hover:bg-slate-700 text-slate-200 border-slate-700/80 text-xs"
+                            className="bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200 text-xs"
                           >
-                            <Play className="w-3 h-3 mr-1 text-emerald-400" />
+                            <Play className="w-3 h-3 mr-1 text-emerald-600" />
                             Test Ping
                           </Button>
 
@@ -846,7 +846,7 @@ export default function ProvidersPage() {
                             size="sm"
                             variant="outline"
                             onClick={() => openEditModal(selectedConnection)}
-                            className="text-xs border-slate-700/80 hover:bg-slate-800"
+                            className="text-xs border-slate-200 hover:bg-slate-100 text-slate-700"
                           >
                             <Edit3 className="w-3 h-3 mr-1" />
                             Edit
@@ -859,7 +859,7 @@ export default function ProvidersPage() {
                                 selectedConnection.customName || meta.label
                               )
                             }
-                            className="p-2 rounded-lg text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 border border-transparent hover:border-rose-800/50 transition cursor-pointer"
+                            className="p-2 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition cursor-pointer"
                             title="Disconnect Provider"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -870,28 +870,28 @@ export default function ProvidersPage() {
 
                     {/* Operational Metrics Strip */}
                     <CardContent className="pt-0">
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-slate-800/80">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-slate-100">
                         {/* Status */}
-                        <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
-                          <span className="text-[10px] text-slate-400 uppercase font-mono tracking-wider">
+                        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                          <span className="text-[10px] text-slate-500 uppercase font-mono tracking-wider">
                             Health Status
                           </span>
                           <div className="flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                            <span className="text-xs font-semibold text-emerald-400">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                            <span className="text-xs font-semibold text-emerald-700">
                               Operational & Ready
                             </span>
                           </div>
                         </div>
 
                         {/* Latency */}
-                        <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
-                          <span className="text-[10px] text-slate-400 uppercase font-mono tracking-wider">
+                        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                          <span className="text-[10px] text-slate-500 uppercase font-mono tracking-wider">
                             Roundtrip Latency
                           </span>
                           <div className="flex items-center gap-1.5">
-                            <Zap className="w-3.5 h-3.5 text-cyan-400" />
-                            <span className="text-xs font-mono font-semibold text-cyan-400">
+                            <Zap className="w-3.5 h-3.5 text-blue-600" />
+                            <span className="text-xs font-mono font-semibold text-blue-600">
                               {testResult?.latencyMs
                                 ? formatLatency(testResult.latencyMs)
                                 : 'Verified'}
@@ -900,13 +900,13 @@ export default function ProvidersPage() {
                         </div>
 
                         {/* Encryption */}
-                        <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
-                          <span className="text-[10px] text-slate-400 uppercase font-mono tracking-wider">
+                        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                          <span className="text-[10px] text-slate-500 uppercase font-mono tracking-wider">
                             Key Protection
                           </span>
                           <div className="flex items-center gap-1.5">
-                            <Lock className="w-3.5 h-3.5 text-emerald-400" />
-                            <span className="text-xs font-mono font-semibold text-slate-200">
+                            <Lock className="w-3.5 h-3.5 text-emerald-600" />
+                            <span className="text-xs font-mono font-semibold text-slate-800">
                               AES-256-GCM
                             </span>
                           </div>
@@ -920,23 +920,23 @@ export default function ProvidersPage() {
                     <div
                       className={`p-4 rounded-xl text-xs border transition-all ${
                         testResult.success
-                          ? 'bg-emerald-950/40 border-emerald-800/70 text-emerald-300'
-                          : 'bg-rose-950/40 border-rose-800/70 text-rose-300'
+                          ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                          : 'bg-rose-50 border-rose-200 text-rose-800'
                       }`}
                     >
                       <div className="flex items-center justify-between font-semibold mb-1">
                         <span className="flex items-center gap-1.5">
                           {testResult.success ? (
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                           ) : (
-                            <AlertTriangle className="w-4 h-4 text-rose-400" />
+                            <AlertTriangle className="w-4 h-4 text-rose-600" />
                           )}
                           {testResult.success
                             ? 'Connection Verified Successfully'
                             : 'Connection Test Failed'}
                         </span>
                         {testResult.latencyMs > 0 && (
-                          <span className="font-mono text-[11px] bg-slate-900/80 px-2 py-0.5 rounded border border-slate-700">
+                          <span className="font-mono text-[11px] bg-white text-slate-800 px-2 py-0.5 rounded border border-slate-200">
                             {formatLatency(testResult.latencyMs)}
                           </span>
                         )}
@@ -946,10 +946,10 @@ export default function ProvidersPage() {
                   )}
 
                   {/* Endpoint & Cryptographic Credentials Card */}
-                  <Card className="border-slate-800/80 bg-[#0F172A]/70">
+                  <Card className="border-slate-200 bg-white shadow-sm">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-sm font-bold flex items-center gap-2">
-                        <Globe className="w-4 h-4 text-blue-400" />
+                        <Globe className="w-4 h-4 text-blue-600" />
                         Endpoint & Enclave Configuration
                       </CardTitle>
                       <CardDescription>
@@ -959,7 +959,7 @@ export default function ProvidersPage() {
                     <CardContent className="space-y-3">
                       {/* Base URL */}
                       <div>
-                        <span className="text-[11px] font-medium text-slate-400 block mb-1">
+                        <span className="text-[11px] font-medium text-slate-500 block mb-1">
                           Base URL (Root Endpoint):
                         </span>
                         <div className="flex items-center gap-2">
@@ -967,7 +967,7 @@ export default function ProvidersPage() {
                             type="text"
                             readOnly
                             value={selectedConnection.apiBaseUrl || 'Standard Provider Endpoint'}
-                            className="flex-1 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs font-mono text-slate-200 focus:outline-none select-all"
+                            className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-900 focus:outline-none select-all"
                           />
                           <Button
                             size="sm"
@@ -981,9 +981,9 @@ export default function ProvidersPage() {
                             className="px-2.5 text-xs"
                           >
                             {copiedUrl ? (
-                              <Check className="w-3.5 h-3.5 text-emerald-400" />
+                              <Check className="w-3.5 h-3.5 text-emerald-600" />
                             ) : (
-                              <Copy className="w-3.5 h-3.5" />
+                              <Copy className="w-3.5 h-3.5 text-slate-500" />
                             )}
                           </Button>
                         </div>
@@ -991,34 +991,34 @@ export default function ProvidersPage() {
 
                       {/* Key Preview */}
                       <div>
-                        <span className="text-[11px] font-medium text-slate-400 block mb-1">
+                        <span className="text-[11px] font-medium text-slate-500 block mb-1">
                           Encrypted Key Token Preview:
                         </span>
-                        <div className="px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs font-mono text-slate-300 flex items-center justify-between">
+                        <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 flex items-center justify-between">
                           <span>{selectedConnection.apiKeyPreview || '••••••••'}</span>
-                          <span className="text-[10px] text-emerald-400 font-sans flex items-center gap-1">
-                            <Lock className="w-3 h-3 text-emerald-400" />
+                          <span className="text-[10px] text-emerald-700 font-sans flex items-center gap-1 font-medium">
+                            <Lock className="w-3 h-3 text-emerald-600" />
                             Encrypted at Rest
                           </span>
                         </div>
                       </div>
 
                       {/* Security Trust Note */}
-                      <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-800/80 flex items-start gap-2.5 text-[11px] text-slate-400 leading-relaxed">
-                        <Shield className="w-4 h-4 text-cyan-400 flex-shrink-0 mt-0.5" />
+                      <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 flex items-start gap-2.5 text-[11px] text-slate-600 leading-relaxed">
+                        <Shield className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
                         <span>
-                          <strong className="text-slate-300">Zero-Knowledge Isolation:</strong> Raw API keys are stored in an encrypted PostgreSQL enclave using authenticated AES-256-GCM. Plaintext secrets are decrypted strictly in ephemeral memory during gateway request forwarding.
+                          <strong className="text-slate-800">Zero-Knowledge Isolation:</strong> Raw API keys are stored in an encrypted PostgreSQL enclave using authenticated AES-256-GCM. Plaintext secrets are decrypted strictly in ephemeral memory during gateway request forwarding.
                         </span>
                       </div>
                     </CardContent>
                   </Card>
 
                   {/* Developer Integration Code Snippet */}
-                  <Card className="border-slate-800/80 bg-[#0F172A]/70">
+                  <Card className="border-slate-200 bg-white shadow-sm">
                     <CardHeader className="pb-3 flex flex-row items-center justify-between">
                       <div>
                         <CardTitle className="text-sm font-bold flex items-center gap-2">
-                          <Terminal className="w-4 h-4 text-cyan-400" />
+                          <Terminal className="w-4 h-4 text-blue-600" />
                           Gateway Request Integration
                         </CardTitle>
                         <CardDescription>
@@ -1042,11 +1042,11 @@ export default function ProvidersPage() {
                         className="text-xs"
                       >
                         {copiedSnippet ? (
-                          <span className="flex items-center gap-1 text-emerald-400">
+                          <span className="flex items-center gap-1 text-emerald-600">
                             <Check className="w-3.5 h-3.5" /> Copied
                           </span>
                         ) : (
-                          <span className="flex items-center gap-1">
+                          <span className="flex items-center gap-1 text-slate-600">
                             <Copy className="w-3.5 h-3.5" /> Copy cURL
                           </span>
                         )}
@@ -1054,7 +1054,7 @@ export default function ProvidersPage() {
                     </CardHeader>
 
                     <CardContent>
-                      <pre className="p-4 rounded-xl bg-[#070A11] border border-slate-800/80 text-[11px] font-mono text-cyan-300 overflow-x-auto leading-relaxed">
+                      <pre className="p-4 rounded-xl bg-slate-900 border border-slate-800 text-[11px] font-mono text-slate-100 overflow-x-auto leading-relaxed">
 {`curl -X POST http://localhost:4000/v1/chat/completions \\
   -H "Authorization: Bearer $TANVELO_API_KEY" \\
   -H "Content-Type: application/json" \\
@@ -1073,62 +1073,62 @@ export default function ProvidersPage() {
           ) : (
             /* When no provider is selected or when none connected */
             <div className="space-y-6">
-              <Card className="border-slate-800/80 bg-gradient-to-br from-[#0F172A] via-[#0B0F19] to-[#070A11] p-8 text-center shadow-xl">
-                <div className="w-16 h-16 rounded-2xl bg-blue-950/60 border border-blue-800/60 flex items-center justify-center mx-auto text-blue-400 mb-4 shadow-lg shadow-blue-500/10">
-                  <ShieldCheck className="w-8 h-8 text-cyan-400" />
+              <Card className="border-slate-200 bg-white p-8 text-center shadow-sm">
+                <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center mx-auto text-blue-600 mb-4 shadow-sm">
+                  <ShieldCheck className="w-8 h-8 text-blue-600" />
                 </div>
 
-                <h2 className="text-xl font-bold text-white tracking-tight">
+                <h2 className="text-xl font-bold text-slate-900 tracking-tight">
                   Universal AI Federation Gateway
                 </h2>
-                <p className="text-xs text-slate-300 mt-2 max-w-lg mx-auto leading-relaxed">
+                <p className="text-xs text-slate-600 mt-2 max-w-lg mx-auto leading-relaxed">
                   Tanvelo provides a unified, production-hardened API proxy across frontier cloud providers (OpenRouter, Gemini, OpenAI, Claude) and self-hosted runtimes (Ollama, vLLM).
                 </p>
 
                 {/* 4 Trust & Security Pillars */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6 text-left max-w-xl mx-auto">
-                  <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/80 space-y-1">
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400">
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
                       <Lock className="w-3.5 h-3.5" />
                       Zero-Knowledge Enclave
                     </div>
-                    <p className="text-[11px] text-slate-400 leading-normal">
+                    <p className="text-[11px] text-slate-600 leading-normal">
                       Credentials are encrypted at rest with hardware AES-256-GCM and never logged.
                     </p>
                   </div>
 
-                  <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/80 space-y-1">
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-cyan-400">
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-blue-600">
                       <Zap className="w-3.5 h-3.5" />
                       Sub-Millisecond Overhead
                     </div>
-                    <p className="text-[11px] text-slate-400 leading-normal">
+                    <p className="text-[11px] text-slate-600 leading-normal">
                       Ultra-low latency streaming proxy architecture designed for microsecond routing.
                     </p>
                   </div>
 
-                  <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/80 space-y-1">
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-blue-400">
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-blue-600">
                       <Layers className="w-3.5 h-3.5" />
                       Automatic Fallbacks
                     </div>
-                    <p className="text-[11px] text-slate-400 leading-normal">
+                    <p className="text-[11px] text-slate-600 leading-normal">
                       Instant circuit breaking and failover when upstream providers experience rate limits.
                     </p>
                   </div>
 
-                  <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/80 space-y-1">
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-purple-400">
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-purple-700">
                       <HardDrive className="w-3.5 h-3.5" />
                       Local & Cloud Unified
                     </div>
-                    <p className="text-[11px] text-slate-400 leading-normal">
+                    <p className="text-[11px] text-slate-600 leading-normal">
                       Seamlessly combine proprietary cloud APIs with private on-prem Ollama & vLLM servers.
                     </p>
                   </div>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-slate-800 flex justify-center">
+                <div className="mt-6 pt-4 border-t border-slate-200 flex justify-center">
                   <Button size="md" onClick={openConnectModal}>
                     <Plus className="w-4 h-4 mr-1.5" />
                     Connect Your First Provider
@@ -1154,8 +1154,8 @@ export default function ProvidersPage() {
         <form onSubmit={handleModalSave} className="space-y-4">
           {/* Modal Error Alert */}
           {modalError && (
-            <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-800/80 text-rose-300 text-xs flex items-start gap-2">
-              <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5 text-rose-400" />
+            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5 text-rose-600" />
               <span>{modalError}</span>
             </div>
           )}
@@ -1165,21 +1165,21 @@ export default function ProvidersPage() {
             <div
               className={`p-3.5 rounded-xl text-xs border transition-all ${
                 modalTestResult.success
-                  ? 'bg-emerald-950/60 border-emerald-700/80 text-emerald-300'
-                  : 'bg-rose-950/60 border-rose-700/80 text-rose-300'
+                  ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                  : 'bg-rose-50 border-rose-200 text-rose-800'
               }`}
             >
               <div className="flex items-center justify-between font-semibold mb-0.5">
                 <span className="flex items-center gap-1.5">
                   {modalTestResult.success ? (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                   ) : (
-                    <AlertTriangle className="w-4 h-4 text-rose-400" />
+                    <AlertTriangle className="w-4 h-4 text-rose-600" />
                   )}
                   {modalTestResult.success ? '✓ Connection Succeeded' : '✕ Test Failed'}
                 </span>
                 {modalTestResult.latencyMs > 0 && (
-                  <span className="font-mono text-[11px] bg-slate-900/80 px-2 py-0.5 rounded border border-slate-700">
+                  <span className="font-mono text-[11px] bg-white text-slate-800 px-2 py-0.5 rounded border border-slate-200">
                     {formatLatency(modalTestResult.latencyMs)}
                   </span>
                 )}
@@ -1191,7 +1191,7 @@ export default function ProvidersPage() {
           {/* Quick Preset Selector Buttons (Optional 1-Click helpers) */}
           {!isEditing && (
             <div>
-              <label className="block text-[11px] font-mono uppercase text-slate-400 mb-1.5">
+              <label className="block text-[11px] font-mono uppercase text-slate-500 mb-1.5">
                 Quick Preset Fill (Optional):
               </label>
               <div className="flex flex-wrap gap-1.5">
@@ -1208,8 +1208,8 @@ export default function ProvidersPage() {
                     }}
                     className={`px-2 py-1 rounded-md text-[11px] font-medium border transition cursor-pointer ${
                       formProvider === preset.providerName
-                        ? 'bg-blue-600/30 text-blue-300 border-blue-500/60 shadow-xs'
-                        : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border-slate-800'
+                        ? 'bg-blue-50 text-blue-700 border-blue-300 shadow-xs'
+                        : 'bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 border-slate-200'
                     }`}
                   >
                     {preset.name.replace(/ Gateway| Primary/, '')}
@@ -1221,8 +1221,8 @@ export default function ProvidersPage() {
 
           {/* Field 1: Name (Required) */}
           <div>
-            <label className="block text-xs font-semibold text-slate-200 mb-1">
-              Connection Name <span className="text-rose-400">*</span>
+            <label className="block text-xs font-semibold text-slate-800 mb-1">
+              Connection Name <span className="text-rose-500">*</span>
             </label>
             <input
               type="text"
@@ -1230,7 +1230,7 @@ export default function ProvidersPage() {
               placeholder="e.g. Production OpenAI or OpenRouter Gateway"
               value={formName}
               onChange={(e) => setFormName(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700/80 rounded-lg text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
+              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition shadow-sm"
             />
             <p className="text-[10px] text-slate-500 mt-1">
               Friendly label displayed in dashboards and routing policies.
@@ -1239,8 +1239,8 @@ export default function ProvidersPage() {
 
           {/* Field 2: Provider Name (Required) */}
           <div>
-            <label className="block text-xs font-semibold text-slate-200 mb-1">
-              Provider Name <span className="text-rose-400">*</span>
+            <label className="block text-xs font-semibold text-slate-800 mb-1">
+              Provider Name <span className="text-rose-500">*</span>
             </label>
             <input
               type="text"
@@ -1248,17 +1248,17 @@ export default function ProvidersPage() {
               placeholder="e.g. openrouter, gemini, openai, claude, ollama, vllm, or custom"
               value={formProvider}
               onChange={(e) => setFormProvider(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700/80 rounded-lg text-xs font-mono text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
+              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition shadow-sm"
             />
             <p className="text-[10px] text-slate-500 mt-1">
-              Any provider: <code className="text-cyan-400 font-mono">openrouter</code>, <code className="text-cyan-400 font-mono">gemini</code>, <code className="text-cyan-400 font-mono">openai</code>, <code className="text-cyan-400 font-mono">claude</code>, <code className="text-cyan-400 font-mono">ollama</code>, or local models.
+              Any provider: <code className="text-blue-600 font-mono">openrouter</code>, <code className="text-blue-600 font-mono">gemini</code>, <code className="text-blue-600 font-mono">openai</code>, <code className="text-blue-600 font-mono">claude</code>, <code className="text-blue-600 font-mono">ollama</code>, or local models.
             </p>
           </div>
 
           {/* Field 3: Base URL (Required) */}
           <div>
-            <label className="block text-xs font-semibold text-slate-200 mb-1">
-              Base URL (Endpoint) <span className="text-rose-400">*</span>
+            <label className="block text-xs font-semibold text-slate-800 mb-1">
+              Base URL (Endpoint) <span className="text-rose-500">*</span>
             </label>
             <input
               type="url"
@@ -1266,7 +1266,7 @@ export default function ProvidersPage() {
               placeholder="https://api.openai.com/v1 or http://localhost:11434/v1"
               value={formBaseUrl}
               onChange={(e) => setFormBaseUrl(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700/80 rounded-lg text-xs font-mono text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
+              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition shadow-sm"
             />
             <p className="text-[10px] text-slate-500 mt-1">
               Provider API root or OpenAI-compatible endpoint. Must support HTTP routing.
@@ -1276,13 +1276,13 @@ export default function ProvidersPage() {
           {/* Field 4: API Key (Required) */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="text-xs font-semibold text-slate-200">
-                API Key / Token <span className="text-rose-400">*</span>
+              <label className="text-xs font-semibold text-slate-800">
+                API Key / Token <span className="text-rose-500">*</span>
               </label>
               <button
                 type="button"
                 onClick={() => setShowApiKey(!showApiKey)}
-                className="text-[10px] text-slate-400 hover:text-slate-200 transition"
+                className="text-[10px] text-slate-500 hover:text-slate-800 transition"
               >
                 {showApiKey ? 'Hide' : 'Show'}
               </button>
@@ -1293,16 +1293,16 @@ export default function ProvidersPage() {
               placeholder="Enter API key (or 'ollama' / 'local' for unauthenticated models)"
               value={formApiKey}
               onChange={(e) => setFormApiKey(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700/80 rounded-lg text-xs font-mono text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
+              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition shadow-sm"
             />
             <p className="text-[10px] text-slate-500 mt-1 flex items-center gap-1.5">
-              <Lock className="w-3 h-3 text-emerald-400 flex-shrink-0" />
+              <Lock className="w-3 h-3 text-emerald-600 flex-shrink-0" />
               <span>Hardware-encrypted with AES-256-GCM. Raw keys are never leaked to client bundles.</span>
             </p>
           </div>
 
           {/* Action Buttons: Test Connection (Left), Cancel & Save (Right) */}
-          <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-slate-800">
+          <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-slate-200">
             {/* Test Connection Button */}
             <Button
               type="button"
@@ -1310,9 +1310,9 @@ export default function ProvidersPage() {
               size="sm"
               loading={modalTesting}
               onClick={handleModalTest}
-              className="border-slate-700 hover:border-slate-600 text-xs"
+              className="border-slate-200 hover:bg-slate-50 text-slate-700 text-xs"
             >
-              <Play className="w-3.5 h-3.5 mr-1 text-emerald-400" />
+              <Play className="w-3.5 h-3.5 mr-1 text-emerald-600" />
               Test Connection
             </Button>
 
@@ -1335,7 +1335,7 @@ export default function ProvidersPage() {
                 type="submit"
                 size="sm"
                 loading={modalSubmitting}
-                className="text-xs bg-blue-600 hover:bg-blue-500 font-semibold"
+                className="text-xs bg-blue-600 hover:bg-blue-500 font-semibold text-white"
               >
                 {isEditing ? 'Save Changes' : 'Save Provider'}
               </Button>

@@ -141,8 +141,8 @@ export default function WebhooksPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-100">Webhooks</h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Webhooks</h1>
+          <p className="text-xs text-slate-500 mt-1">
             Dispatch signed HMAC HTTP POST notifications upon failure events, rate-limits, or budget alerts.
           </p>
         </div>
@@ -157,15 +157,15 @@ export default function WebhooksPage() {
         <div
           className={`p-4 rounded-xl border text-xs flex items-center justify-between ${
             testResult.isSuccess
-              ? 'bg-emerald-950/40 border-emerald-800 text-emerald-300'
-              : 'bg-rose-950/40 border-rose-800 text-rose-300'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+              : 'bg-rose-50 border-rose-200 text-rose-800'
           }`}
         >
           <div className="flex items-center gap-2">
             {testResult.isSuccess ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
             ) : (
-              <AlertCircle className="w-4 h-4 text-rose-400" />
+              <AlertCircle className="w-4 h-4 text-rose-600" />
             )}
             <span>
               {testResult.isSuccess
@@ -175,7 +175,7 @@ export default function WebhooksPage() {
           </div>
           <button
             onClick={() => setTestResult(null)}
-            className="text-[11px] underline hover:opacity-80"
+            className="text-[11px] underline hover:opacity-80 font-medium"
           >
             Dismiss
           </button>
@@ -187,7 +187,7 @@ export default function WebhooksPage() {
         <CardHeader>
           <CardTitle>Configured Webhook Endpoints</CardTitle>
           <CardDescription>
-            All delivery payloads are signed with HMAC-SHA256 headers (<code className="text-cyan-400 font-mono">X-Tanvelo-Signature</code>)
+            All delivery payloads are signed with HMAC-SHA256 headers (<code className="text-blue-600 font-mono">X-Tanvelo-Signature</code>)
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -199,7 +199,7 @@ export default function WebhooksPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="border-b border-slate-800 text-slate-400">
+                  <tr className="border-b border-slate-200 text-slate-600">
                     <th className="pb-3 font-medium">Destination URL</th>
                     <th className="pb-3 font-medium">Subscribed Events</th>
                     <th className="pb-3 font-medium">Status</th>
@@ -207,16 +207,16 @@ export default function WebhooksPage() {
                     <th className="pb-3 font-medium text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60">
+                <tbody className="divide-y divide-slate-200">
                   {webhooks.map((w) => (
-                    <tr key={w.id} className="hover:bg-slate-900/40 transition">
-                      <td className="py-3.5 font-mono text-slate-200">{w.url}</td>
+                    <tr key={w.id} className="hover:bg-slate-50/70 transition">
+                      <td className="py-3.5 font-mono text-slate-800">{w.url}</td>
                       <td className="py-3.5">
                         <div className="flex flex-wrap gap-1 max-w-xs">
                           {w.events.map((ev) => (
                             <span
                               key={ev}
-                              className="px-2 py-0.5 rounded text-[10px] bg-slate-900 border border-slate-800 text-cyan-400 font-mono"
+                              className="px-2 py-0.5 rounded text-[10px] bg-blue-50 border border-blue-200 text-blue-700 font-mono"
                             >
                               {ev}
                             </span>
@@ -226,10 +226,10 @@ export default function WebhooksPage() {
                       <td className="py-3.5">
                         <Badge variant="success">Active</Badge>
                       </td>
-                      <td className="py-3.5 font-mono text-slate-300">
+                      <td className="py-3.5 font-mono text-slate-700">
                         <button
                           onClick={() => viewDeliveries(w.id)}
-                          className="hover:text-blue-400 hover:underline flex items-center gap-1"
+                          className="text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1 font-medium"
                         >
                           <History className="w-3.5 h-3.5" /> {w.deliveryCount} attempts
                         </button>
@@ -241,11 +241,11 @@ export default function WebhooksPage() {
                             variant="secondary"
                             onClick={() => handleTestPing(w.id)}
                           >
-                            <Play className="w-3 h-3 mr-1 text-emerald-400" /> Ping
+                            <Play className="w-3 h-3 mr-1 text-emerald-600" /> Ping
                           </Button>
                           <button
                             onClick={() => handleDelete(w.id)}
-                            className="p-1.5 text-rose-400 hover:text-rose-300 rounded hover:bg-rose-950/40 transition"
+                            className="p-1.5 text-rose-500 hover:text-rose-700 rounded hover:bg-rose-50 transition"
                             title="Delete Webhook"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -270,20 +270,20 @@ export default function WebhooksPage() {
       >
         <form onSubmit={handleCreate} className="space-y-4">
           {error && (
-            <div className="p-3 rounded-lg bg-rose-950/60 border border-rose-800 text-rose-300 text-xs">
+            <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs">
               {error}
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Payload URL</label>
+            <label className="block text-xs font-medium text-slate-700 mb-1">Payload URL</label>
             <input
               type="url"
               required
               placeholder="https://your-api.com/webhooks/tanvelo"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 font-mono"
+              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-mono shadow-sm"
             />
             <p className="text-[11px] text-slate-500 mt-1">
               Destination must be public HTTP or HTTPS. Loopback/internal IPs (127.0.0.1, RFC1918, metadata) are blocked.
@@ -291,7 +291,7 @@ export default function WebhooksPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-2">Subscribe to Events</label>
+            <label className="block text-xs font-medium text-slate-700 mb-2">Subscribe to Events</label>
             <div className="space-y-2">
               {AVAILABLE_EVENTS.map((ev) => {
                 const checked = selectedEvents.includes(ev.id);
@@ -301,19 +301,19 @@ export default function WebhooksPage() {
                     onClick={() => toggleEvent(ev.id)}
                     className={`p-2.5 rounded-lg border text-xs cursor-pointer flex items-start gap-2.5 transition ${
                       checked
-                        ? 'bg-blue-950/20 border-blue-800/80 text-slate-200'
-                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
+                        ? 'bg-blue-50 border-blue-300 text-slate-900 shadow-sm'
+                        : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
                     }`}
                   >
                     <input
                       type="checkbox"
                       checked={checked}
                       onChange={() => {}}
-                      className="mt-0.5 rounded text-blue-600 focus:ring-0 bg-slate-800 border-slate-700"
+                      className="mt-0.5 rounded text-blue-600 focus:ring-0 bg-white border-slate-300"
                     />
                     <div>
-                      <span className="font-semibold block text-slate-200 font-mono">{ev.id}</span>
-                      <p className="text-[11px] text-slate-400">{ev.desc}</p>
+                      <span className="font-semibold block text-slate-900 font-mono">{ev.id}</span>
+                      <p className="text-[11px] text-slate-500">{ev.desc}</p>
                     </div>
                   </div>
                 );
@@ -340,10 +340,10 @@ export default function WebhooksPage() {
         description="Verify signatures using this secret to authenticate requests originating from Tanvelo."
       >
         <div className="space-y-4">
-          <p className="text-xs text-slate-300">
-            Tanvelo includes the signature in the <code className="text-cyan-400 font-mono">X-Tanvelo-Signature</code> header.
+          <p className="text-xs text-slate-700">
+            Tanvelo includes the signature in the <code className="text-blue-600 font-mono">X-Tanvelo-Signature</code> header.
           </p>
-          <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 font-mono text-emerald-400 text-xs select-all">
+          <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 font-mono text-emerald-400 text-xs select-all">
             {createdSecret}
           </div>
           <div className="flex justify-end">
@@ -367,19 +367,19 @@ export default function WebhooksPage() {
             <p className="text-xs text-slate-500 py-6 text-center">No delivery attempts recorded yet.</p>
           ) : (
             deliveries.map((d) => (
-              <div key={d.id} className="p-3 rounded-lg border border-slate-800 bg-slate-950/60 text-xs space-y-1">
+              <div key={d.id} className="p-3 rounded-lg border border-slate-200 bg-slate-50 text-xs space-y-1">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Badge variant={d.isSuccess ? 'success' : 'destructive'}>
                       {d.statusCode ? `HTTP ${d.statusCode}` : 'Network Failure'}
                     </Badge>
-                    <span className="font-mono text-slate-300">{d.eventType}</span>
+                    <span className="font-mono text-slate-800 font-medium">{d.eventType}</span>
                   </div>
                   <span className="text-[11px] text-slate-500">{new Date(d.createdAt).toLocaleTimeString()}</span>
                 </div>
-                {d.errorMessage && <p className="text-rose-400 text-[11px] font-mono">{d.errorMessage}</p>}
+                {d.errorMessage && <p className="text-rose-600 text-[11px] font-mono">{d.errorMessage}</p>}
                 {d.responseBody && (
-                  <p className="text-slate-400 text-[10px] font-mono truncate">{d.responseBody}</p>
+                  <p className="text-slate-600 text-[10px] font-mono truncate">{d.responseBody}</p>
                 )}
               </div>
             ))

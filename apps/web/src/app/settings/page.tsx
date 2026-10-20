@@ -31,8 +31,8 @@ export default function SettingsPage() {
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-100">System Settings & Controls</h1>
-        <p className="text-xs text-slate-400 mt-1">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">System Settings & Controls</h1>
+        <p className="text-xs text-slate-500 mt-1">
           Infrastructure health diagnostics, cryptographic status, and security network binding.
         </p>
       </div>
@@ -44,7 +44,7 @@ export default function SettingsPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Database className="w-4 h-4 text-blue-400" />
+                <Database className="w-4 h-4 text-blue-600" />
                 <CardTitle className="text-sm">PostgreSQL 16</CardTitle>
               </div>
               <Badge variant={settings?.database?.connected ? 'success' : 'destructive'}>
@@ -53,7 +53,7 @@ export default function SettingsPage() {
             </div>
             <CardDescription>Primary relational storage & migrations</CardDescription>
           </CardHeader>
-          <CardContent className="text-xs text-slate-400 space-y-1">
+          <CardContent className="text-xs text-slate-600 space-y-1">
             <p>Engine: PostgreSQL 16 Alpine</p>
             <p>ORM: Prisma Client with transaction safety</p>
             <p>Isolation: Strict project segregation enforced</p>
@@ -65,14 +65,14 @@ export default function SettingsPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-cyan-400" />
+                <Zap className="w-4 h-4 text-cyan-600" />
                 <CardTitle className="text-sm">Redis 7 & Rate Limiting</CardTitle>
               </div>
               <Badge variant="cyan">Atomic Token Bucket</Badge>
             </div>
             <CardDescription>Distributed rate limiting infrastructure</CardDescription>
           </CardHeader>
-          <CardContent className="text-xs text-slate-400 space-y-1">
+          <CardContent className="text-xs text-slate-600 space-y-1">
             <p>Engine: Redis 7 with atomic INCR/EXPIRE</p>
             <p>Fallback: In-memory sliding window cache</p>
             <p>Headers: RFC-compliant rate limit headers</p>
@@ -84,14 +84,14 @@ export default function SettingsPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Lock className="w-4 h-4 text-purple-400" />
+                <Lock className="w-4 h-4 text-purple-600" />
                 <CardTitle className="text-sm">Cryptographic Controls</CardTitle>
               </div>
               <Badge variant="purple">AES-256-GCM</Badge>
             </div>
             <CardDescription>Server-side secret protection</CardDescription>
           </CardHeader>
-          <CardContent className="text-xs text-slate-400 space-y-1">
+          <CardContent className="text-xs text-slate-600 space-y-1">
             <p>Algorithm: AES-256-GCM with auth tags</p>
             <p>Key Storage: SHA-256 hashing for API keys</p>
             <p>Webhooks: HMAC-SHA256 signature verification</p>
@@ -100,31 +100,31 @@ export default function SettingsPage() {
       </div>
 
       {/* Security Architecture Notice (PRD Section 19) */}
-      <Card className="border-amber-900/50 bg-amber-950/10">
+      <Card className="border-amber-200 bg-amber-50/70">
         <CardHeader>
-          <div className="flex items-center gap-2 text-amber-400">
+          <div className="flex items-center gap-2 text-amber-700">
             <ShieldAlert className="w-5 h-5" />
-            <CardTitle className="text-amber-300">
+            <CardTitle className="text-amber-900">
               Security Architecture: Dashboard Authentication Exclusion
             </CardTitle>
           </div>
-          <CardDescription className="text-amber-200/70">
+          <CardDescription className="text-amber-700/80">
             Compliance specification per PRD Section 19.
           </CardDescription>
         </CardHeader>
-        <CardContent className="text-xs text-slate-300 space-y-3 leading-relaxed">
+        <CardContent className="text-xs text-slate-700 space-y-3 leading-relaxed">
           <p>
             Per specification, dashboard login, password authentication, and OAuth accounts are <strong>explicitly excluded</strong>. Gateway requests are authenticated using Bearer API keys, whereas the management dashboard operates under a local/private network trust boundary.
           </p>
 
-          <div className="p-3.5 rounded-lg bg-slate-900 border border-slate-800 space-y-2 text-[11px]">
-            <span className="font-semibold text-slate-100 block">Production Deployment Mandates:</span>
-            <ul className="list-disc pl-4 space-y-1 text-slate-400">
+          <div className="p-3.5 rounded-lg bg-white border border-amber-200/80 shadow-sm space-y-2 text-[11px]">
+            <span className="font-semibold text-slate-900 block">Production Deployment Mandates:</span>
+            <ul className="list-disc pl-4 space-y-1 text-slate-600">
               <li>
-                The management dashboard and its API routes (<code className="text-cyan-300">/api/*</code>) must be bound strictly to <code className="text-cyan-300">127.0.0.1</code> or an internal VPN / trusted private network.
+                The management dashboard and its API routes (<code className="text-blue-700 font-mono">/api/*</code>) must be bound strictly to <code className="text-blue-700 font-mono">127.0.0.1</code> or an internal VPN / trusted private network.
               </li>
               <li>
-                Only the unified gateway endpoint (<code className="text-cyan-300">POST /v1/chat/completions</code>) should be exposed publicly through a reverse proxy.
+                Only the unified gateway endpoint (<code className="text-blue-700 font-mono">POST /v1/chat/completions</code>) should be exposed publicly through a reverse proxy.
               </li>
               <li>
                 Never expose management routes publicly without mutual TLS, internal network VPC rules, or network access control lists.
@@ -140,10 +140,10 @@ export default function SettingsPage() {
           <CardTitle>Data Privacy & Log Redaction</CardTitle>
           <CardDescription>Settings governing sensitive payload handling</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3 text-xs text-slate-300">
-          <div className="flex items-center justify-between py-2 border-b border-slate-800">
+        <CardContent className="space-y-3 text-xs text-slate-700">
+          <div className="flex items-center justify-between py-2 border-b border-slate-200">
             <div>
-              <span className="font-medium text-slate-200 block">Header Redaction</span>
+              <span className="font-medium text-slate-900 block">Header Redaction</span>
               <span className="text-[11px] text-slate-500">
                 Authorization, API Keys, and secret tokens are replaced with [REDACTED]
               </span>
@@ -151,9 +151,9 @@ export default function SettingsPage() {
             <Badge variant="success">Enforced</Badge>
           </div>
 
-          <div className="flex items-center justify-between py-2 border-b border-slate-800">
+          <div className="flex items-center justify-between py-2 border-b border-slate-200">
             <div>
-              <span className="font-medium text-slate-200 block">Prompt Payload Truncation</span>
+              <span className="font-medium text-slate-900 block">Prompt Payload Truncation</span>
               <span className="text-[11px] text-slate-500">
                 Log entries over 5,000 characters are safely bounded to prevent database bloat
               </span>
@@ -163,7 +163,7 @@ export default function SettingsPage() {
 
           <div className="flex items-center justify-between py-2">
             <div>
-              <span className="font-medium text-slate-200 block">SSRF Webhook Guard</span>
+              <span className="font-medium text-slate-900 block">SSRF Webhook Guard</span>
               <span className="text-[11px] text-slate-500">
                 Blocks destination IPs resolving to RFC1918, 127.0.0.1, or cloud metadata
               </span>

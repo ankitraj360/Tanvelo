@@ -105,19 +105,19 @@ export default function AnalyticsPage() {
       {/* Header & Date Filter */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-100">Analytics</h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Analytics</h1>
+          <p className="text-xs text-slate-500 mt-1">
             Persisted metrics computed from recorded gateway requests and token usage.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           {/* Days selector */}
-          <div className="flex items-center bg-slate-900 border border-slate-800 rounded-lg p-1 text-xs">
+          <div className="flex items-center bg-white border border-slate-200 shadow-sm rounded-lg p-1 text-xs">
             <button
               onClick={() => setDays('1')}
               className={`px-3 py-1 rounded-md transition ${
-                days === '1' ? 'bg-blue-600 text-white font-medium' : 'text-slate-400 hover:text-slate-200'
+                days === '1' ? 'bg-blue-600 text-white font-medium' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               24h
@@ -125,7 +125,7 @@ export default function AnalyticsPage() {
             <button
               onClick={() => setDays('7')}
               className={`px-3 py-1 rounded-md transition ${
-                days === '7' ? 'bg-blue-600 text-white font-medium' : 'text-slate-400 hover:text-slate-200'
+                days === '7' ? 'bg-blue-600 text-white font-medium' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               7d
@@ -133,7 +133,7 @@ export default function AnalyticsPage() {
             <button
               onClick={() => setDays('30')}
               className={`px-3 py-1 rounded-md transition ${
-                days === '30' ? 'bg-blue-600 text-white font-medium' : 'text-slate-400 hover:text-slate-200'
+                days === '30' ? 'bg-blue-600 text-white font-medium' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               30d
@@ -150,8 +150,8 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
-            <span className="text-xs text-slate-400 block font-medium">Total Volume</span>
-            <div className="text-2xl font-bold text-slate-100 mt-1">{formatNumber(summary.totalRequests)}</div>
+            <span className="text-xs text-slate-500 block font-medium">Total Volume</span>
+            <div className="text-2xl font-bold text-slate-900 mt-1">{formatNumber(summary.totalRequests)}</div>
             <p className="text-[11px] text-slate-500 mt-0.5">
               {summary.successfulRequests} success • {summary.failedRequests} errors
             </p>
@@ -160,8 +160,8 @@ export default function AnalyticsPage() {
 
         <Card>
           <CardContent className="p-4">
-            <span className="text-xs text-slate-400 block font-medium">Latency (Avg / P95)</span>
-            <div className="text-2xl font-bold text-cyan-400 mt-1 font-mono">
+            <span className="text-xs text-slate-500 block font-medium">Latency (Avg / P95)</span>
+            <div className="text-2xl font-bold text-blue-600 mt-1 font-mono">
               {summary.totalRequests > 0 ? `${formatLatency(summary.averageLatencyMs)} / ${formatLatency(summary.p95LatencyMs)}` : '—'}
             </div>
             <p className="text-[11px] text-slate-500 mt-0.5">Measured provider roundtrips</p>
@@ -170,8 +170,8 @@ export default function AnalyticsPage() {
 
         <Card>
           <CardContent className="p-4">
-            <span className="text-xs text-slate-400 block font-medium">Total Tokens</span>
-            <div className="text-2xl font-bold text-slate-100 mt-1 font-mono">
+            <span className="text-xs text-slate-500 block font-medium">Total Tokens</span>
+            <div className="text-2xl font-bold text-slate-900 mt-1 font-mono">
               {formatNumber(summary.totalTokens)}
             </div>
             <p className="text-[11px] text-slate-500 mt-0.5">Input & output tokens combined</p>
@@ -180,8 +180,8 @@ export default function AnalyticsPage() {
 
         <Card>
           <CardContent className="p-4">
-            <span className="text-xs text-slate-400 block font-medium">Estimated Cost</span>
-            <div className="text-2xl font-bold text-purple-400 mt-1 font-mono">
+            <span className="text-xs text-slate-500 block font-medium">Estimated Cost</span>
+            <div className="text-2xl font-bold text-purple-700 mt-1 font-mono">
               {formatCurrency(summary.totalCost)}
             </div>
             <p className="text-[11px] text-slate-500 mt-0.5">Not an invoice; estimate only</p>
@@ -201,10 +201,10 @@ export default function AnalyticsPage() {
             {data?.timeSeries && data.timeSeries.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.timeSeries}>
-                  <XAxis dataKey="date" stroke="#475569" fontSize={11} tickLine={false} />
-                  <YAxis stroke="#475569" fontSize={11} tickLine={false} allowDecimals={false} />
+                  <XAxis dataKey="date" stroke="#64748B" fontSize={11} tickLine={false} />
+                  <YAxis stroke="#64748B" fontSize={11} tickLine={false} allowDecimals={false} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#0F172A', borderColor: '#334155', borderRadius: '8px' }}
+                    contentStyle={{ backgroundColor: '#FFFFFF', borderColor: '#E2E8F0', borderRadius: '8px', color: '#0F172A', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   />
                   <Legend />
                   <Bar dataKey="success" name="Successful" fill="#10B981" radius={[4, 4, 0, 0]} />
@@ -212,7 +212,7 @@ export default function AnalyticsPage() {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex flex-col items-center justify-center text-slate-500">
+              <div className="h-full flex flex-col items-center justify-center text-slate-400">
                 <Inbox className="w-8 h-8 mb-2 opacity-50" />
                 <p className="text-xs">No analytics data recorded for this timeframe.</p>
               </div>
@@ -236,10 +236,10 @@ export default function AnalyticsPage() {
                       <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="date" stroke="#475569" fontSize={11} tickLine={false} />
-                  <YAxis stroke="#475569" fontSize={11} tickLine={false} />
+                  <XAxis dataKey="date" stroke="#64748B" fontSize={11} tickLine={false} />
+                  <YAxis stroke="#64748B" fontSize={11} tickLine={false} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#0F172A', borderColor: '#334155', borderRadius: '8px' }}
+                    contentStyle={{ backgroundColor: '#FFFFFF', borderColor: '#E2E8F0', borderRadius: '8px', color: '#0F172A', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   />
                   <Area
                     type="monotone"
@@ -253,7 +253,7 @@ export default function AnalyticsPage() {
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex flex-col items-center justify-center text-slate-500">
+              <div className="h-full flex flex-col items-center justify-center text-slate-400">
                 <Inbox className="w-8 h-8 mb-2 opacity-50" />
                 <p className="text-xs">No cost data recorded for this timeframe.</p>
               </div>
@@ -271,23 +271,23 @@ export default function AnalyticsPage() {
             {data?.byModel && data.byModel.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.byModel} layout="vertical">
-                  <XAxis type="number" stroke="#475569" fontSize={11} tickLine={false} />
+                  <XAxis type="number" stroke="#64748B" fontSize={11} tickLine={false} />
                   <YAxis
                     type="category"
                     dataKey="model"
-                    stroke="#475569"
+                    stroke="#64748B"
                     fontSize={11}
                     tickLine={false}
                     width={140}
                   />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#0F172A', borderColor: '#334155', borderRadius: '8px' }}
+                    contentStyle={{ backgroundColor: '#FFFFFF', borderColor: '#E2E8F0', borderRadius: '8px', color: '#0F172A', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   />
-                  <Bar dataKey="count" name="Requests" fill="#06B6D4" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="count" name="Requests" fill="#0284C7" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex flex-col items-center justify-center text-slate-500">
+              <div className="h-full flex flex-col items-center justify-center text-slate-400">
                 <Inbox className="w-8 h-8 mb-2 opacity-50" />
                 <p className="text-xs">No model usage recorded.</p>
               </div>

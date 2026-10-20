@@ -1,43 +1,42 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useProject } from '@/context/ProjectContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
-import { Boxes, Edit3, CheckCircle2, XCircle, Zap, DollarSign, Layers } from 'lucide-react';
-import { formatCurrency, formatNumber } from '@/lib/utils';
+import { Edit3, Zap } from 'lucide-react';
+import { formatNumber, parseApiResponse } from '@/lib/utils';
 
-interface ModelConfig {
+interface Model {
   id: string;
+  provider: string;
   modelId: string;
   name: string;
-  provider: string;
-  isEnabled: boolean;
+  contextWindow: number;
   inputPricePerMillion: number;
   outputPricePerMillion: number;
-  contextWindow: number;
   supportsStreaming: boolean;
+  supportsVision: boolean;
+  supportsFunctionCalling: boolean;
+  isEnabled: boolean;
 }
 
 export default function ModelsPage() {
-  const { currentProject } = useProject();
-  const [models, setModels] = useState<ModelConfig[]>([]);
+  const [models, setModels] = useState<Model[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Edit modal
-  const [editingModel, setEditingModel] = useState<ModelConfig | null>(null);
+  // Edit Pricing Modal State
+  const [editingModel, setEditingModel] = useState<Model | null>(null);
   const [inputPrice, setInputPrice] = useState('');
   const [outputPrice, setOutputPrice] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const fetchModels = async () => {
-    if (!currentProject) return;
     try {
-      const res = await fetch(`/api/models?projectId=${currentProject.id}`);
+      const res = await fetch('/api/models');
       if (res.ok) {
-        setModels(await res.json());
+        setModels(await parseApiResponse(res));
       }
     } catch (e) {
       console.error(e);
@@ -48,18 +47,17 @@ export default function ModelsPage() {
 
   useEffect(() => {
     fetchModels();
-  }, [currentProject]);
+  }, []);
 
-  const toggleModel = async (model: ModelConfig) => {
+  const toggleModel = async (model: Model) => {
     try {
       const res = await fetch(`/api/models/${model.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isEnabled: !model.isEnabled }),
       });
-      if (res.ok) {
-        await fetchModels();
-      }
+      await parseApiResponse(res);
+      await fetchModels();
     } catch (e) {
       console.error(e);
     }
@@ -80,12 +78,11 @@ export default function ModelsPage() {
         }),
       });
 
-      if (res.ok) {
-        await fetchModels();
-        setEditingModel(null);
-      }
-    } catch (e) {
-      console.error(e);
+      await parseApiResponse(res);
+      setEditingModel(null);
+      await fetchModels();
+    } catch (e: any) {
+      alert(e.message || 'Failed to update pricing');
     } finally {
       setSubmitting(false);
     }
@@ -96,8 +93,8 @@ export default function ModelsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-100">Models & Pricing</h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Models & Pricing</h1>
+          <p className="text-xs text-slate-500 mt-1">
             Manage supported LLM models, custom token pricing rates, and routing availability.
           </p>
         </div>
@@ -105,7 +102,7 @@ export default function ModelsPage() {
 
       {/* Models Table Card */}
       <Card>
-        <CardHeader>
+        <CardHeader className="border-b border-slate-100">
           <CardTitle>Catalog of Supported Models</CardTitle>
           <CardDescription>
             Input and output prices are used to compute transparent cost estimations per request.
@@ -115,28 +112,28 @@ export default function ModelsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-slate-800 text-slate-400">
-                  <th className="pb-3 font-medium">Model Name & ID</th>
-                  <th className="pb-3 font-medium">Provider</th>
-                  <th className="pb-3 font-medium">Status</th>
-                  <th className="pb-3 font-medium">Input / 1M Tokens</th>
-                  <th className="pb-3 font-medium">Output / 1M Tokens</th>
-                  <th className="pb-3 font-medium">Context Window</th>
-                  <th className="pb-3 font-medium">Streaming</th>
-                  <th className="pb-3 font-medium text-right">Actions</th>
+                <tr className="border-b border-slate-200 text-slate-500 font-mono bg-slate-50/50">
+                  <th className="py-2.5 px-3 font-medium">Model Name & ID</th>
+                  <th className="py-2.5 px-3 font-medium">Provider</th>
+                  <th className="py-2.5 px-3 font-medium">Status</th>
+                  <th className="py-2.5 px-3 font-medium">Input / 1M Tokens</th>
+                  <th className="py-2.5 px-3 font-medium">Output / 1M Tokens</th>
+                  <th className="py-2.5 px-3 font-medium">Context Window</th>
+                  <th className="py-2.5 px-3 font-medium">Streaming</th>
+                  <th className="py-2.5 px-3 font-medium text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-slate-100">
                 {models.map((m) => (
-                  <tr key={m.id} className="hover:bg-slate-900/40 transition">
-                    <td className="py-3.5">
-                      <div className="font-semibold text-slate-200">{m.name}</div>
+                  <tr key={m.id} className="hover:bg-slate-50 transition">
+                    <td className="py-3 px-3">
+                      <div className="font-semibold text-slate-900">{m.name}</div>
                       <div className="text-[11px] font-mono text-slate-500">{m.modelId}</div>
                     </td>
-                    <td className="py-3.5">
-                      <span className="capitalize font-medium text-slate-300">{m.provider}</span>
+                    <td className="py-3 px-3">
+                      <span className="capitalize font-medium text-slate-700">{m.provider}</span>
                     </td>
-                    <td className="py-3.5">
+                    <td className="py-3 px-3">
                       <button
                         onClick={() => toggleModel(m)}
                         className="cursor-pointer focus:outline-none"
@@ -153,25 +150,25 @@ export default function ModelsPage() {
                         )}
                       </button>
                     </td>
-                    <td className="py-3.5 font-mono text-slate-300">
+                    <td className="py-3 px-3 font-mono text-slate-800 font-medium">
                       ${m.inputPricePerMillion.toFixed(2)}
                     </td>
-                    <td className="py-3.5 font-mono text-slate-300">
+                    <td className="py-3 px-3 font-mono text-slate-800 font-medium">
                       ${m.outputPricePerMillion.toFixed(2)}
                     </td>
-                    <td className="py-3.5 font-mono text-slate-400">
+                    <td className="py-3 px-3 font-mono text-slate-500">
                       {formatNumber(m.contextWindow)} tokens
                     </td>
-                    <td className="py-3.5">
+                    <td className="py-3 px-3">
                       {m.supportsStreaming ? (
-                        <span className="text-emerald-400 flex items-center gap-1 font-mono text-[11px]">
-                          <Zap className="w-3 h-3" /> SSE
+                        <span className="text-emerald-700 flex items-center gap-1 font-mono text-[11px] font-medium">
+                          <Zap className="w-3 h-3 text-emerald-600" /> SSE
                         </span>
                       ) : (
-                        <span className="text-slate-500 text-[11px]">No</span>
+                        <span className="text-slate-400 text-[11px]">No</span>
                       )}
                     </td>
-                    <td className="py-3.5 text-right">
+                    <td className="py-3 px-3 text-right">
                       <Button
                         size="sm"
                         variant="ghost"
@@ -201,7 +198,7 @@ export default function ModelsPage() {
       >
         <form onSubmit={handleSavePricing} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">
+            <label className="block text-xs font-medium text-slate-700 mb-1">
               Input Price (USD per 1M tokens)
             </label>
             <input
@@ -210,12 +207,12 @@ export default function ModelsPage() {
               required
               value={inputPrice}
               onChange={(e) => setInputPrice(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-blue-500"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 shadow-2xs font-mono"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">
+            <label className="block text-xs font-medium text-slate-700 mb-1">
               Output Price (USD per 1M tokens)
             </label>
             <input
@@ -224,7 +221,7 @@ export default function ModelsPage() {
               required
               value={outputPrice}
               onChange={(e) => setOutputPrice(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-blue-500"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 shadow-2xs font-mono"
             />
           </div>
 

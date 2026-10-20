@@ -54,17 +54,17 @@ export default function RequestInspectorPage() {
   };
 
   if (loading) {
-    return <div className="text-slate-400 text-xs py-12">Loading request inspection details...</div>;
+    return <div className="text-slate-500 text-xs py-12">Loading request inspection details...</div>;
   }
 
   if (!request) {
     return (
       <div className="py-16 text-center max-w-lg mx-auto">
-        <h3 className="text-slate-200 font-semibold text-base">Request Not Found</h3>
-        <p className="text-xs text-slate-400 mt-1">
+        <h3 className="text-slate-800 font-semibold text-base">Request Not Found</h3>
+        <p className="text-xs text-slate-500 mt-1">
           No request with ID &quot;{requestId}&quot; was recorded in the database.
         </p>
-        <Link href="/requests" className="text-xs text-blue-400 mt-4 inline-block hover:underline">
+        <Link href="/requests" className="text-xs text-blue-600 font-medium mt-4 inline-block hover:underline">
           ← Return to API Requests
         </Link>
       </div>
@@ -80,13 +80,13 @@ export default function RequestInspectorPage() {
         <div className="flex items-center gap-3">
           <Link
             href="/requests"
-            className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition"
+            className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold tracking-tight text-slate-100 font-mono">
+              <h1 className="text-xl font-bold tracking-tight text-slate-900 font-mono">
                 {request.requestId}
               </h1>
               <Badge
@@ -101,7 +101,7 @@ export default function RequestInspectorPage() {
                 {request.statusCode} {request.status}
               </Badge>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               Captured on {new Date(request.createdAt).toLocaleString()} • IP: {request.clientIp || '127.0.0.1'}
             </p>
           </div>
@@ -112,8 +112,8 @@ export default function RequestInspectorPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
-            <span className="text-[11px] text-slate-400 block font-medium">Total Latency</span>
-            <div className="text-xl font-bold text-slate-100 mt-1 font-mono">
+            <span className="text-[11px] text-slate-500 block font-medium">Total Latency</span>
+            <div className="text-xl font-bold text-slate-900 mt-1 font-mono">
               {formatLatency(request.totalLatencyMs)}
             </div>
             <p className="text-[10px] text-slate-500 mt-0.5">
@@ -124,8 +124,8 @@ export default function RequestInspectorPage() {
 
         <Card>
           <CardContent className="p-4">
-            <span className="text-[11px] text-slate-400 block font-medium">Token Consumption</span>
-            <div className="text-xl font-bold text-slate-100 mt-1 font-mono">
+            <span className="text-[11px] text-slate-500 block font-medium">Token Consumption</span>
+            <div className="text-xl font-bold text-slate-900 mt-1 font-mono">
               {formatNumber(request.totalTokens)}
             </div>
             <p className="text-[10px] text-slate-500 mt-0.5">
@@ -136,8 +136,8 @@ export default function RequestInspectorPage() {
 
         <Card>
           <CardContent className="p-4">
-            <span className="text-[11px] text-slate-400 block font-medium">Estimated Cost</span>
-            <div className="text-xl font-bold text-slate-100 mt-1 font-mono">
+            <span className="text-[11px] text-slate-500 block font-medium">Estimated Cost</span>
+            <div className="text-xl font-bold text-slate-900 mt-1 font-mono">
               {formatCurrency(request.estimatedCost)}
             </div>
             <p className="text-[10px] text-slate-500 mt-0.5">Calculated from model token rates</p>
@@ -146,9 +146,9 @@ export default function RequestInspectorPage() {
 
         <Card>
           <CardContent className="p-4">
-            <span className="text-[11px] text-slate-400 block font-medium">Routing Target</span>
-            <div className="text-xl font-bold text-slate-100 mt-1 capitalize">{request.provider}</div>
-            <p className="text-[10px] font-mono text-slate-400 mt-0.5">{request.model}</p>
+            <span className="text-[11px] text-slate-500 block font-medium">Routing Target</span>
+            <div className="text-xl font-bold text-slate-900 mt-1 capitalize">{request.provider}</div>
+            <p className="text-[10px] font-mono text-slate-500 mt-0.5">{request.model}</p>
           </CardContent>
         </Card>
       </div>
@@ -173,16 +173,16 @@ export default function RequestInspectorPage() {
                   key={att.id || idx}
                   className={`p-3.5 rounded-lg border text-xs flex items-center justify-between ${
                     att.isSuccess
-                      ? 'bg-slate-900 border-emerald-800/60'
-                      : 'bg-rose-950/20 border-rose-800/60'
+                      ? 'bg-emerald-50/70 border-emerald-200'
+                      : 'bg-rose-50/70 border-rose-200'
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs ${
                         att.isSuccess
-                          ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
-                          : 'bg-rose-950 text-rose-400 border border-rose-800'
+                          ? 'bg-emerald-100 text-emerald-700 border border-emerald-300'
+                          : 'bg-rose-100 text-rose-700 border border-rose-300'
                       }`}
                     >
                       {att.attemptNumber}
@@ -190,21 +190,21 @@ export default function RequestInspectorPage() {
 
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-slate-200 capitalize">{att.provider}</span>
-                        <span className="font-mono text-[11px] text-slate-400">{att.model}</span>
+                        <span className="font-semibold text-slate-800 capitalize">{att.provider}</span>
+                        <span className="font-mono text-[11px] text-slate-500">{att.model}</span>
                         <Badge variant={att.isSuccess ? 'success' : 'destructive'}>
                           HTTP {att.statusCode}
                         </Badge>
                       </div>
 
                       {att.errorMessage && (
-                        <p className="text-[11px] text-rose-300 mt-1 font-mono">{att.errorMessage}</p>
+                        <p className="text-[11px] text-rose-600 mt-1 font-mono">{att.errorMessage}</p>
                       )}
                     </div>
                   </div>
 
                   <div className="text-right">
-                    <span className="font-mono text-slate-300 block">{formatLatency(att.latencyMs)}</span>
+                    <span className="font-mono text-slate-800 font-semibold block">{formatLatency(att.latencyMs)}</span>
                     <span className="text-[10px] text-slate-500">
                       {att.isSuccess ? 'Response Delivered' : 'Triggered Fallback'}
                     </span>
@@ -237,17 +237,17 @@ export default function RequestInspectorPage() {
             >
               {copiedSection === 'req' ? (
                 <>
-                  <Check className="w-3.5 h-3.5 mr-1 text-emerald-400" /> Copied
+                  <Check className="w-3.5 h-3.5 mr-1 text-emerald-600" /> Copied
                 </>
               ) : (
                 <>
-                  <Copy className="w-3.5 h-3.5 mr-1" /> Copy JSON
+                  <Copy className="w-3.5 h-3.5 mr-1 text-slate-500" /> Copy JSON
                 </>
               )}
             </Button>
           </CardHeader>
           <CardContent>
-            <pre className="p-4 rounded-lg bg-slate-950 border border-slate-800 text-[11px] font-mono text-slate-300 overflow-x-auto max-h-96">
+            <pre className="p-4 rounded-lg bg-slate-900 border border-slate-800 text-[11px] font-mono text-slate-100 overflow-x-auto max-h-96">
               {JSON.stringify(request.requestBodySanitized, null, 2) || '{}'}
             </pre>
           </CardContent>
@@ -272,17 +272,17 @@ export default function RequestInspectorPage() {
             >
               {copiedSection === 'res' ? (
                 <>
-                  <Check className="w-3.5 h-3.5 mr-1 text-emerald-400" /> Copied
+                  <Check className="w-3.5 h-3.5 mr-1 text-emerald-600" /> Copied
                 </>
               ) : (
                 <>
-                  <Copy className="w-3.5 h-3.5 mr-1" /> Copy JSON
+                  <Copy className="w-3.5 h-3.5 mr-1 text-slate-500" /> Copy JSON
                 </>
               )}
             </Button>
           </CardHeader>
           <CardContent>
-            <pre className="p-4 rounded-lg bg-slate-950 border border-slate-800 text-[11px] font-mono text-slate-300 overflow-x-auto max-h-96">
+            <pre className="p-4 rounded-lg bg-slate-900 border border-slate-800 text-[11px] font-mono text-slate-100 overflow-x-auto max-h-96">
               {JSON.stringify(request.responseBodySanitized, null, 2) || '{}'}
             </pre>
           </CardContent>

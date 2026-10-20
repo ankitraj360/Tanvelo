@@ -1,0 +1,37 @@
+{
+  "name": "@tanvelo/sdk",
+  "version": "1.0.0",
+  "description": "Official TypeScript & Node.js SDK for Tanvelo LLM Federation Gateway",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "tanvelo",
+    "llm",
+    "gateway",
+    "ai",
+    "openai",
+    "anthropic",
+    "gemini",
+    "deepseek",
+    "groq",
+    "sdk"
+  ],
+  "author": "Tanvelo",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.13.4",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  }
+}
