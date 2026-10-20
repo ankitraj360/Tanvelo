@@ -8,17 +8,18 @@ import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { formatCurrency, parseApiResponse } from '@/lib/utils';
-import { Settings, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Settings, ShieldCheck, CheckCircle2, Coins, AlertCircle, RefreshCw } from 'lucide-react';
 
 interface Budget {
-  id: string;
-  projectId: string;
+  id?: string;
+  projectId?: string;
+  environmentId?: string | null;
   maxBudgetUsd: number;
   currentSpendUsd: number;
   warningThresholdPercent: number;
   hardLimitEnabled: boolean;
   period: string;
-  resetDayOfMonth: number;
+  resetAt?: string | null;
 }
 
 interface Alert {
@@ -33,40 +34,50 @@ interface Alert {
 }
 
 export default function BudgetsPage() {
-  const { currentProject } = useProject();
+  const { currentProject, currentEnvironment } = useProject();
   const [budget, setBudget] = useState<Budget | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Configure Modal
   const [isOpen, setIsOpen] = useState(false);
   const [maxBudget, setMaxBudget] = useState('100');
   const [warningThreshold, setWarningThreshold] = useState('80');
   const [hardLimit, setHardLimit] = useState(true);
+  const [period, setPeriod] = useState('monthly');
   const [submitting, setSubmitting] = useState(false);
 
   const fetchBudgetAndAlerts = async () => {
-    if (!currentProject) return;
+    if (!currentProject?.id) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
     try {
-      const [bRes, aRes] = await Promise.all([
-        fetch(`/api/budgets?projectId=${currentProject.id}`),
-        fetch(`/api/budgets/alerts?projectId=${currentProject.id}&limit=10`),
-      ]);
+      const envParam = currentEnvironment?.id ? `&environmentId=${currentEnvironment.id}` : '';
+      const res = await fetch(`/api/budgets?projectId=${currentProject.id}${envParam}`);
 
-      if (bRes.ok) {
-        const bData = await parseApiResponse(bRes);
+      if (res.ok) {
+        const data = await parseApiResponse(res);
+        const bData: Budget = data.budget;
         setBudget(bData);
+        setAlerts(data.alerts || []);
+
         if (bData) {
-          setMaxBudget(bData.maxBudgetUsd.toString());
-          setWarningThreshold(bData.warningThresholdPercent.toString());
-          setHardLimit(bData.hardLimitEnabled);
+          setMaxBudget(bData.maxBudgetUsd?.toString() || '100');
+          setWarningThreshold(bData.warningThresholdPercent?.toString() || '80');
+          setHardLimit(bData.hardLimitEnabled ?? true);
+          setPeriod(bData.period || 'monthly');
         }
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setError(err.error || 'Failed to fetch budget');
       }
-      if (aRes.ok) {
-        setAlerts(await parseApiResponse(aRes));
-      }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      setError(e.message || 'Failed to load budgets');
     } finally {
       setLoading(false);
     }
@@ -74,7 +85,7 @@ export default function BudgetsPage() {
 
   useEffect(() => {
     fetchBudgetAndAlerts();
-  }, [currentProject]);
+  }, [currentProject?.id, currentEnvironment?.id]);
 
   const handleSaveBudget = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,10 +98,11 @@ export default function BudgetsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectId: currentProject.id,
+          environmentId: currentEnvironment?.id || null,
           maxBudgetUsd: parseFloat(maxBudget) || 100,
-          warningThresholdPercent: parseInt(warningThreshold) || 80,
+          warningThresholdPercent: parseInt(warningThreshold, 10) || 80,
           hardLimitEnabled: hardLimit,
-          period: 'monthly',
+          period,
         }),
       });
 
@@ -104,9 +116,27 @@ export default function BudgetsPage() {
     }
   };
 
+  if (!currentProject) {
+    return (
+      <div className="space-y-6 max-w-7xl mx-auto">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Usage & Budgets</h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Enforce spending limits, automated alerts, and hard cutoffs on LLM gateway consumption.
+          </p>
+        </div>
+        <EmptyState
+          icon={Coins}
+          title="No Project Selected"
+          description="Please select a project to view and configure spend limits."
+        />
+      </div>
+    );
+  }
+
   const spend = budget?.currentSpendUsd || 0;
   const limit = budget?.maxBudgetUsd || 100;
-  const percentUsed = Math.min(100, (spend / limit) * 100);
+  const percentUsed = limit > 0 ? Math.min(100, (spend / limit) * 100) : 0;
   const isWarning = percentUsed >= (budget?.warningThresholdPercent || 80);
   const isExceeded = spend >= limit;
 
@@ -118,20 +148,38 @@ export default function BudgetsPage() {
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">Usage & Budgets</h1>
           <p className="text-xs text-slate-500 mt-1">
             Enforce spending limits, automated alerts, and hard cutoffs on LLM gateway consumption.
+            {currentEnvironment && (
+              <span className="font-mono text-indigo-600 font-medium ml-1">
+                (Scope: {currentEnvironment.name})
+              </span>
+            )}
           </p>
         </div>
 
-        <Button size="sm" onClick={() => setIsOpen(true)}>
-          <Settings className="w-4 h-4 mr-1.5" /> Configure Budget
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={fetchBudgetAndAlerts} disabled={loading}>
+            <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button size="sm" onClick={() => setIsOpen(true)}>
+            <Settings className="w-4 h-4 mr-1.5" /> Configure Budget
+          </Button>
+        </div>
       </div>
+
+      {error && (
+        <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
 
       {/* Budget Progress Card */}
       <Card>
         <CardHeader className="border-b border-slate-100">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Current Spend vs Monthly Limit</CardTitle>
+              <CardTitle>Current Spend vs Limit</CardTitle>
               <CardDescription>
                 Calculated from actual completed request token usage and model pricing
               </CardDescription>
@@ -252,7 +300,22 @@ export default function BudgetsPage() {
         <form onSubmit={handleSaveBudget} className="space-y-4">
           <div>
             <label className="block text-xs font-medium text-slate-700 mb-1">
-              Max Monthly Budget (USD)
+              Billing Period
+            </label>
+            <select
+              value={period}
+              onChange={(e) => setPeriod(e.target.value)}
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 shadow-2xs"
+            >
+              <option value="monthly">Monthly (Resets on 1st of month)</option>
+              <option value="daily">Daily (Resets every 24h at 00:00 UTC)</option>
+              <option value="total">Total / Lifetime (No auto-reset)</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-slate-700 mb-1">
+              Max Budget (USD)
             </label>
             <input
               type="number"
