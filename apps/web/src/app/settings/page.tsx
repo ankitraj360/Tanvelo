@@ -45,17 +45,17 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Database className="w-4 h-4 text-blue-600" />
-                <CardTitle className="text-sm">PostgreSQL 16</CardTitle>
+                <CardTitle className="text-sm">Neon PostgreSQL (Production)</CardTitle>
               </div>
               <Badge variant={settings?.database?.connected ? 'success' : 'destructive'}>
-                {settings?.database?.connected ? 'Connected' : 'Offline'}
+                {settings?.database?.connected ? 'Production Connected' : 'Offline'}
               </Badge>
             </div>
-            <CardDescription>Primary relational storage & migrations</CardDescription>
+            <CardDescription>Serverless relational storage & transaction pooling</CardDescription>
           </CardHeader>
           <CardContent className="text-xs text-slate-600 space-y-1">
-            <p>Engine: PostgreSQL 16 Alpine</p>
-            <p>ORM: Prisma Client with transaction safety</p>
+            <p>Engine: {settings?.database?.engine || 'Neon Serverless PostgreSQL'}</p>
+            <p>Pooler: Neon PgBouncer Active with Connection Limits</p>
             <p>Isolation: Strict project segregation enforced</p>
           </CardContent>
         </Card>

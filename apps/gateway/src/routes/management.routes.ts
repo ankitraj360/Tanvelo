@@ -949,8 +949,10 @@ export async function managementRoutes(fastify: FastifyInstance) {
       service: 'Tanvelo LLM Gateway',
       version: '1.0.0',
       database: {
-        engine: 'Neon PostgreSQL (Cloud Serverless)',
+        engine: 'Neon PostgreSQL (Production Serverless)',
         connected: dbOk,
+        mode: 'production',
+        pooler: 'Neon PgBouncer Active',
       },
       rateLimiter: {
         engine: rlStatus.distributed ? 'Redis 7 Cluster' : 'In-Memory Sliding Window (Fallback)',

@@ -133,7 +133,9 @@ export default function OverviewPage() {
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-sky-500" />
             <span className="text-slate-500">Storage Engine:</span>
-            <span className="text-slate-800 font-medium">PostgreSQL (Neon)</span>
+            <span className="text-slate-800 font-medium flex items-center gap-1.5">
+              Neon PostgreSQL <span className="px-1.5 py-0.2 rounded text-[10px] bg-emerald-50 text-emerald-700 font-mono border border-emerald-200">Production</span>
+            </span>
           </div>
 
           <div className="flex items-center gap-2">

@@ -11,8 +11,7 @@ export const prisma =
     log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
   });
 
-if (process.env.NODE_ENV !== 'production') {
-  globalThis.prismaGlobal = prisma;
-}
+// Always retain global singleton across hot reloads and worker threads to prevent connection pool exhaustion on Neon
+globalThis.prismaGlobal = prisma;
 
 export * from '@prisma/client';
