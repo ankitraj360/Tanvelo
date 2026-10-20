@@ -1,0 +1,16 @@
+{
+  "name": "tanvelo-landing-v2",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tanvelo landing v2 — a warm editorial, 3D monolith landing page",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "serve": "npx serve ."
+  },
+  "devDependencies": {
+    "three": "^0.160.0",
+    "vite": "^5.4.14"
+  }
+}
