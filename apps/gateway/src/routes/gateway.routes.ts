@@ -1,13 +1,28 @@
 import crypto from 'crypto';
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { GatewayService } from '../services/gateway.service.js';
-import { ErrorCategory, GatewayError } from '@tanvelo/core';
+import { ErrorCategory, GatewayError, calculateCost } from '@tanvelo/core';
 import { prisma } from '@tanvelo/db';
 
 const gatewayService = new GatewayService();
 
 export async function gatewayRoutes(fastify: FastifyInstance) {
-  // Health check endpoint
+  // Liveness check (process is alive)
+  fastify.get('/health/live', async (_request: FastifyRequest, reply: FastifyReply) => {
+    return reply.status(200).send({ status: 'alive' });
+  });
+
+  // Readiness check (DB connection active)
+  fastify.get('/health/ready', async (_request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      return reply.status(200).send({ status: 'ready', database: 'ok' });
+    } catch (err: any) {
+      return reply.status(503).send({ status: 'unready', database: `error: ${err.message}` });
+    }
+  });
+
+  // Comprehensive Health check endpoint
   fastify.get('/health', async (request: FastifyRequest, reply: FastifyReply) => {
     let dbStatus = 'ok';
     try {
@@ -17,14 +32,19 @@ export async function gatewayRoutes(fastify: FastifyInstance) {
     }
 
     const rateLimiterStatus = gatewayService.getRateLimiter().getStatus();
+    const isDbOk = dbStatus === 'ok';
+    const isRedisOk = rateLimiterStatus.distributed;
 
-    return reply.send({
-      status: 'healthy',
+    const overallStatus = !isDbOk ? 'unhealthy' : !isRedisOk ? 'degraded' : 'healthy';
+    const statusCode = isDbOk ? 200 : 503;
+
+    return reply.status(statusCode).send({
+      status: overallStatus,
       timestamp: new Date().toISOString(),
       service: 'tanvelo-llm-gateway',
       version: '1.0.0',
       database: dbStatus,
-      redis: rateLimiterStatus.distributed ? 'ok' : 'degraded (in-memory fallback)',
+      redis: isRedisOk ? 'ok' : 'degraded (in-memory fallback)',
       rateLimiter: rateLimiterStatus,
     });
   });
@@ -33,6 +53,23 @@ export async function gatewayRoutes(fastify: FastifyInstance) {
   fastify.get('/v1/models', async (request: FastifyRequest, reply: FastifyReply) => {
     const authHeader = request.headers.authorization;
     const ctx = await gatewayService.authenticateKey(authHeader);
+
+    // Permission scope check
+    if (
+      ctx.permissions &&
+      Array.isArray(ctx.permissions) &&
+      !ctx.permissions.includes('models:read') &&
+      !ctx.permissions.includes('models:list') &&
+      !ctx.permissions.includes('chat:completions') &&
+      !ctx.permissions.includes('*')
+    ) {
+      const gErr = new GatewayError(
+        'Forbidden: API key does not have permission to list models.',
+        ErrorCategory.GATEWAY_KEY_REJECTED,
+        403
+      );
+      return reply.status(403).send(gErr.toResponse());
+    }
 
     const models = await prisma.modelConfig.findMany({
       where: { projectId: ctx.projectId, isEnabled: true },
@@ -67,6 +104,21 @@ export async function gatewayRoutes(fastify: FastifyInstance) {
       return reply.status(gErr.statusCode).send(gErr.toResponse());
     }
 
+    // Permission scope check (Item 17)
+    if (
+      ctx.permissions &&
+      Array.isArray(ctx.permissions) &&
+      !ctx.permissions.includes('chat:completions') &&
+      !ctx.permissions.includes('*')
+    ) {
+      const gErr = new GatewayError(
+        'Forbidden: API key does not have required "chat:completions" permission scope.',
+        ErrorCategory.GATEWAY_KEY_REJECTED,
+        403
+      );
+      return reply.status(403).send(gErr.toResponse());
+    }
+
     // Rate limit check
     try {
       const rl = await gatewayService.checkRateLimits(ctx);
@@ -76,11 +128,12 @@ export async function gatewayRoutes(fastify: FastifyInstance) {
     } catch (err: any) {
       const gErr = err instanceof GatewayError ? err : new GatewayError(err.message, ErrorCategory.GATEWAY_RATE_LIMIT_EXCEEDED, 429);
 
-      // Set X-RateLimit-* headers on 429 response
+      // Set X-RateLimit-* and Retry-After headers on 429 response
       const rlInfo = gErr.rateLimitInfo || { limit: 0, remaining: 0, resetSeconds: 60 };
       reply.header('X-RateLimit-Limit', rlInfo.limit);
       reply.header('X-RateLimit-Remaining', rlInfo.remaining);
       reply.header('X-RateLimit-Reset', rlInfo.resetSeconds);
+      reply.header('Retry-After', String(rlInfo.resetSeconds || 60));
 
       // Trigger rate_limit.exceeded webhook
       gatewayService.triggerWebhooks(ctx.projectId, 'rate_limit.exceeded', {
@@ -176,13 +229,27 @@ export async function gatewayRoutes(fastify: FastifyInstance) {
       return reply.status(400).send(gErr.toResponse());
     }
 
+    // Model enabled check (Item 8)
+    const configuredModel = await prisma.modelConfig.findFirst({
+      where: { projectId: ctx.projectId, modelId: body.model },
+    });
+    if (configuredModel && !configuredModel.isEnabled) {
+      const gErr = new GatewayError(
+        `Model '${body.model}' is disabled for this project.`,
+        ErrorCategory.UNSUPPORTED_MODEL,
+        400
+      );
+      return reply.status(400).send(gErr.toResponse());
+    }
+
+    const fallbacksHeader = (request.headers['x-tanvelo-fallbacks'] as string) || null;
     const { rules, connectionMap, pricingMap } = await gatewayService.getRoutingContext(ctx);
     const routingEngine = gatewayService.getRoutingEngine();
 
     if (body.stream) {
       // Streaming execution
       try {
-        const outcome = await routingEngine.executeStreamChat(body, rules as any, connectionMap);
+        const outcome = await routingEngine.executeStreamChat(body, rules as any, connectionMap, fallbacksHeader);
         const pricing = pricingMap.get(outcome.finalModel);
 
         reply.raw.writeHead(200, {
@@ -266,7 +333,7 @@ export async function gatewayRoutes(fastify: FastifyInstance) {
     } else {
       // Non-streaming execution
       try {
-        const outcome = await routingEngine.executeChat(body, rules as any, connectionMap);
+        const outcome = await routingEngine.executeChat(body, rules as any, connectionMap, fallbacksHeader);
         const totalLatency = Date.now() - startTime;
         const pricing = pricingMap.get(outcome.finalModel);
 
@@ -291,6 +358,12 @@ export async function gatewayRoutes(fastify: FastifyInstance) {
         reply.header('X-Tanvelo-Request-Id', requestId);
         reply.header('X-Tanvelo-Provider', outcome.finalProvider);
         reply.header('X-Tanvelo-Model', outcome.finalModel);
+        reply.header('X-Tanvelo-Latency-Ms', String(totalLatency));
+
+        if (pricing && outcome.result?.usage) {
+          const costCalc = calculateCost(outcome.result.usage, pricing);
+          reply.header('X-Tanvelo-Cost-Usd', String(costCalc.estimatedCost.toFixed(6)));
+        }
 
         return reply.status(outcome.result!.statusCode).send(outcome.result!.response);
       } catch (err: any) {

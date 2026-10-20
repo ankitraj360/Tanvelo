@@ -102,7 +102,7 @@ export default function RateLimitsPage() {
             <span>Rate Limiting & Token Throttling</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Configure atomic rate and token throughput limits enforced by Redis across gateway nodes.
+            Configure fixed-window request and token counters enforced by Redis across gateway nodes (with in-memory local fallback).
           </p>
         </div>
 
@@ -115,9 +115,9 @@ export default function RateLimitsPage() {
       <div className="p-4 rounded-xl border border-sky-200 bg-sky-50/60 flex items-start gap-3 text-xs text-slate-700 shadow-2xs">
         <Info className="w-4 h-4 shrink-0 mt-0.5 text-sky-600" />
         <div className="space-y-1">
-          <span className="font-semibold text-slate-900">Gateway-Enforced vs Upstream Limits:</span>
+          <span className="font-semibold text-slate-900">Fixed-Window Counter Semantics:</span>
           <p className="text-[11px] leading-relaxed text-slate-600">
-            Tanvelo returns HTTP 429 with standard headers (<code className="text-sky-700 font-mono bg-white px-1 py-0.5 rounded border border-sky-200">X-RateLimit-Limit</code>, <code className="text-sky-700 font-mono bg-white px-1 py-0.5 rounded border border-sky-200">X-RateLimit-Remaining</code>, <code className="text-sky-700 font-mono bg-white px-1 py-0.5 rounded border border-sky-200">X-RateLimit-Reset</code>) when gateway request or token limits are exceeded. Policy precedence is strictly key-specific &gt; environment &gt; project-wide.
+            Tanvelo enforces rate limits via distributed atomic fixed-window counters. When request or token limits are reached, the gateway responds with HTTP 429 and standard headers (<code className="text-sky-700 font-mono bg-white px-1 py-0.5 rounded border border-sky-200">X-RateLimit-Limit</code>, <code className="text-sky-700 font-mono bg-white px-1 py-0.5 rounded border border-sky-200">X-RateLimit-Remaining</code>, <code className="text-sky-700 font-mono bg-white px-1 py-0.5 rounded border border-sky-200">X-RateLimit-Reset</code> in seconds remaining, and <code className="text-sky-700 font-mono bg-white px-1 py-0.5 rounded border border-sky-200">Retry-After</code>). Policy precedence is strictly key-specific &gt; environment &gt; project-wide.
           </p>
         </div>
       </div>

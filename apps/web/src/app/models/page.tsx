@@ -5,8 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
-import { Edit3, Zap } from 'lucide-react';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Edit3, Zap, Boxes, AlertCircle, RefreshCw } from 'lucide-react';
 import { formatNumber, parseApiResponse } from '@/lib/utils';
+import { useProject } from '@/context/ProjectContext';
 
 interface Model {
   id: string;
@@ -23,8 +25,10 @@ interface Model {
 }
 
 export default function ModelsPage() {
+  const { currentProject } = useProject();
   const [models, setModels] = useState<Model[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Edit Pricing Modal State
   const [editingModel, setEditingModel] = useState<Model | null>(null);
@@ -33,13 +37,23 @@ export default function ModelsPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const fetchModels = async () => {
+    if (!currentProject?.id) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
     try {
-      const res = await fetch('/api/models');
+      const res = await fetch(`/api/models?projectId=${currentProject.id}`);
       if (res.ok) {
         setModels(await parseApiResponse(res));
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setError(err.error || 'Failed to fetch models');
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      setError(e.message || 'Failed to load models');
     } finally {
       setLoading(false);
     }
@@ -47,7 +61,7 @@ export default function ModelsPage() {
 
   useEffect(() => {
     fetchModels();
-  }, []);
+  }, [currentProject?.id]);
 
   const toggleModel = async (model: Model) => {
     try {
@@ -88,6 +102,24 @@ export default function ModelsPage() {
     }
   };
 
+  if (!currentProject) {
+    return (
+      <div className="space-y-6 max-w-7xl mx-auto">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Models & Pricing</h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Manage supported LLM models, custom token pricing rates, and routing availability.
+          </p>
+        </div>
+        <EmptyState
+          icon={Boxes}
+          title="No Project Selected"
+          description="Please select a project from the header to configure its models and pricing."
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -98,7 +130,18 @@ export default function ModelsPage() {
             Manage supported LLM models, custom token pricing rates, and routing availability.
           </p>
         </div>
+        <Button variant="outline" size="sm" onClick={fetchModels} disabled={loading}>
+          <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
       </div>
+
+      {error && (
+        <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
 
       {/* Models Table Card */}
       <Card>
@@ -109,83 +152,93 @@ export default function ModelsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-slate-200 text-slate-500 font-mono bg-slate-50/50">
-                  <th className="py-2.5 px-3 font-medium">Model Name & ID</th>
-                  <th className="py-2.5 px-3 font-medium">Provider</th>
-                  <th className="py-2.5 px-3 font-medium">Status</th>
-                  <th className="py-2.5 px-3 font-medium">Input / 1M Tokens</th>
-                  <th className="py-2.5 px-3 font-medium">Output / 1M Tokens</th>
-                  <th className="py-2.5 px-3 font-medium">Context Window</th>
-                  <th className="py-2.5 px-3 font-medium">Streaming</th>
-                  <th className="py-2.5 px-3 font-medium text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {models.map((m) => (
-                  <tr key={m.id} className="hover:bg-slate-50 transition">
-                    <td className="py-3 px-3">
-                      <div className="font-semibold text-slate-900">{m.name}</div>
-                      <div className="text-[11px] font-mono text-slate-500">{m.modelId}</div>
-                    </td>
-                    <td className="py-3 px-3">
-                      <span className="capitalize font-medium text-slate-700">{m.provider}</span>
-                    </td>
-                    <td className="py-3 px-3">
-                      <button
-                        onClick={() => toggleModel(m)}
-                        className="cursor-pointer focus:outline-none"
-                        title="Click to toggle status"
-                      >
-                        {m.isEnabled ? (
-                          <Badge variant="success" className="cursor-pointer">
-                            Enabled
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="cursor-pointer">
-                            Disabled
-                          </Badge>
-                        )}
-                      </button>
-                    </td>
-                    <td className="py-3 px-3 font-mono text-slate-800 font-medium">
-                      ${m.inputPricePerMillion.toFixed(2)}
-                    </td>
-                    <td className="py-3 px-3 font-mono text-slate-800 font-medium">
-                      ${m.outputPricePerMillion.toFixed(2)}
-                    </td>
-                    <td className="py-3 px-3 font-mono text-slate-500">
-                      {formatNumber(m.contextWindow)} tokens
-                    </td>
-                    <td className="py-3 px-3">
-                      {m.supportsStreaming ? (
-                        <span className="text-emerald-700 flex items-center gap-1 font-mono text-[11px] font-medium">
-                          <Zap className="w-3 h-3 text-emerald-600" /> SSE
-                        </span>
-                      ) : (
-                        <span className="text-slate-400 text-[11px]">No</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-3 text-right">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          setEditingModel(m);
-                          setInputPrice(m.inputPricePerMillion.toString());
-                          setOutputPrice(m.outputPricePerMillion.toString());
-                        }}
-                      >
-                        <Edit3 className="w-3.5 h-3.5 mr-1" /> Edit Pricing
-                      </Button>
-                    </td>
+          {loading && models.length === 0 ? (
+            <div className="py-12 text-center text-xs text-slate-500">Loading model catalog...</div>
+          ) : models.length === 0 ? (
+            <EmptyState
+              icon={Boxes}
+              title="No Models Found"
+              description="No models configured for this project. Seed default models or configure a new provider connection."
+            />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 text-slate-500 font-mono bg-slate-50/50">
+                    <th className="py-2.5 px-3 font-medium">Model Name & ID</th>
+                    <th className="py-2.5 px-3 font-medium">Provider</th>
+                    <th className="py-2.5 px-3 font-medium">Status</th>
+                    <th className="py-2.5 px-3 font-medium">Input / 1M Tokens</th>
+                    <th className="py-2.5 px-3 font-medium">Output / 1M Tokens</th>
+                    <th className="py-2.5 px-3 font-medium">Context Window</th>
+                    <th className="py-2.5 px-3 font-medium">Streaming</th>
+                    <th className="py-2.5 px-3 font-medium text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {models.map((m) => (
+                    <tr key={m.id} className="hover:bg-slate-50 transition">
+                      <td className="py-3 px-3">
+                        <div className="font-semibold text-slate-900">{m.name}</div>
+                        <div className="text-[11px] font-mono text-slate-500">{m.modelId}</div>
+                      </td>
+                      <td className="py-3 px-3">
+                        <span className="capitalize font-medium text-slate-700">{m.provider}</span>
+                      </td>
+                      <td className="py-3 px-3">
+                        <button
+                          onClick={() => toggleModel(m)}
+                          className="cursor-pointer focus:outline-none"
+                          title="Click to toggle status"
+                        >
+                          {m.isEnabled ? (
+                            <Badge variant="success" className="cursor-pointer">
+                              Enabled
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="cursor-pointer">
+                              Disabled
+                            </Badge>
+                          )}
+                        </button>
+                      </td>
+                      <td className="py-3 px-3 font-mono text-slate-800 font-medium">
+                        ${m.inputPricePerMillion.toFixed(2)}
+                      </td>
+                      <td className="py-3 px-3 font-mono text-slate-800 font-medium">
+                        ${m.outputPricePerMillion.toFixed(2)}
+                      </td>
+                      <td className="py-3 px-3 font-mono text-slate-500">
+                        {formatNumber(m.contextWindow)} tokens
+                      </td>
+                      <td className="py-3 px-3">
+                        {m.supportsStreaming ? (
+                          <span className="text-emerald-700 flex items-center gap-1 font-mono text-[11px] font-medium">
+                            <Zap className="w-3 h-3 text-emerald-600" /> SSE
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 text-[11px]">No</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-3 text-right">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setEditingModel(m);
+                            setInputPrice(m.inputPricePerMillion.toString());
+                            setOutputPrice(m.outputPricePerMillion.toString());
+                          }}
+                        >
+                          <Edit3 className="w-3.5 h-3.5 mr-1" /> Edit Pricing
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
 

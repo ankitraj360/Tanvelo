@@ -122,10 +122,10 @@ export default function TermsOfServicePage() {
           <section className="space-y-3">
             <h2 className="text-base sm:text-lg font-bold text-slate-900">5. Rate Limits & Hard Spend Cutoffs</h2>
             <p>
-              To protect both our infrastructure and customer budgets, Tanvelo enforces atomic rate limits and budget constraints. When a configured spend threshold or token bucket is depleted:
+              To protect both our infrastructure and customer budgets, Tanvelo enforces atomic fixed-window rate limits and budget constraints. When a configured spend threshold or rate limit is reached:
             </p>
             <p>
-              Requests are rejected with standard HTTP <code className="text-rose-600 font-mono">429 Too Many Requests</code> status codes. Tanvelo is not liable for downstream application errors or interrupted workloads caused by enforced rate limits or customer-configured budget caps.
+              Requests are rejected with standard HTTP <code className="text-rose-600 font-mono">429 Too Many Requests</code> status codes (with <code className="text-rose-600 font-mono">Retry-After</code> headers). Tanvelo is not liable for downstream application errors or interrupted workloads caused by enforced rate limits or customer-configured budget caps.
             </p>
           </section>
 

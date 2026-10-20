@@ -77,18 +77,18 @@ export default function PrivacyPolicyPage() {
               Tanvelo acts as a high-performance proxy and routing plane between your applications and upstream LLM providers (including OpenAI, Anthropic Claude, Google Gemini, DeepSeek, Groq, Mistral AI, and self-hosted inference nodes like Ollama and vLLM).
             </p>
             <p>
-              When your application dispatches a request to <code className="text-blue-700 font-mono bg-blue-50 px-1 py-0.5 rounded text-xs">POST /v1/chat/completions</code>, Tanvelo inspects routing policies, verifies rate limits, and forwards the payload over mutual TLS to the selected provider.
+              When your application dispatches a request to <code className="text-blue-700 font-mono bg-blue-50 px-1 py-0.5 rounded text-xs">POST /v1/chat/completions</code>, Tanvelo inspects routing policies, verifies rate limits, and forwards the payload over secure TLS (HTTPS) to the selected provider.
             </p>
           </section>
 
           <section className="space-y-3">
             <h2 className="text-base sm:text-lg font-bold text-slate-900">2. In-Flight Inference Data & Zero Prompt Retention</h2>
             <p>
-              By default, Tanvelo does not retain prompt payloads or model generation bodies. In-flight streams are processed in transient RAM and piped directly back to the client application via Server-Sent Events (SSE) or chunked HTTP responses.
+              By default, Tanvelo does not store or retain prompt payloads or model completion bodies in the database (<code className="text-slate-800 font-mono">LOG_PAYLOADS=false</code>). In-flight streams are processed in transient RAM and piped directly back to the client application via Server-Sent Events (SSE) or chunked HTTP responses.
             </p>
             <ul className="list-disc pl-5 space-y-1 text-slate-600">
-              <li><strong>Metadata Logging:</strong> Only non-sensitive execution metadata is logged (request ID, model name, provider target, token counts, total latency, and HTTP status code).</li>
-              <li><strong>Payload Redaction:</strong> When request inspection is enabled in development environments, sensitive header values (including <code className="text-slate-800 font-mono">Authorization</code>, <code className="text-slate-800 font-mono">x-api-key</code>) are permanently redacted.</li>
+              <li><strong>Metadata Logging:</strong> Only operational execution metadata is logged (request ID, model name, provider target, token counts, total latency, and HTTP status code).</li>
+              <li><strong>Payload Redaction:</strong> In environments where operator payload debugging is explicitly enabled, sensitive authorization headers (including <code className="text-slate-800 font-mono">Authorization</code>, <code className="text-slate-800 font-mono">x-api-key</code>) are permanently sanitized before write.</li>
               <li><strong>No Data Sales:</strong> We do not sell, rent, or monetize your requests or completions.</li>
             </ul>
           </section>
@@ -96,7 +96,7 @@ export default function PrivacyPolicyPage() {
           <section className="space-y-3">
             <h2 className="text-base sm:text-lg font-bold text-slate-900">3. Cryptographic Key Management</h2>
             <p>
-              Upstream provider credentials (such as your OpenAI API Key or Anthropic secret) are stored in an encrypted PostgreSQL enclave using AES-256-GCM authenticated cipher streams. Each encrypted value requires an authentication tag verified prior to decryption.
+              Upstream provider credentials (such as your OpenAI API Key or Anthropic secret) are stored encrypted in PostgreSQL using industry-standard AES-256-GCM authenticated encryption with unique initialization vectors and authentication tags verified prior to decryption.
             </p>
             <p>
               Gateway API keys provided to your client applications are never stored in plaintext. We store only the one-way SHA-256 hash. Even in the event of an unauthorized database dump, raw gateway keys cannot be derived.
@@ -119,7 +119,7 @@ export default function PrivacyPolicyPage() {
           <section className="space-y-3">
             <h2 className="text-base sm:text-lg font-bold text-slate-900">5. Egress & SSRF Security Guardrails</h2>
             <p>
-              To protect internal enterprise networks, Tanvelo webhooks and custom provider endpoints strictly enforce SSRF (Server-Side Request Forgery) egress protections. Destination IP addresses resolving to loopback (<code className="text-slate-800 font-mono">127.0.0.1</code>), RFC1918 private subnets (<code className="text-slate-800 font-mono">10.0.0.0/8</code>, <code className="text-slate-800 font-mono">192.168.0.0/16</code>), or cloud instance metadata services (<code className="text-slate-800 font-mono">169.254.169.254</code>) are blocked at the socket layer.
+              To protect internal enterprise networks, Tanvelo webhooks and custom provider endpoints strictly enforce SSRF (Server-Side Request Forgery) egress protections. Destination IP addresses resolving to loopback (<code className="text-slate-800 font-mono">127.0.0.1</code>), RFC1918 private subnets (<code className="text-slate-800 font-mono">10.0.0.0/8</code>, <code className="text-slate-800 font-mono">192.168.0.0/16</code>), or cloud instance metadata services (<code className="text-slate-800 font-mono">169.254.169.254</code>) are blocked by application-level egress security validation before network dispatch.
             </p>
           </section>
 

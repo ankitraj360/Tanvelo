@@ -53,7 +53,8 @@ export class RoutingEngine {
    */
   resolveRoute(
     requestedModel: string,
-    rules: RoutingRuleConfig[]
+    rules: RoutingRuleConfig[],
+    fallbacksHeader?: string | null
   ): {
     primaryProvider: string;
     primaryModel: string;
@@ -68,38 +69,84 @@ export class RoutingEngine {
     // Sort rules by priority descending
     const sorted = [...rules].sort((a, b) => b.priority - a.priority);
 
+    let resolvedPrimaryProvider = '';
+    let resolvedPrimaryModel = '';
+    let resolvedSecondaryProvider: string | null | undefined = null;
+    let resolvedSecondaryModel: string | null | undefined = null;
+    let timeoutMs = 30000;
+    let maxRetries = 1;
+    let fallbackOnTimeout = true;
+    let fallbackOnRateLimit = true;
+    let fallbackOnError = true;
+
+    let matched = false;
     for (const rule of sorted) {
       if (this.matchPattern(rule.modelPattern, requestedModel)) {
-        return {
-          primaryProvider: rule.primaryProvider,
-          primaryModel: rule.primaryModel === '*' ? requestedModel : rule.primaryModel,
-          secondaryProvider: rule.secondaryProvider,
-          secondaryModel: rule.secondaryModel,
-          timeoutMs: rule.timeoutMs || 30000,
-          maxRetries: rule.maxRetries || 1,
-          fallbackOnTimeout: rule.fallbackOnTimeout,
-          fallbackOnRateLimit: rule.fallbackOnRateLimit,
-          fallbackOnError: rule.fallbackOnError,
-        };
+        resolvedPrimaryProvider = rule.primaryProvider;
+        resolvedPrimaryModel = rule.primaryModel === '*' ? requestedModel : rule.primaryModel;
+        resolvedSecondaryProvider = rule.secondaryProvider;
+        resolvedSecondaryModel = rule.secondaryModel;
+        timeoutMs = rule.timeoutMs || 30000;
+        maxRetries = Math.max(1, rule.maxRetries || 1);
+        fallbackOnTimeout = rule.fallbackOnTimeout;
+        fallbackOnRateLimit = rule.fallbackOnRateLimit;
+        fallbackOnError = rule.fallbackOnError;
+        matched = true;
+        break;
       }
     }
 
-    // Default provider inference by model name if no rule matches
-    let inferredProvider = 'openai';
-    if (requestedModel.toLowerCase().startsWith('claude')) {
-      inferredProvider = 'anthropic';
-    } else if (requestedModel.toLowerCase().startsWith('gemini')) {
-      inferredProvider = 'gemini';
+    if (!matched) {
+      // Default provider inference by model name if no rule matches
+      let inferredProvider = 'openai';
+      if (requestedModel.toLowerCase().startsWith('claude')) {
+        inferredProvider = 'anthropic';
+      } else if (requestedModel.toLowerCase().startsWith('gemini')) {
+        inferredProvider = 'gemini';
+      }
+      resolvedPrimaryProvider = inferredProvider;
+      resolvedPrimaryModel = requestedModel;
+    }
+
+    // Support X-Tanvelo-Fallbacks per-request fallback header override
+    if (fallbacksHeader) {
+      const parsedFallbacks = fallbacksHeader
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      if (parsedFallbacks.length > 0) {
+        const fbTarget = parsedFallbacks[0];
+        if (fbTarget.includes('/')) {
+          const [p, m] = fbTarget.split('/');
+          resolvedSecondaryProvider = p;
+          resolvedSecondaryModel = m;
+        } else {
+          let fbProvider = 'openai';
+          if (fbTarget.toLowerCase().startsWith('claude')) {
+            fbProvider = 'anthropic';
+          } else if (fbTarget.toLowerCase().startsWith('gemini')) {
+            fbProvider = 'gemini';
+          }
+          resolvedSecondaryProvider = fbProvider;
+          resolvedSecondaryModel = fbTarget;
+        }
+        fallbackOnTimeout = true;
+        fallbackOnRateLimit = true;
+        fallbackOnError = true;
+      }
     }
 
     return {
-      primaryProvider: inferredProvider,
-      primaryModel: requestedModel,
-      timeoutMs: 30000,
-      maxRetries: 1,
-      fallbackOnTimeout: true,
-      fallbackOnRateLimit: true,
-      fallbackOnError: true,
+      primaryProvider: resolvedPrimaryProvider,
+      primaryModel: resolvedPrimaryModel,
+      secondaryProvider: resolvedSecondaryProvider,
+      secondaryModel: resolvedSecondaryModel,
+      timeoutMs,
+      maxRetries,
+      fallbackOnTimeout,
+      fallbackOnRateLimit,
+      fallbackOnError,
     };
   }
 
@@ -119,24 +166,23 @@ export class RoutingEngine {
   async executeChat(
     request: ChatCompletionRequest,
     rules: RoutingRuleConfig[],
-    connections: Map<string, ProviderConnectionConfig>
+    connections: Map<string, ProviderConnectionConfig>,
+    fallbacksHeader?: string | null
   ): Promise<ExecutionOutcome> {
-    const route = this.resolveRoute(request.model, rules);
+    const route = this.resolveRoute(request.model, rules, fallbacksHeader);
     const attempts: AttemptLog[] = [];
 
-    // Attempt 1: Primary provider
-    let currentProvider = route.primaryProvider;
-    let currentModel = route.primaryModel;
-    let attemptNum = 1;
+    // Stage 1: Try primary provider
+    let shouldTrySecondary = false;
 
-    while (attemptNum <= (route.maxRetries || 2)) {
-      const connection = connections.get(currentProvider);
+    for (let pAttempt = 1; pAttempt <= route.maxRetries; pAttempt++) {
+      const connection = connections.get(route.primaryProvider);
       if (!connection || connection.status !== 'connected' || !connection.apiKey) {
-        const errorMsg = `Provider '${currentProvider}' is not configured or connected for this project.`;
+        const errorMsg = `Provider '${route.primaryProvider}' is not configured or connected for this project.`;
         attempts.push({
-          attemptNumber: attemptNum,
-          provider: currentProvider,
-          model: currentModel,
+          attemptNumber: attempts.length + 1,
+          provider: route.primaryProvider,
+          model: route.primaryModel,
           statusCode: 503,
           latencyMs: 0,
           isSuccess: false,
@@ -144,26 +190,17 @@ export class RoutingEngine {
           errorMessage: errorMsg,
         });
 
-        // Check if secondary is available
-        if (
-          attemptNum === 1 &&
-          route.secondaryProvider &&
-          route.secondaryModel &&
-          route.secondaryProvider !== currentProvider
-        ) {
-          currentProvider = route.secondaryProvider;
-          currentModel = route.secondaryModel;
-          attemptNum++;
-          continue;
+        shouldTrySecondary = Boolean(route.secondaryProvider && route.secondaryModel);
+        if (!shouldTrySecondary) {
+          throw new GatewayError(errorMsg, ErrorCategory.PROVIDER_UNAVAILABLE, 503, undefined, undefined, [...attempts]);
         }
-
-        throw new GatewayError(errorMsg, ErrorCategory.PROVIDER_UNAVAILABLE, 503, undefined, undefined, [...attempts]);
+        break;
       }
 
-      const adapter = getProviderAdapter(currentProvider, connection.apiBaseUrl);
+      const adapter = getProviderAdapter(route.primaryProvider, connection.apiBaseUrl);
       if (!adapter) {
         throw new GatewayError(
-          `No adapter available for provider '${currentProvider}'`,
+          `No adapter available for provider '${route.primaryProvider}'`,
           ErrorCategory.INTERNAL_GATEWAY_ERROR,
           500,
           undefined,
@@ -175,7 +212,7 @@ export class RoutingEngine {
       try {
         const reqWithModel: ChatCompletionRequest = {
           ...request,
-          model: currentModel,
+          model: route.primaryModel,
         };
 
         const result = await adapter.execute(
@@ -186,9 +223,9 @@ export class RoutingEngine {
         );
 
         attempts.push({
-          attemptNumber: attemptNum,
-          provider: currentProvider,
-          model: currentModel,
+          attemptNumber: attempts.length + 1,
+          provider: route.primaryProvider,
+          model: route.primaryModel,
           statusCode: result.statusCode,
           latencyMs: result.latencyMs,
           isSuccess: true,
@@ -196,8 +233,8 @@ export class RoutingEngine {
 
         return {
           result,
-          finalProvider: currentProvider,
-          finalModel: currentModel,
+          finalProvider: route.primaryProvider,
+          finalModel: route.primaryModel,
           attempts,
         };
       } catch (err: any) {
@@ -206,9 +243,9 @@ export class RoutingEngine {
         const latencyMs = err.originalError?.latencyMs || 100;
 
         attempts.push({
-          attemptNumber: attemptNum,
-          provider: currentProvider,
-          model: currentModel,
+          attemptNumber: attempts.length + 1,
+          provider: route.primaryProvider,
+          model: route.primaryModel,
           statusCode,
           latencyMs,
           isSuccess: false,
@@ -218,9 +255,7 @@ export class RoutingEngine {
 
         // Determine if fallback is allowed
         const canFallback =
-          attemptNum === 1 &&
-          route.secondaryProvider &&
-          route.secondaryModel &&
+          Boolean(route.secondaryProvider && route.secondaryModel) &&
           ((category === ErrorCategory.TIMEOUT && route.fallbackOnTimeout) ||
             (category === ErrorCategory.PROVIDER_RATE_LIMIT_EXCEEDED && route.fallbackOnRateLimit) ||
             (category === ErrorCategory.PROVIDER_QUOTA_EXHAUSTED && route.fallbackOnRateLimit) ||
@@ -228,13 +263,92 @@ export class RoutingEngine {
             (statusCode >= 500 && route.fallbackOnError));
 
         if (canFallback) {
-          currentProvider = route.secondaryProvider!;
-          currentModel = route.secondaryModel!;
-          attemptNum++;
-          continue;
+          shouldTrySecondary = true;
+          break;
         }
 
-        // Rethrow original error with attempt logs attached
+        if (pAttempt === route.maxRetries) {
+          err.attempts = attempts;
+          throw err;
+        }
+      }
+    }
+
+    // Stage 2: Secondary fallback (always executed when triggered, even if maxRetries was 1)
+    if (shouldTrySecondary && route.secondaryProvider && route.secondaryModel) {
+      const connection = connections.get(route.secondaryProvider);
+      if (!connection || connection.status !== 'connected' || !connection.apiKey) {
+        const errorMsg = `Secondary provider '${route.secondaryProvider}' is not configured or connected for this project.`;
+        attempts.push({
+          attemptNumber: attempts.length + 1,
+          provider: route.secondaryProvider,
+          model: route.secondaryModel,
+          statusCode: 503,
+          latencyMs: 0,
+          isSuccess: false,
+          errorCategory: ErrorCategory.PROVIDER_UNAVAILABLE,
+          errorMessage: errorMsg,
+        });
+
+        throw new GatewayError(errorMsg, ErrorCategory.PROVIDER_UNAVAILABLE, 503, undefined, undefined, [...attempts]);
+      }
+
+      const adapter = getProviderAdapter(route.secondaryProvider, connection.apiBaseUrl);
+      if (!adapter) {
+        throw new GatewayError(
+          `No adapter available for secondary provider '${route.secondaryProvider}'`,
+          ErrorCategory.INTERNAL_GATEWAY_ERROR,
+          500,
+          undefined,
+          undefined,
+          [...attempts]
+        );
+      }
+
+      try {
+        const reqWithModel: ChatCompletionRequest = {
+          ...request,
+          model: route.secondaryModel,
+        };
+
+        const result = await adapter.execute(
+          reqWithModel,
+          connection.apiKey,
+          connection.apiBaseUrl,
+          route.timeoutMs
+        );
+
+        attempts.push({
+          attemptNumber: attempts.length + 1,
+          provider: route.secondaryProvider,
+          model: route.secondaryModel,
+          statusCode: result.statusCode,
+          latencyMs: result.latencyMs,
+          isSuccess: true,
+        });
+
+        return {
+          result,
+          finalProvider: route.secondaryProvider,
+          finalModel: route.secondaryModel,
+          attempts,
+        };
+      } catch (err: any) {
+        const statusCode = err.statusCode || 500;
+        const category = err.category || ErrorCategory.INTERNAL_GATEWAY_ERROR;
+        const latencyMs = err.originalError?.latencyMs || 100;
+
+        attempts.push({
+          attemptNumber: attempts.length + 1,
+          provider: route.secondaryProvider,
+          model: route.secondaryModel,
+          statusCode,
+          latencyMs,
+          isSuccess: false,
+          errorCategory: category,
+          errorMessage: err.message,
+        });
+
         err.attempts = attempts;
         throw err;
       }
@@ -249,23 +363,23 @@ export class RoutingEngine {
   async executeStreamChat(
     request: ChatCompletionRequest,
     rules: RoutingRuleConfig[],
-    connections: Map<string, ProviderConnectionConfig>
+    connections: Map<string, ProviderConnectionConfig>,
+    fallbacksHeader?: string | null
   ): Promise<ExecutionOutcome> {
-    const route = this.resolveRoute(request.model, rules);
+    const route = this.resolveRoute(request.model, rules, fallbacksHeader);
     const attempts: AttemptLog[] = [];
 
-    let currentProvider = route.primaryProvider;
-    let currentModel = route.primaryModel;
-    let attemptNum = 1;
+    let shouldTrySecondary = false;
 
-    while (attemptNum <= (route.maxRetries || 2)) {
-      const connection = connections.get(currentProvider);
+    // Stage 1: Try primary provider
+    for (let pAttempt = 1; pAttempt <= route.maxRetries; pAttempt++) {
+      const connection = connections.get(route.primaryProvider);
       if (!connection || connection.status !== 'connected' || !connection.apiKey) {
-        const errorMsg = `Provider '${currentProvider}' is not configured or connected for this project.`;
+        const errorMsg = `Provider '${route.primaryProvider}' is not configured or connected for this project.`;
         attempts.push({
-          attemptNumber: attemptNum,
-          provider: currentProvider,
-          model: currentModel,
+          attemptNumber: attempts.length + 1,
+          provider: route.primaryProvider,
+          model: route.primaryModel,
           statusCode: 503,
           latencyMs: 0,
           isSuccess: false,
@@ -273,25 +387,17 @@ export class RoutingEngine {
           errorMessage: errorMsg,
         });
 
-        if (
-          attemptNum === 1 &&
-          route.secondaryProvider &&
-          route.secondaryModel &&
-          route.secondaryProvider !== currentProvider
-        ) {
-          currentProvider = route.secondaryProvider;
-          currentModel = route.secondaryModel;
-          attemptNum++;
-          continue;
+        shouldTrySecondary = Boolean(route.secondaryProvider && route.secondaryModel);
+        if (!shouldTrySecondary) {
+          throw new GatewayError(errorMsg, ErrorCategory.PROVIDER_UNAVAILABLE, 503, undefined, undefined, [...attempts]);
         }
-
-        throw new GatewayError(errorMsg, ErrorCategory.PROVIDER_UNAVAILABLE, 503, undefined, undefined, [...attempts]);
+        break;
       }
 
-      const adapter = getProviderAdapter(currentProvider, connection.apiBaseUrl);
+      const adapter = getProviderAdapter(route.primaryProvider, connection.apiBaseUrl);
       if (!adapter) {
         throw new GatewayError(
-          `No adapter available for provider '${currentProvider}'`,
+          `No adapter available for provider '${route.primaryProvider}'`,
           ErrorCategory.INTERNAL_GATEWAY_ERROR,
           500,
           undefined,
@@ -303,7 +409,7 @@ export class RoutingEngine {
       try {
         const reqWithModel: ChatCompletionRequest = {
           ...request,
-          model: currentModel,
+          model: route.primaryModel,
         };
 
         const streamingResult = await adapter.executeStream(
@@ -314,9 +420,9 @@ export class RoutingEngine {
         );
 
         attempts.push({
-          attemptNumber: attemptNum,
-          provider: currentProvider,
-          model: currentModel,
+          attemptNumber: attempts.length + 1,
+          provider: route.primaryProvider,
+          model: route.primaryModel,
           statusCode: streamingResult.statusCode,
           latencyMs: streamingResult.latencyMs,
           isSuccess: true,
@@ -324,8 +430,8 @@ export class RoutingEngine {
 
         return {
           streamingResult,
-          finalProvider: currentProvider,
-          finalModel: currentModel,
+          finalProvider: route.primaryProvider,
+          finalModel: route.primaryModel,
           attempts,
         };
       } catch (err: any) {
@@ -334,9 +440,9 @@ export class RoutingEngine {
         const latencyMs = 100;
 
         attempts.push({
-          attemptNumber: attemptNum,
-          provider: currentProvider,
-          model: currentModel,
+          attemptNumber: attempts.length + 1,
+          provider: route.primaryProvider,
+          model: route.primaryModel,
           statusCode,
           latencyMs,
           isSuccess: false,
@@ -345,9 +451,7 @@ export class RoutingEngine {
         });
 
         const canFallback =
-          attemptNum === 1 &&
-          route.secondaryProvider &&
-          route.secondaryModel &&
+          Boolean(route.secondaryProvider && route.secondaryModel) &&
           ((category === ErrorCategory.TIMEOUT && route.fallbackOnTimeout) ||
             (category === ErrorCategory.PROVIDER_RATE_LIMIT_EXCEEDED && route.fallbackOnRateLimit) ||
             (category === ErrorCategory.PROVIDER_QUOTA_EXHAUSTED && route.fallbackOnRateLimit) ||
@@ -355,11 +459,91 @@ export class RoutingEngine {
             (statusCode >= 500 && route.fallbackOnError));
 
         if (canFallback) {
-          currentProvider = route.secondaryProvider!;
-          currentModel = route.secondaryModel!;
-          attemptNum++;
-          continue;
+          shouldTrySecondary = true;
+          break;
         }
+
+        if (pAttempt === route.maxRetries) {
+          err.attempts = attempts;
+          throw err;
+        }
+      }
+    }
+
+    // Stage 2: Secondary fallback
+    if (shouldTrySecondary && route.secondaryProvider && route.secondaryModel) {
+      const connection = connections.get(route.secondaryProvider);
+      if (!connection || connection.status !== 'connected' || !connection.apiKey) {
+        const errorMsg = `Secondary provider '${route.secondaryProvider}' is not configured or connected for this project.`;
+        attempts.push({
+          attemptNumber: attempts.length + 1,
+          provider: route.secondaryProvider,
+          model: route.secondaryModel,
+          statusCode: 503,
+          latencyMs: 0,
+          isSuccess: false,
+          errorCategory: ErrorCategory.PROVIDER_UNAVAILABLE,
+          errorMessage: errorMsg,
+        });
+
+        throw new GatewayError(errorMsg, ErrorCategory.PROVIDER_UNAVAILABLE, 503, undefined, undefined, [...attempts]);
+      }
+
+      const adapter = getProviderAdapter(route.secondaryProvider, connection.apiBaseUrl);
+      if (!adapter) {
+        throw new GatewayError(
+          `No adapter available for secondary provider '${route.secondaryProvider}'`,
+          ErrorCategory.INTERNAL_GATEWAY_ERROR,
+          500,
+          undefined,
+          undefined,
+          [...attempts]
+        );
+      }
+
+      try {
+        const reqWithModel: ChatCompletionRequest = {
+          ...request,
+          model: route.secondaryModel,
+        };
+
+        const streamingResult = await adapter.executeStream(
+          reqWithModel,
+          connection.apiKey,
+          connection.apiBaseUrl,
+          route.timeoutMs
+        );
+
+        attempts.push({
+          attemptNumber: attempts.length + 1,
+          provider: route.secondaryProvider,
+          model: route.secondaryModel,
+          statusCode: streamingResult.statusCode,
+          latencyMs: streamingResult.latencyMs,
+          isSuccess: true,
+        });
+
+        return {
+          streamingResult,
+          finalProvider: route.secondaryProvider,
+          finalModel: route.secondaryModel,
+          attempts,
+        };
+      } catch (err: any) {
+        const statusCode = err.statusCode || 500;
+        const category = err.category || ErrorCategory.INTERNAL_GATEWAY_ERROR;
+        const latencyMs = 100;
+
+        attempts.push({
+          attemptNumber: attempts.length + 1,
+          provider: route.secondaryProvider,
+          model: route.secondaryModel,
+          statusCode,
+          latencyMs,
+          isSuccess: false,
+          errorCategory: category,
+          errorMessage: err.message,
+        });
 
         err.attempts = attempts;
         throw err;

@@ -96,7 +96,22 @@ export async function managementRoutes(fastify: FastifyInstance) {
       where: { OR: [{ id }, { slug: id }] },
       include: {
         environments: true,
-        providerConnections: true,
+        providerConnections: {
+          select: {
+            id: true,
+            projectId: true,
+            provider: true,
+            customName: true,
+            isCustom: true,
+            apiKeyPreview: true,
+            apiBaseUrl: true,
+            status: true,
+            lastTestedAt: true,
+            lastError: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
         modelConfigs: true,
         budgets: true,
       },
@@ -767,19 +782,29 @@ export async function managementRoutes(fastify: FastifyInstance) {
 
   // ================= USAGE & BUDGETS =================
   fastify.get('/api/budgets', async (req: FastifyRequest, reply: FastifyReply) => {
-    const { projectId } = req.query as any;
+    const { projectId, environmentId } = req.query as any;
     if (!projectId) return reply.status(400).send({ error: 'projectId is required' });
 
-    const [budget, alerts] = await Promise.all([
-      prisma.budget.findFirst({
-        where: { projectId },
-      }),
-      prisma.alert.findMany({
-        where: { projectId },
-        orderBy: { createdAt: 'desc' },
-        take: 20,
-      }),
-    ]);
+    let budget = null;
+    if (environmentId) {
+      budget = await prisma.budget.findFirst({
+        where: { projectId, environmentId },
+      });
+    }
+    if (!budget) {
+      budget = await prisma.budget.findFirst({
+        where: { projectId, environmentId: null },
+      });
+    }
+
+    const alerts = await prisma.alert.findMany({
+      where: {
+        projectId,
+        ...(environmentId ? { OR: [{ environmentId }, { environmentId: null }] } : {}),
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+    });
 
     return reply.send({
       budget: budget || {
@@ -787,18 +812,56 @@ export async function managementRoutes(fastify: FastifyInstance) {
         warningThresholdPercent: 80.0,
         hardLimitEnabled: false,
         currentSpendUsd: 0.0,
+        period: 'monthly',
       },
       alerts,
     });
   });
 
+  fastify.get('/api/budgets/alerts', async (req: FastifyRequest, reply: FastifyReply) => {
+    const { projectId, environmentId, limit } = req.query as any;
+    if (!projectId) return reply.status(400).send({ error: 'projectId is required' });
+
+    const take = limit ? parseInt(limit, 10) : 20;
+    const alerts = await prisma.alert.findMany({
+      where: {
+        projectId,
+        ...(environmentId ? { OR: [{ environmentId }, { environmentId: null }] } : {}),
+      },
+      orderBy: { createdAt: 'desc' },
+      take,
+    });
+
+    return reply.send(alerts);
+  });
+
   fastify.post('/api/budgets', async (req: FastifyRequest, reply: FastifyReply) => {
-    const { projectId, maxBudgetUsd, warningThresholdPercent, hardLimitEnabled } = req.body as any;
+    const { projectId, environmentId, maxBudgetUsd, warningThresholdPercent, hardLimitEnabled, period } = req.body as any;
     if (!projectId || maxBudgetUsd === undefined) {
       return reply.status(400).send({ error: 'projectId and maxBudgetUsd are required' });
     }
 
-    const existing = await prisma.budget.findFirst({ where: { projectId } });
+    const cleanPeriod = period === 'daily' || period === 'total' ? period : 'monthly';
+    const envId = environmentId || null;
+
+    const existing = await prisma.budget.findFirst({
+      where: { projectId, environmentId: envId },
+    });
+
+    // Compute next reset date
+    let resetAt: Date | null = null;
+    if (cleanPeriod === 'daily') {
+      const d = new Date();
+      d.setUTCDate(d.getUTCDate() + 1);
+      d.setUTCHours(0, 0, 0, 0);
+      resetAt = d;
+    } else if (cleanPeriod === 'monthly') {
+      const d = new Date();
+      d.setUTCMonth(d.getUTCMonth() + 1);
+      d.setUTCDate(1);
+      d.setUTCHours(0, 0, 0, 0);
+      resetAt = d;
+    }
 
     let budget;
     if (existing) {
@@ -808,15 +871,20 @@ export async function managementRoutes(fastify: FastifyInstance) {
           maxBudgetUsd: parseFloat(maxBudgetUsd),
           warningThresholdPercent: parseFloat(warningThresholdPercent) || 80.0,
           hardLimitEnabled: Boolean(hardLimitEnabled),
+          period: cleanPeriod,
+          resetAt: existing.period !== cleanPeriod ? resetAt : (existing.resetAt || resetAt),
         },
       });
     } else {
       budget = await prisma.budget.create({
         data: {
           projectId,
+          environmentId: envId,
           maxBudgetUsd: parseFloat(maxBudgetUsd),
           warningThresholdPercent: parseFloat(warningThresholdPercent) || 80.0,
           hardLimitEnabled: Boolean(hardLimitEnabled),
+          period: cleanPeriod,
+          resetAt,
         },
       });
     }

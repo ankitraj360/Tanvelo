@@ -1,0 +1,80 @@
+version: '3.8'
+
+networks:
+  public_net:
+    driver: bridge
+  private_mgmt_net:
+    internal: true # Isolated internal network: port 4001 cannot be routed from outside
+
+volumes:
+  redis_data:
+    driver: local
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: tanvelo-redis-prod
+    restart: unless-stopped
+    command: redis-server --appendonly yes --save 60 1
+    volumes:
+      - redis_data:/data
+    networks:
+      - private_mgmt_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  gateway:
+    build:
+      context: .
+      dockerfile: apps/gateway/Dockerfile
+    container_name: tanvelo-gateway-prod
+    restart: unless-stopped
+    ports:
+      - "4000:4000" # Unified public gateway
+      # Notice: Port 4001 is NOT published to host; it is reachable only via private_mgmt_net
+    environment:
+      - NODE_ENV=production
+      - GATEWAY_PORT=4000
+      - GATEWAY_HOST=0.0.0.0
+      - MANAGEMENT_PORT=4001
+      - MANAGEMENT_BIND_HOST=0.0.0.0 # Bound internally on private_mgmt_net
+      - MANAGEMENT_API_SECRET=${MANAGEMENT_API_SECRET}
+      - ENCRYPTION_SECRET=${ENCRYPTION_SECRET}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379
+      - LOG_PAYLOADS=${LOG_PAYLOADS:-false}
+    networks:
+      - public_net
+      - private_mgmt_net
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: tanvelo-web-prod
+    restart: unless-stopped
+    ports:
+      - "3000:3000" # Authenticated control plane dashboard
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - GATEWAY_INTERNAL_URL=http://gateway:4001
+      - MANAGEMENT_API_SECRET=${MANAGEMENT_API_SECRET}
+      - NEXT_PUBLIC_GATEWAY_URL=${NEXT_PUBLIC_GATEWAY_URL:-http://localhost:4000}
+      - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+      - NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+      - NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+      - NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/overview
+      - NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/overview
+    networks:
+      - public_net
+      - private_mgmt_net
+    depends_on:
+      - gateway

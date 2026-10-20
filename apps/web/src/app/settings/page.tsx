@@ -68,14 +68,14 @@ export default function SettingsPage() {
                 <Zap className="w-4 h-4 text-cyan-600" />
                 <CardTitle className="text-sm">Redis 7 & Rate Limiting</CardTitle>
               </div>
-              <Badge variant="cyan">Atomic Token Bucket</Badge>
+              <Badge variant="cyan">Fixed-Window Counter</Badge>
             </div>
             <CardDescription>Distributed rate limiting infrastructure</CardDescription>
           </CardHeader>
           <CardContent className="text-xs text-slate-600 space-y-1">
             <p>Engine: Redis 7 with atomic INCR/EXPIRE</p>
-            <p>Fallback: In-memory sliding window cache</p>
-            <p>Headers: RFC-compliant rate limit headers</p>
+            <p>Fallback: In-memory per-process counter</p>
+            <p>Headers: RFC-compliant rate limit & Retry-After headers</p>
           </CardContent>
         </Card>
 
@@ -99,35 +99,35 @@ export default function SettingsPage() {
         </Card>
       </div>
 
-      {/* Security Architecture Notice (PRD Section 19) */}
-      <Card className="border-amber-200 bg-amber-50/70">
+      {/* Security Architecture & Auth Notice */}
+      <Card className="border-sky-200 bg-sky-50/70">
         <CardHeader>
-          <div className="flex items-center gap-2 text-amber-700">
-            <ShieldAlert className="w-5 h-5" />
-            <CardTitle className="text-amber-900">
-              Security Architecture: Dashboard Authentication Exclusion
+          <div className="flex items-center gap-2 text-sky-700">
+            <ShieldCheck className="w-5 h-5" />
+            <CardTitle className="text-sky-900">
+              Security Architecture: Clerk Auth & Isolated Management Service
             </CardTitle>
           </div>
-          <CardDescription className="text-amber-700/80">
-            Compliance specification per PRD Section 19.
+          <CardDescription className="text-sky-700/80">
+            Multi-layer perimeter security and operator access control.
           </CardDescription>
         </CardHeader>
         <CardContent className="text-xs text-slate-700 space-y-3 leading-relaxed">
           <p>
-            Per specification, dashboard login, password authentication, and OAuth accounts are <strong>explicitly excluded</strong>. Gateway requests are authenticated using Bearer API keys, whereas the management dashboard operates under a local/private network trust boundary.
+            The Tanvelo dashboard is authenticated via <strong>Clerk</strong>. Browser requests never talk directly to the management port (4001). Instead, a server-side route handler verifies the active Clerk operator session and injects <code className="text-sky-800 font-mono">X-Management-Secret</code> over an isolated loopback proxy.
           </p>
 
-          <div className="p-3.5 rounded-lg bg-white border border-amber-200/80 shadow-sm space-y-2 text-[11px]">
+          <div className="p-3.5 rounded-lg bg-white border border-sky-200/80 shadow-sm space-y-2 text-[11px]">
             <span className="font-semibold text-slate-900 block">Production Deployment Mandates:</span>
             <ul className="list-disc pl-4 space-y-1 text-slate-600">
               <li>
-                The management dashboard and its API routes (<code className="text-blue-700 font-mono">/api/*</code>) must be bound strictly to <code className="text-blue-700 font-mono">127.0.0.1</code> or an internal VPN / trusted private network.
+                The internal gateway management listener (<code className="text-blue-700 font-mono">:4001</code>) must remain strictly on <code className="text-blue-700 font-mono">127.0.0.1</code> or an isolated Docker internal network.
               </li>
               <li>
-                Only the unified gateway endpoint (<code className="text-blue-700 font-mono">POST /v1/chat/completions</code>) should be exposed publicly through a reverse proxy.
+                Only the public gateway (<code className="text-blue-700 font-mono">:4000/v1/*</code>) and the authenticated Next.js dashboard are exposed through the public ingress / reverse proxy.
               </li>
               <li>
-                Never expose management routes publicly without mutual TLS, internal network VPC rules, or network access control lists.
+                A minimum 32-character <code className="text-blue-700 font-mono">MANAGEMENT_API_SECRET</code> is enforced at startup for all management operations.
               </li>
             </ul>
           </div>

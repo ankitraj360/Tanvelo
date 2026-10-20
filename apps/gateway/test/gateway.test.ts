@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { FastifyInstance } from 'fastify';
 import { createServers, isLoopbackHost, validateManagementSecurity } from '../src/server.js';
 import { gatewayService } from '../src/services/gateway.service.js';
@@ -12,6 +12,7 @@ let testKeyId: string;
 let testProjectId: string;
 let testEnvId: string;
 let initialDefaultProvidersCount: number;
+const testManagementSecret = process.env.MANAGEMENT_API_SECRET || 'c8e6f1a4d9b2e7c3a0f5d8b1e4c7a2f9c8e6f1a4d9b2e7c3a0f5d8b1e4c7a2f9';
 
 beforeAll(async () => {
   const servers = await createServers();
@@ -95,10 +96,16 @@ describe('Gateway Management Security & Host Validation (Critical #3)', () => {
     expect(isLoopbackHost('192.168.1.10')).toBe(false);
   });
 
-  it('allows loopback hosts without management secret', () => {
-    const res = validateManagementSecurity('127.0.0.1', undefined, true);
+  it('allows loopback hosts without management secret in non-production', () => {
+    const res = validateManagementSecurity('127.0.0.1', undefined, false);
     expect(res.safeHost).toBe('127.0.0.1');
     expect(res.warning).toBeUndefined();
+  });
+
+  it('refuses to start in production if management secret is missing even on loopback', () => {
+    expect(() => validateManagementSecurity('127.0.0.1', undefined, true)).toThrow(
+      /FATAL SECURITY CONFIGURATION/
+    );
   });
 
   it('forces 127.0.0.1 and warns in non-production when non-loopback has no secret', () => {
@@ -114,7 +121,7 @@ describe('Gateway Management Security & Host Validation (Critical #3)', () => {
   });
 
   it('allows non-loopback host in production when a valid secret is provided', () => {
-    const res = validateManagementSecurity('0.0.0.0', 'strong-management-secret-1234', true);
+    const res = validateManagementSecurity('0.0.0.0', 'strong-management-secret-12345678901234567890', true);
     expect(res.safeHost).toBe('0.0.0.0');
     expect(res.warning).toBeUndefined();
   });
@@ -145,16 +152,28 @@ describe('Gateway Architecture & Listener Isolation', () => {
     expect(body.error.code).toBe('MANAGEMENT_PORT_RESTRICTED');
   });
 
-  it('serves management routes on the private management listener (Fix #1)', async () => {
+  it('serves management routes on the private management listener with management secret (Fix #1)', async () => {
     const res = await managementServer.inject({
       method: 'GET',
       url: '/api/projects',
+      headers: {
+        'x-management-secret': testManagementSecret,
+      },
     });
 
     expect(res.statusCode).toBe(200);
     const projects = JSON.parse(res.body);
     expect(Array.isArray(projects)).toBe(true);
     expect(projects.length).toBeGreaterThan(0);
+  });
+
+  it('rejects management routes on private listener without management secret', async () => {
+    const res = await managementServer.inject({
+      method: 'GET',
+      url: '/api/projects',
+    });
+
+    expect(res.statusCode).toBe(401);
   });
 
   it('reports consistent Redis state between /health and /api/settings without connection leaks (High #4)', async () => {
@@ -167,6 +186,9 @@ describe('Gateway Architecture & Listener Isolation', () => {
     const settingsRes = await managementServer.inject({
       method: 'GET',
       url: '/api/settings',
+      headers: {
+        'x-management-secret': testManagementSecret,
+      },
     });
     const settingsBody = JSON.parse(settingsRes.body);
 
@@ -494,38 +516,54 @@ describe('Webhooks & Provider Security', () => {
       data: { reason: 'test failure' },
     };
 
-    const attempts = await dispatchWebhookWithRetries(
-      'https://203.0.113.1/webhook-test', // TEST-NET-3 IP, non-routable
-      'whsec_test_secret',
-      dummyPayload,
-      2,
-      400,
-      50
-    );
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+      throw new TypeError('Simulated network failure');
+    });
 
-    expect(Array.isArray(attempts)).toBe(true);
-    expect(attempts.length).toBe(2);
-    expect(attempts[0].attemptNumber).toBe(1);
-    expect(attempts[0].isSuccess).toBe(false);
-    expect(attempts[1].attemptNumber).toBe(2);
-    expect(attempts[1].isSuccess).toBe(false);
+    try {
+      const attempts = await dispatchWebhookWithRetries(
+        'https://example.com/webhook-test',
+        'whsec_test_secret',
+        dummyPayload,
+        2,
+        400,
+        50
+      );
+
+      expect(Array.isArray(attempts)).toBe(true);
+      expect(attempts.length).toBe(2);
+      expect(attempts[0].attemptNumber).toBe(1);
+      expect(attempts[0].isSuccess).toBe(false);
+      expect(attempts[0].errorMessage).toContain('Simulated network failure');
+      expect(attempts[1].attemptNumber).toBe(2);
+      expect(attempts[1].isSuccess).toBe(false);
+    } finally {
+      fetchSpy.mockRestore();
+    }
   });
 
   it('manual webhook test endpoint executes retries and records delivery logs (Medium #6)', async () => {
     const testWebhook = await prisma.webhook.create({
       data: {
         projectId: testProjectId,
-        url: 'https://203.0.113.1/manual-test-fail',
+        url: 'https://example.com/manual-test-fail',
         secret: 'whsec_manual_test_secret',
         events: ['*'],
         isEnabled: true,
       },
     });
 
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+      throw new TypeError('Simulated manual test failure');
+    });
+
     try {
       const res = await managementServer.inject({
         method: 'POST',
         url: `/api/webhooks/${testWebhook.id}/test`,
+        headers: {
+          'x-management-secret': testManagementSecret,
+        },
       });
 
       expect(res.statusCode).toBe(200);
@@ -538,6 +576,7 @@ describe('Webhooks & Provider Security', () => {
       });
       expect(deliveries.length).toBe(3);
     } finally {
+      fetchSpy.mockRestore();
       await prisma.webhookDelivery.deleteMany({ where: { webhookId: testWebhook.id } });
       await prisma.webhook.delete({ where: { id: testWebhook.id } });
     }
@@ -548,6 +587,9 @@ describe('Webhooks & Provider Security', () => {
     const res = await managementServer.inject({
       method: 'POST',
       url: '/api/providers',
+      headers: {
+        'x-management-secret': testManagementSecret,
+      },
       payload: {
         projectId: testProjectId,
         provider: 'openai',
@@ -575,3 +617,120 @@ describe('Webhooks & Provider Security', () => {
     expect(dbConn?.status).toBe('error');
   });
 });
+
+describe('Production Readiness & Hardening Verifications (P0/P1 items)', () => {
+  it('GET /health/live returns 200 process alive', async () => {
+    const res = await publicGateway.inject({
+      method: 'GET',
+      url: '/health/live',
+    });
+
+    expect(res.statusCode).toBe(200);
+    const body = JSON.parse(res.body);
+    expect(body.status).toBe('alive');
+  });
+
+  it('GET /health/ready returns 200 with database status ok', async () => {
+    const res = await publicGateway.inject({
+      method: 'GET',
+      url: '/health/ready',
+    });
+
+    expect(res.statusCode).toBe(200);
+    const body = JSON.parse(res.body);
+    expect(body.status).toBe('ready');
+    expect(body.database).toBe('ok');
+  });
+
+  it('rejects chat completions with 400 when model is explicitly disabled (P1 #8)', async () => {
+    // Disable model in test project
+    const modelConfig = await prisma.modelConfig.create({
+      data: {
+        projectId: testProjectId,
+        name: 'Disabled Test Model',
+        modelId: 'disabled-test-model',
+        provider: 'openai',
+        isEnabled: false,
+        inputPricePerMillion: 2.5,
+        outputPricePerMillion: 10.0,
+      },
+    });
+
+    try {
+      const res = await publicGateway.inject({
+        method: 'POST',
+        url: '/v1/chat/completions',
+        headers: {
+          authorization: `Bearer ${testKey}`,
+          'content-type': 'application/json',
+        },
+        payload: {
+          model: 'disabled-test-model',
+          messages: [{ role: 'user', content: 'hello' }],
+        },
+      });
+
+      expect(res.statusCode).toBe(400);
+      const body = JSON.parse(res.body);
+      expect(body.error.type).toBe('unsupported_model');
+      expect(body.error.message).toContain("disabled for this project");
+    } finally {
+      await prisma.modelConfig.delete({ where: { id: modelConfig.id } });
+    }
+  });
+
+  it('GET /api/projects/:id omits encrypted API keys (P1 #13)', async () => {
+    const res = await managementServer.inject({
+      method: 'GET',
+      url: `/api/projects/${testProjectId}`,
+      headers: {
+        'x-management-secret': testManagementSecret,
+      },
+    });
+
+    expect(res.statusCode).toBe(200);
+    const proj = JSON.parse(res.body);
+    expect(proj.id).toBe(testProjectId);
+    if (proj.providerConnections && proj.providerConnections.length > 0) {
+      for (const conn of proj.providerConnections) {
+        expect(conn.apiKeyEncrypted).toBeUndefined();
+      }
+    }
+  });
+
+  it('rejects chat completions with 403 when API key lacks chat:completions permission (P1 #17)', async () => {
+    const { rawKey, keyPrefix, keyHash } = generateGatewayApiKey('test');
+    const restrictedKey = await prisma.gatewayApiKey.create({
+      data: {
+        name: 'Restricted Key Without Chat',
+        keyPrefix,
+        keyHash,
+        projectId: testProjectId,
+        environmentId: testEnvId,
+        permissions: ['models:read'], // Lacks 'chat:completions'
+      },
+    });
+
+    try {
+      const res = await publicGateway.inject({
+        method: 'POST',
+        url: '/v1/chat/completions',
+        headers: {
+          authorization: `Bearer ${rawKey}`,
+          'content-type': 'application/json',
+        },
+        payload: {
+          model: 'gpt-4o',
+          messages: [{ role: 'user', content: 'hello' }],
+        },
+      });
+
+      expect(res.statusCode).toBe(403);
+      const body = JSON.parse(res.body);
+      expect(body.error.message).toContain('chat:completions');
+    } finally {
+      await prisma.gatewayApiKey.delete({ where: { id: restrictedKey.id } });
+    }
+  });
+});
+

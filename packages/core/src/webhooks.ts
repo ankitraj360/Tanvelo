@@ -26,6 +26,10 @@ export async function validateWebhookUrl(rawUrl: string): Promise<{ valid: boole
       return { valid: false, reason: 'Webhook URL must use HTTP or HTTPS protocol.' };
     }
 
+    if (parsed.username || parsed.password) {
+      return { valid: false, reason: 'Webhook URL must not contain embedded user credentials.' };
+    }
+
     const hostname = parsed.hostname;
 
     // Check banned hostnames
@@ -62,23 +66,41 @@ export async function validateWebhookUrl(rawUrl: string): Promise<{ valid: boole
 /**
  * Checks if an IP is private, loopback, link-local, or cloud metadata
  */
-function isPrivateOrRestrictedIp(ip: string): boolean {
+function isPrivateOrRestrictedIp(rawIp: string): boolean {
+  let ip = rawIp.trim().toLowerCase();
+
+  // IPv4-mapped IPv6 address handling (e.g. ::ffff:127.0.0.1)
+  if (ip.startsWith('::ffff:')) {
+    ip = ip.slice(7);
+  }
+
   // IPv4 loopback (127.0.0.0/8)
   if (ip.startsWith('127.')) return true;
-  // IPv4 Private networks
+  // IPv4 Private networks (RFC1918)
   if (ip.startsWith('10.')) return true;
   if (/^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(ip)) return true;
   if (ip.startsWith('192.168.')) return true;
+  // CGNAT (100.64.0.0/10)
+  if (/^100\.(6[4-9]|[7-9][0-9]|1[0-1][0-9]|12[0-7])\./.test(ip)) return true;
+  // Benchmarking (198.18.0.0/15)
+  if (/^198\.(18|19)\./.test(ip)) return true;
+  // Documentation / TEST-NET (192.0.2.0/24, 198.51.100.0/24, 203.0.113.0/24)
+  if (ip.startsWith('192.0.2.') || ip.startsWith('198.51.100.') || ip.startsWith('203.0.113.')) return true;
+  // Multicast & Future use (224.0.0.0/4)
+  if (/^(22[4-9]|23[0-9]|24[0-9]|25[0-5])\./.test(ip)) return true;
   // Link-local & cloud metadata (169.254.0.0/16)
   if (ip.startsWith('169.254.')) return true;
   // IPv4 broadcast / zero
   if (ip === '0.0.0.0' || ip === '255.255.255.255') return true;
-  // IPv6 loopback
+
+  // IPv6 loopback and unspecified
   if (ip === '::1' || ip === '::') return true;
   // IPv6 link-local (fe80::/10)
-  if (ip.toLowerCase().startsWith('fe80:')) return true;
+  if (ip.startsWith('fe80:')) return true;
   // IPv6 unique local (fc00::/7)
-  if (ip.toLowerCase().startsWith('fc00:') || ip.toLowerCase().startsWith('fd')) return true;
+  if (ip.startsWith('fc00:') || ip.startsWith('fd')) return true;
+  // IPv6 documentation (2001:db8::/32)
+  if (ip.startsWith('2001:db8:') || ip.startsWith('2001:0db8:')) return true;
 
   return false;
 }
@@ -119,6 +141,7 @@ export async function dispatchWebhook(
       },
       body: payloadString,
       signal: controller.signal,
+      redirect: 'error',
     });
 
     clearTimeout(timeoutId);

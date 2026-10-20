@@ -7,14 +7,38 @@ const TAG_LENGTH = 16;
 /**
  * Returns a 32-byte Buffer from ENCRYPTION_SECRET or falls back to a deterministic 32-byte key in dev
  */
+export function validateEncryptionConfig(
+  secret = process.env.ENCRYPTION_SECRET,
+  isProd = process.env.NODE_ENV === 'production'
+): void {
+  if (isProd) {
+    if (!secret || secret.trim() === '') {
+      throw new Error(
+        'FATAL SECURITY CONFIGURATION: ENCRYPTION_SECRET environment variable is missing in production.'
+      );
+    }
+    if (secret.length !== 64 || !/^[0-9a-fA-F]+$/.test(secret)) {
+      throw new Error(
+        'FATAL SECURITY CONFIGURATION: ENCRYPTION_SECRET must be a 64-character hex string (32 bytes) in production.'
+      );
+    }
+  }
+}
+
 function getEncryptionKey(): Buffer {
   const secret = process.env.ENCRYPTION_SECRET;
   if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('ENCRYPTION_SECRET is required in production.');
+    }
     // Fallback key for development if not provided
     return crypto.scryptSync('tanvelo-default-development-secret-key', 'tanvelo-salt', 32);
   }
-  if (secret.length === 64) {
+  if (secret.length === 64 && /^[0-9a-fA-F]+$/.test(secret)) {
     return Buffer.from(secret, 'hex');
+  }
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('ENCRYPTION_SECRET must be a 64-character hex string (32 bytes) in production.');
   }
   return crypto.scryptSync(secret, 'tanvelo-salt', 32);
 }

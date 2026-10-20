@@ -250,9 +250,12 @@ function verifyTanveloWebhook(payloadRaw, signatureHeader, secret) {
               <div><span className="text-blue-600 font-semibold">X-Tanvelo-Request-Id</span>: req_c82fa0...</div>
               <div><span className="text-blue-600 font-semibold">X-Tanvelo-Provider</span>: openai (or anthropic / gemini / deepseek)</div>
               <div><span className="text-blue-600 font-semibold">X-Tanvelo-Model</span>: gpt-4o</div>
+              <div><span className="text-blue-600 font-semibold">X-Tanvelo-Latency-Ms</span>: 142</div>
+              <div><span className="text-blue-600 font-semibold">X-Tanvelo-Cost-Usd</span>: 0.000350 (non-streaming with pricing)</div>
               <div><span className="text-blue-600 font-semibold">X-RateLimit-Limit</span>: 60</div>
               <div><span className="text-blue-600 font-semibold">X-RateLimit-Remaining</span>: 59</div>
-              <div><span className="text-blue-600 font-semibold">X-RateLimit-Reset</span>: 45</div>
+              <div><span className="text-blue-600 font-semibold">X-RateLimit-Reset</span>: 45 (seconds remaining)</div>
+              <div><span className="text-blue-600 font-semibold">Retry-After</span>: 45 (emitted on HTTP 429)</div>
             </div>
           </div>
         </CardContent>

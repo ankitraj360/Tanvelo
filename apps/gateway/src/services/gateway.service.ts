@@ -25,6 +25,7 @@ export interface AuthenticatedContext {
   projectName: string;
   environmentName: string;
   keyPrefix: string;
+  permissions: string[];
 }
 
 export class GatewayService {
@@ -75,6 +76,12 @@ export class GatewayService {
       })
       .catch(() => {});
 
+    const permissions = Array.isArray(apiKey.permissions)
+      ? (apiKey.permissions as string[])
+      : typeof apiKey.permissions === 'string'
+      ? JSON.parse(apiKey.permissions)
+      : ['chat:completions'];
+
     return {
       apiKeyId: apiKey.id,
       projectId: apiKey.projectId,
@@ -82,6 +89,7 @@ export class GatewayService {
       projectName: apiKey.project.name,
       environmentName: apiKey.environment.name,
       keyPrefix: apiKey.keyPrefix,
+      permissions,
     };
   }
 
@@ -154,12 +162,17 @@ export class GatewayService {
    * Checks if project budget hard limit is exceeded and performs period reset if due
    */
   async checkBudget(ctx: AuthenticatedContext) {
-    const budget = await prisma.budget.findFirst({
-      where: {
-        projectId: ctx.projectId,
-        OR: [{ environmentId: ctx.environmentId }, { environmentId: null }],
-      },
-    });
+    let budget = null;
+    if (ctx.environmentId) {
+      budget = await prisma.budget.findFirst({
+        where: { projectId: ctx.projectId, environmentId: ctx.environmentId },
+      });
+    }
+    if (!budget) {
+      budget = await prisma.budget.findFirst({
+        where: { projectId: ctx.projectId, environmentId: null },
+      });
+    }
 
     if (budget) {
       // Check if period reset is due
@@ -186,16 +199,17 @@ export class GatewayService {
     }
   }
 
-  private calculateNextReset(period: string): Date {
+  private calculateNextReset(period: string): Date | null {
+    if (period === 'total') return null;
     const d = new Date();
     if (period === 'daily') {
-      d.setDate(d.getDate() + 1);
-      d.setHours(0, 0, 0, 0);
+      d.setUTCDate(d.getUTCDate() + 1);
+      d.setUTCHours(0, 0, 0, 0);
     } else {
       // monthly
-      d.setMonth(d.getMonth() + 1);
-      d.setDate(1);
-      d.setHours(0, 0, 0, 0);
+      d.setUTCMonth(d.getUTCMonth() + 1);
+      d.setUTCDate(1);
+      d.setUTCHours(0, 0, 0, 0);
     }
     return d;
   }
@@ -296,8 +310,14 @@ export class GatewayService {
           estimatedCost: costCalc.estimatedCost,
           errorCategory: params.errorCategory,
           errorMessage: params.errorMessage,
-          requestBodySanitized: params.requestBody ? (sanitizePayload(params.requestBody) as any) : undefined,
-          responseBodySanitized: params.responseBody ? (sanitizePayload(params.responseBody) as any) : undefined,
+          requestBodySanitized:
+            process.env.LOG_PAYLOADS === 'true' && params.requestBody
+              ? (sanitizePayload(params.requestBody) as any)
+              : undefined,
+          responseBodySanitized:
+            process.env.LOG_PAYLOADS === 'true' && params.responseBody
+              ? (sanitizePayload(params.responseBody) as any)
+              : undefined,
           clientIp: params.clientIp,
           userAgent: params.userAgent,
           attempts: {
@@ -339,12 +359,23 @@ export class GatewayService {
 
         // Atomically update budget spend using Prisma increment
         if (costCalc.estimatedCost > 0) {
-          const budget = await prisma.budget.findFirst({
-            where: {
-              projectId: params.ctx.projectId,
-              OR: [{ environmentId: params.ctx.environmentId }, { environmentId: null }],
-            },
-          });
+          let budget = null;
+          if (params.ctx.environmentId) {
+            budget = await prisma.budget.findFirst({
+              where: {
+                projectId: params.ctx.projectId,
+                environmentId: params.ctx.environmentId,
+              },
+            });
+          }
+          if (!budget) {
+            budget = await prisma.budget.findFirst({
+              where: {
+                projectId: params.ctx.projectId,
+                environmentId: null,
+              },
+            });
+          }
 
           if (budget) {
             // Check if period reset is due
@@ -357,7 +388,10 @@ export class GatewayService {
                   resetAt: nextReset,
                 },
               });
+              budget.currentSpendUsd = 0;
             }
+
+            const previousSpend = budget.currentSpendUsd;
 
             // Atomic increment prevents race conditions under high concurrency
             const updatedBudget = await prisma.budget.update({
@@ -368,8 +402,11 @@ export class GatewayService {
             });
 
             const newSpend = updatedBudget.currentSpendUsd;
-            const percentUsed = (newSpend / budget.maxBudgetUsd) * 100;
-            if (percentUsed >= budget.warningThresholdPercent && percentUsed < 100) {
+            const warningThresholdUsd = (budget.warningThresholdPercent / 100) * budget.maxBudgetUsd;
+
+            // Suppress duplicate alerts: only trigger when crossing the threshold in this request
+            if (previousSpend < warningThresholdUsd && newSpend >= warningThresholdUsd && newSpend < budget.maxBudgetUsd) {
+              const percentUsed = (newSpend / budget.maxBudgetUsd) * 100;
               await prisma.alert.create({
                 data: {
                   projectId: params.ctx.projectId,
@@ -385,7 +422,7 @@ export class GatewayService {
                 maxBudget: budget.maxBudgetUsd,
                 percentUsed,
               });
-            } else if (newSpend >= budget.maxBudgetUsd) {
+            } else if (previousSpend < budget.maxBudgetUsd && newSpend >= budget.maxBudgetUsd) {
               await prisma.alert.create({
                 data: {
                   projectId: params.ctx.projectId,

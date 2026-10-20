@@ -11,6 +11,7 @@ import sensible from '@fastify/sensible';
 import { gatewayRoutes } from './routes/gateway.routes.js';
 import { managementRoutes } from './routes/management.routes.js';
 import { gatewayService } from './services/gateway.service.js';
+import { validateEncryptionConfig } from '@tanvelo/core';
 
 export function isLoopbackHost(host: string): boolean {
   const norm = (host || '').trim().toLowerCase();
@@ -28,26 +29,34 @@ export function validateManagementSecurity(
   isProd = process.env.NODE_ENV === 'production'
 ): { safeHost: string; warning?: string } {
   const isLoopback = isLoopbackHost(host);
-  const hasSecret = Boolean(secret && secret.trim().length >= 8);
+  const hasSecret = Boolean(secret && secret.trim().length >= 32);
 
   if (!isLoopback) {
     if (!hasSecret) {
       if (isProd) {
         throw new Error(
-          `FATAL SECURITY CONFIGURATION: MANAGEMENT_BIND_HOST '${host}' is a non-loopback network interface, but MANAGEMENT_API_SECRET is missing or under 8 characters. Refusing to start in production to prevent exposing management API unauthenticated.`
+          `FATAL SECURITY CONFIGURATION: MANAGEMENT_BIND_HOST '${host}' is a non-loopback network interface, but MANAGEMENT_API_SECRET is missing or under 32 characters. Refusing to start in production to prevent exposing management API unauthenticated.`
         );
       }
       return {
         safeHost: '127.0.0.1',
-        warning: `SECURITY WARNING: MANAGEMENT_BIND_HOST '${host}' is non-loopback without a valid MANAGEMENT_API_SECRET (minimum 8 characters). Forcing bind to 127.0.0.1 in non-production.`,
+        warning: `SECURITY WARNING: MANAGEMENT_BIND_HOST '${host}' is non-loopback without a valid MANAGEMENT_API_SECRET (minimum 32 characters). Forcing bind to 127.0.0.1 in non-production.`,
       };
     }
+  }
+
+  if (isProd && !hasSecret) {
+    throw new Error(
+      `FATAL SECURITY CONFIGURATION: In production, MANAGEMENT_API_SECRET is required (minimum 32 characters) to secure internal management endpoints.`
+    );
   }
 
   return { safeHost: host };
 }
 
 export async function createServers() {
+  validateEncryptionConfig();
+  const isUnified = process.env.UNIFIED_SERVER === 'true' || process.env.RENDER === 'true';
   const rawManagementHost = process.env.MANAGEMENT_BIND_HOST || '127.0.0.1';
   const managementSecret = process.env.MANAGEMENT_API_SECRET;
   const { safeHost, warning } = validateManagementSecurity(rawManagementHost, managementSecret);
@@ -64,8 +73,8 @@ export async function createServers() {
 
   await publicGateway.register(cors, {
     origin: true,
-    methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Management-Secret', 'X-Tanvelo-Admin-Token'],
   });
   await publicGateway.register(sensible);
   await publicGateway.register(gatewayRoutes);
@@ -74,16 +83,42 @@ export async function createServers() {
     await gatewayService.close();
   });
 
-  // Block any attempt to reach management routes on the public gateway
-  publicGateway.all('/api/*', async (request, reply) => {
-    return reply.status(403).send({
-      error: {
-        message: 'Management API is not exposed on the public gateway interface. Access via the private management listener.',
-        type: 'access_denied',
-        code: 'MANAGEMENT_PORT_RESTRICTED',
-      },
+  if (isUnified) {
+    if (managementSecret) {
+      publicGateway.addHook('onRequest', async (request, reply) => {
+        if (request.url.startsWith('/api') && request.method !== 'OPTIONS') {
+          const headerSecret =
+            request.headers['x-management-secret'] ||
+            request.headers['x-tanvelo-admin-token'] ||
+            (request.headers['authorization']?.startsWith('Bearer ')
+              ? request.headers['authorization'].slice(7)
+              : null);
+
+          if (headerSecret !== managementSecret) {
+            return reply.status(401).send({
+              error: {
+                message: 'Unauthorized: Invalid management secret provided.',
+                type: 'management_auth_failed',
+                code: 'UNAUTHORIZED_MANAGEMENT_ACCESS',
+              },
+            });
+          }
+        }
+      });
+    }
+    await publicGateway.register(managementRoutes);
+  } else {
+    // Block any attempt to reach management routes on the public gateway
+    publicGateway.all('/api/*', async (request, reply) => {
+      return reply.status(403).send({
+        error: {
+          message: 'Management API is not exposed on the public gateway interface. Access via the private management listener.',
+          type: 'access_denied',
+          code: 'MANAGEMENT_PORT_RESTRICTED',
+        },
+      });
     });
-  });
+  }
 
   // 2. Private Management Server (isolated to safeHost / MANAGEMENT_BIND_HOST)
   const managementServer = Fastify({
