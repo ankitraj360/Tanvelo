@@ -7,6 +7,21 @@ import { prisma } from '@tanvelo/db';
 const gatewayService = new GatewayService();
 
 export async function gatewayRoutes(fastify: FastifyInstance) {
+  // Root welcome / status endpoint
+  fastify.get('/', async (_request: FastifyRequest, reply: FastifyReply) => {
+    return reply.status(200).send({
+      service: 'Tanvelo LLM Federation Gateway',
+      status: 'operational',
+      version: '1.0.0',
+      endpoints: {
+        health: '/health',
+        chatCompletions: '/v1/chat/completions',
+        models: '/v1/models',
+        documentation: 'https://www.tanvelo.in/docs',
+      },
+    });
+  });
+
   // Liveness check (process is alive)
   fastify.get('/health/live', async (_request: FastifyRequest, reply: FastifyReply) => {
     return reply.status(200).send({ status: 'alive' });
