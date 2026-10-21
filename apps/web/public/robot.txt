@@ -1,0 +1,31 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+Allow: /docs
+Allow: /privacy
+Allow: /terms
+Allow: /sign-in
+Allow: /sign-up
+
+# Disallow internal and protected console dashboard routes
+Disallow: /api/
+Disallow: /overview
+Disallow: /analytics
+Disallow: /requests
+Disallow: /requests/
+Disallow: /budgets
+Disallow: /models
+Disallow: /routing
+Disallow: /providers
+Disallow: /rate-limits
+Disallow: /errors
+Disallow: /webhooks
+Disallow: /api-keys
+Disallow: /projects
+Disallow: /projects/
+Disallow: /settings
+Disallow: /_next/
+
+# Host & Sitemap specification
+Host: https://tanvelo.in
+Sitemap: https://tanvelo.in/sitemap.xml

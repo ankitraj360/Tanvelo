@@ -4,6 +4,7 @@ import './globals.css';
 import { ShellWrapper } from '@/components/layout/ShellWrapper';
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://tanvelo.in'),
   title: 'Tanvelo — One gateway for every LLM',
   description: 'Production-ready LLM API Gateway with intelligent routing, fallbacks, rate-limiting, and cost tracking.',
   icons: {
