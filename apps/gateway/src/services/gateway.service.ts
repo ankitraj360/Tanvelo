@@ -111,14 +111,12 @@ export class GatewayService {
     });
 
     // Rank policies: key-specific (rank 3) > environment-specific (rank 2) > project-wide (rank 1)
-    const policy = candidatePolicies.sort((a, b) => {
-      const getRank = (p: typeof a) => {
-        if (p.keyId === ctx.apiKeyId) return 3;
-        if (p.environmentId === ctx.environmentId && !p.keyId) return 2;
-        return 1;
-      };
-      return getRank(b) - getRank(a);
-    })[0];
+    const getRank = (p: (typeof candidatePolicies)[number]) => {
+      if (p.keyId === ctx.apiKeyId) return 3;
+      if (p.environmentId === ctx.environmentId && !p.keyId) return 2;
+      return 1;
+    };
+    const policy = candidatePolicies.sort((a, b) => getRank(b) - getRank(a))[0];
 
     if (policy) {
       const result = await rateLimiter.checkRateLimit(`key:${ctx.apiKeyId}`, {
