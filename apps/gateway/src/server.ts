@@ -28,9 +28,14 @@ export function isLoopbackHost(host: string): boolean {
   );
 }
 
+export function cleanSecret(secret?: unknown): string {
+  if (typeof secret !== 'string') return '';
+  return secret.trim().replace(/^["']|["']$/g, '').trim();
+}
+
 export function hasValidManagementSecret(secret?: string | null): boolean {
   if (!secret) return false;
-  return secret.trim().length >= 32;
+  return cleanSecret(secret).length >= 32;
 }
 
 export function validateManagementSecurity(
@@ -62,7 +67,7 @@ export async function createServers() {
   validateEncryptionConfig();
   const isUnified = process.env.UNIFIED_SERVER === 'true' || process.env.RENDER === 'true';
   const rawManagementHost = process.env.MANAGEMENT_BIND_HOST || '127.0.0.1';
-  const managementSecret = process.env.MANAGEMENT_API_SECRET?.trim();
+  const managementSecret = cleanSecret(process.env.MANAGEMENT_API_SECRET);
   const hasSecret = hasValidManagementSecret(managementSecret);
   const { safeHost, warning } = validateManagementSecurity(rawManagementHost, managementSecret);
 
@@ -101,14 +106,16 @@ export async function createServers() {
         });
       }
 
-      const headerSecret =
+      const rawHeaderSecret =
         request.headers['x-management-secret'] ||
         request.headers['x-tanvelo-admin-token'] ||
-        (request.headers['authorization']?.startsWith('Bearer ')
+        (typeof request.headers['authorization'] === 'string' && request.headers['authorization'].startsWith('Bearer ')
           ? request.headers['authorization'].slice(7)
           : null);
 
-      if (headerSecret !== managementSecret) {
+      const headerSecret = cleanSecret(rawHeaderSecret);
+
+      if (!headerSecret || headerSecret !== managementSecret) {
         return reply.status(401).send({
           error: {
             message: 'Unauthorized: Invalid management secret provided.',

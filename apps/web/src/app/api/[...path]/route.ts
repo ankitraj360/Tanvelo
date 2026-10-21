@@ -7,8 +7,16 @@ const GATEWAY_URL =
     ? 'https://tanvelo-backend-zgyc.onrender.com'
     : 'http://127.0.0.1:4001');
 
-const MANAGEMENT_SECRET =
-  process.env.MANAGEMENT_API_SECRET || 'c8e6f1a4d9b2e7c3a0f5d8b1e4c7a2f9c8e6f1a4d9b2e7c3a0f5d8b1e4c7a2f9';
+const FALLBACK_MANAGEMENT_SECRET = 'c8e6f1a4d9b2e7c3a0f5d8b1e4c7a2f9c8e6f1a4d9b2e7c3a0f5d8b1e4c7a2f9';
+
+function resolveManagementSecret(): string {
+  const envVal = process.env.MANAGEMENT_API_SECRET?.trim().replace(/^["']|["']$/g, '');
+  // Ignore encrypted Vercel blobs or too-short secrets, safely fallback to canonical secret
+  if (envVal && !envVal.startsWith('eyJ') && envVal.length >= 32) {
+    return envVal;
+  }
+  return FALLBACK_MANAGEMENT_SECRET;
+}
 
 async function handleProxy(req: NextRequest, { params }: { params: { path: string[] } }) {
   // 1. Verify Clerk user session
@@ -31,14 +39,14 @@ async function handleProxy(req: NextRequest, { params }: { params: { path: strin
   const search = req.nextUrl.search;
   const targetUrl = `${GATEWAY_URL}/api/${path}${search}`;
 
+  const secret = resolveManagementSecret();
+
   const headers: Record<string, string> = {
     'Content-Type': req.headers.get('content-type') || 'application/json',
     Accept: req.headers.get('accept') || 'application/json',
+    'x-management-secret': secret,
+    'x-tanvelo-admin-token': secret,
   };
-
-  if (MANAGEMENT_SECRET) {
-    headers['x-management-secret'] = MANAGEMENT_SECRET;
-  }
 
   try {
     const fetchOptions: RequestInit = {

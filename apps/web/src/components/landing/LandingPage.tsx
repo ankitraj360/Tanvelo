@@ -337,14 +337,9 @@ for chunk in stream:
 
             {/* Subtle Overlay Chip */}
             <div className="absolute bottom-3 left-3 right-3 sm:right-auto sm:left-4 sm:bottom-4 bg-white/95 border border-slate-200/90 rounded-xl p-2.5 sm:p-3 shadow-md backdrop-blur-sm pointer-events-none font-mono text-[10px] sm:text-xs">
-              <div className="text-slate-800 flex items-center gap-1 sm:gap-1.5 font-medium flex-wrap">
-                <span>gpt-4o</span>
-                <span className="text-sky-500">→</span>
-                <span>claude-3-5</span>
-                <span className="text-sky-500">→</span>
-                <span>deepseek-v3</span>
-                <span className="text-sky-500">→</span>
-                <span>gemini-2</span>
+              <div className="text-slate-800 flex items-center gap-2 font-medium">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span>Multi-provider in one API</span>
               </div>
             </div>
           </div>
