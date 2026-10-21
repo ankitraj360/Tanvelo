@@ -140,8 +140,12 @@ export default function PrivacyPolicyPage() {
             </p>
             <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1 text-xs">
               <p className="font-semibold text-slate-900">Tanvelo Trust & Safety Office</p>
-              <p className="text-slate-600">Email: security@tanvelo.com</p>
-              <p className="text-slate-600">PGP Key ID: 0x948F2BE1A</p>
+              <p className="text-slate-600">
+                Email:{' '}
+                <a href="mailto:tanvelo@zohomail.in" className="text-sky-600 hover:text-sky-700 hover:underline">
+                  tanvelo@zohomail.in
+                </a>
+              </p>
             </div>
           </section>
         </div>
