@@ -61,37 +61,24 @@ const PROVIDERS = [
 ];
 
 export function LandingPage() {
-  const [activeTab, setActiveTab] = useState<'python' | 'typescript' | 'curl'>('python');
+  const [activeTab, setActiveTab] = useState<'typescript' | 'python' | 'curl'>('typescript');
   const [copied, setCopied] = useState(false);
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const codeSnippets = {
-    python: `from openai import OpenAI
+    typescript: `// npm install @tanvelo/sdk
+import { Tanvelo } from "@tanvelo/sdk";
 
-client = OpenAI(
-    base_url="https://api.tanvelo.com/v1",
-    api_key="tv_live_948f2b...",
-)
-
-response = client.chat.completions.create(
-    model="gpt-4o",
-    messages=[{"role": "user", "content": "Ship to production."}],
-    stream=True,
-)
-
-for chunk in response:
-    print(chunk.choices[0].delta.content or "", end="")`,
-    typescript: `import OpenAI from "openai";
-
-const client = new OpenAI({
-  baseURL: "https://api.tanvelo.com/v1",
-  apiKey: process.env.TANVELO_API_KEY,
+const tanvelo = new Tanvelo({
+  apiKey: process.env.TANVELO_API_KEY, // or "tv_live_..."
 });
 
-const stream = await client.chat.completions.create({
+// Call any model with automated multi-provider fallback failover
+const stream = await tanvelo.chat.completions.create({
   model: "gpt-4o",
+  fallbacks: ["claude-3-5-sonnet", "gemini-1.5-pro", "deepseek-r1"],
   messages: [{ role: "user", content: "Ship to production." }],
   stream: true,
 });
@@ -99,11 +86,29 @@ const stream = await client.chat.completions.create({
 for await (const chunk of stream) {
   process.stdout.write(chunk.choices[0]?.delta?.content || "");
 }`,
-    curl: `curl https://api.tanvelo.com/v1/chat/completions \\
+    python: `# pip install tanvelo
+from tanvelo import Tanvelo
+
+tanvelo = Tanvelo(
+    api_key="tv_live_948f2b...", # or TANVELO_API_KEY env var
+)
+
+# Route requests with sub-180ms intelligent provider fallbacks
+stream = tanvelo.chat.completions.create(
+    model="gpt-4o",
+    fallbacks=["claude-3-5-sonnet", "gemini-1.5-pro", "deepseek-r1"],
+    messages=[{"role": "user", "content": "Ship to production."}],
+    stream=True,
+)
+
+for chunk in stream:
+    print(chunk.delta, end="", flush=True)`,
+    curl: `curl https://api.tanvelo.in/v1/chat/completions \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $TANVELO_API_KEY" \\
   -d '{
     "model": "gpt-4o",
+    "fallbacks": ["claude-3-5-sonnet", "gemini-1.5-pro"],
     "messages": [{"role": "user", "content": "Ship to production."}],
     "stream": true
   }'`,
@@ -126,7 +131,7 @@ for await (const chunk of stream) {
     },
     {
       q: 'Do I have to rewrite my application code?',
-      a: 'No. Keep your existing OpenAI client. Set base_url="https://api.tanvelo.com/v1" and provide your Tanvelo key.',
+      a: 'No. You can use our official SDKs (@tanvelo/sdk for TypeScript or tanvelo for Python) with native fallback support, or point any OpenAI-compatible client to Tanvelo by updating the base URL.',
     },
     {
       q: 'What happens when OpenAI rate-limits (429)?',
@@ -489,30 +494,34 @@ for await (const chunk of stream) {
             From zero to first request in 60 seconds.
           </h2>
           <p className="text-slate-600 text-base md:text-lg max-w-2xl mb-8">
-            Keep your existing OpenAI SDK. Point the base URL at Tanvelo.
+            Official Tanvelo SDK for TypeScript &amp; Python. Intelligent multi-provider routing, instant fallback failover, and zero config.
           </p>
 
           <div className="rounded-2xl border border-slate-800 bg-slate-950 text-slate-100 overflow-hidden shadow-xl max-w-3xl">
             <div className="flex items-center justify-between px-4 py-3 bg-slate-900 border-b border-slate-800">
-              <div className="flex items-center gap-2">
-                {(['python', 'typescript', 'curl'] as const).map((lang) => (
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                {(['typescript', 'python', 'curl'] as const).map((lang) => (
                   <button
                     key={lang}
                     onClick={() => setActiveTab(lang)}
-                    className={`px-3 py-1 rounded text-xs font-mono capitalize transition-colors ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-colors ${
                       activeTab === lang
-                        ? 'bg-slate-800 text-white font-medium'
+                        ? 'bg-slate-800 text-white font-medium border border-slate-700 shadow-xs'
                         : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
-                    {lang}
+                    {lang === 'typescript'
+                      ? 'TypeScript (@tanvelo/sdk)'
+                      : lang === 'python'
+                      ? 'Python (tanvelo)'
+                      : 'cURL / REST'}
                   </button>
                 ))}
               </div>
 
               <button
                 onClick={handleCopy}
-                className="flex items-center gap-1.5 text-xs font-mono text-slate-400 hover:text-white transition-colors px-2 py-1"
+                className="flex items-center gap-1.5 text-xs font-mono text-slate-400 hover:text-white transition-colors px-2.5 py-1.5 rounded-lg hover:bg-slate-800"
               >
                 {copied ? (
                   <>
