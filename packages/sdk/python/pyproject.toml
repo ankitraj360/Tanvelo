@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tanvelo"
+version = "1.0.0"
+description = "Official Python SDK for Tanvelo LLM Federation Gateway"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [
+    { name = "Tanvelo", email = "support@tanvelo.in" }
+]
+keywords = ["tanvelo", "llm", "gateway", "ai", "openai", "anthropic", "gemini"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://www.tanvelo.in"
+Documentation = "https://www.tanvelo.in/docs"
+Repository = "https://github.com/ankitraj360/Tanvelo"
+
+[tool.setuptools]
+py-modules = ["tanvelo"]

@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 
-const GATEWAY_URL = process.env.GATEWAY_INTERNAL_URL || 'http://127.0.0.1:4001';
-const MANAGEMENT_SECRET = process.env.MANAGEMENT_API_SECRET || '';
+const GATEWAY_URL =
+  process.env.GATEWAY_INTERNAL_URL ||
+  (process.env.NODE_ENV === 'production'
+    ? 'https://tanvelo-backend-zgyc.onrender.com'
+    : 'http://127.0.0.1:4001');
+
+const MANAGEMENT_SECRET =
+  process.env.MANAGEMENT_API_SECRET || 'c8e6f1a4d9b2e7c3a0f5d8b1e4c7a2f9c8e6f1a4d9b2e7c3a0f5d8b1e4c7a2f9';
 
 async function handleProxy(req: NextRequest, { params }: { params: { path: string[] } }) {
   // 1. Verify Clerk user session

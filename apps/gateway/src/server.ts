@@ -1,9 +1,14 @@
 import path from 'path';
 import dotenv from 'dotenv';
 
-// Load root .env
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+// Load root .env first, then package .env without letting empty strings shadow root secrets
 dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env'), override: false });
+
+if (!process.env.MANAGEMENT_API_SECRET || process.env.MANAGEMENT_API_SECRET.trim() === '') {
+  delete process.env.MANAGEMENT_API_SECRET;
+  dotenv.config({ path: path.resolve(process.cwd(), '../../.env'), override: true });
+}
 
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
@@ -23,32 +28,31 @@ export function isLoopbackHost(host: string): boolean {
   );
 }
 
+export function hasValidManagementSecret(secret?: string | null): boolean {
+  if (!secret) return false;
+  return secret.trim().length >= 32;
+}
+
 export function validateManagementSecurity(
   host: string,
   secret?: string,
   isProd = process.env.NODE_ENV === 'production'
 ): { safeHost: string; warning?: string } {
   const isLoopback = isLoopbackHost(host);
-  const hasSecret = Boolean(secret && secret.trim().length >= 32);
+  const isValid = hasValidManagementSecret(secret);
 
-  if (!isLoopback) {
-    if (!hasSecret) {
-      if (isProd) {
-        throw new Error(
-          `FATAL SECURITY CONFIGURATION: MANAGEMENT_BIND_HOST '${host}' is a non-loopback network interface, but MANAGEMENT_API_SECRET is missing or under 32 characters. Refusing to start in production to prevent exposing management API unauthenticated.`
-        );
-      }
+  if (!isValid) {
+    if (isProd) {
+      throw new Error(
+        `FATAL SECURITY CONFIGURATION: In production, MANAGEMENT_API_SECRET is required (minimum 32 characters) to secure internal management endpoints.`
+      );
+    }
+    if (!isLoopback) {
       return {
         safeHost: '127.0.0.1',
-        warning: `SECURITY WARNING: MANAGEMENT_BIND_HOST '${host}' is non-loopback without a valid MANAGEMENT_API_SECRET (minimum 32 characters). Forcing bind to 127.0.0.1 in non-production.`,
+        warning: `SECURITY WARNING: MANAGEMENT_BIND_HOST '${host}' is non-loopback without a valid MANAGEMENT_API_SECRET (minimum 32 characters). Forcing bind to 127.0.0.1.`,
       };
     }
-  }
-
-  if (isProd && !hasSecret) {
-    throw new Error(
-      `FATAL SECURITY CONFIGURATION: In production, MANAGEMENT_API_SECRET is required (minimum 32 characters) to secure internal management endpoints.`
-    );
   }
 
   return { safeHost: host };
@@ -58,7 +62,8 @@ export async function createServers() {
   validateEncryptionConfig();
   const isUnified = process.env.UNIFIED_SERVER === 'true' || process.env.RENDER === 'true';
   const rawManagementHost = process.env.MANAGEMENT_BIND_HOST || '127.0.0.1';
-  const managementSecret = process.env.MANAGEMENT_API_SECRET;
+  const managementSecret = process.env.MANAGEMENT_API_SECRET?.trim();
+  const hasSecret = hasValidManagementSecret(managementSecret);
   const { safeHost, warning } = validateManagementSecurity(rawManagementHost, managementSecret);
 
   if (warning && process.env.NODE_ENV !== 'test') {
@@ -83,29 +88,40 @@ export async function createServers() {
     await gatewayService.close();
   });
 
-  if (isUnified) {
-    if (managementSecret) {
-      publicGateway.addHook('onRequest', async (request, reply) => {
-        if (request.url.startsWith('/api') && request.method !== 'OPTIONS') {
-          const headerSecret =
-            request.headers['x-management-secret'] ||
-            request.headers['x-tanvelo-admin-token'] ||
-            (request.headers['authorization']?.startsWith('Bearer ')
-              ? request.headers['authorization'].slice(7)
-              : null);
+  // Common management authentication hook
+  const createManagementAuthHook = () => async (request: any, reply: any) => {
+    if (request.url.startsWith('/api') && request.method !== 'OPTIONS') {
+      if (!hasSecret) {
+        return reply.status(503).send({
+          error: {
+            message: 'Management API is unavailable: MANAGEMENT_API_SECRET is not configured or is under 32 characters.',
+            type: 'management_not_configured',
+            code: 'MANAGEMENT_SECRET_REQUIRED',
+          },
+        });
+      }
 
-          if (headerSecret !== managementSecret) {
-            return reply.status(401).send({
-              error: {
-                message: 'Unauthorized: Invalid management secret provided.',
-                type: 'management_auth_failed',
-                code: 'UNAUTHORIZED_MANAGEMENT_ACCESS',
-              },
-            });
-          }
-        }
-      });
+      const headerSecret =
+        request.headers['x-management-secret'] ||
+        request.headers['x-tanvelo-admin-token'] ||
+        (request.headers['authorization']?.startsWith('Bearer ')
+          ? request.headers['authorization'].slice(7)
+          : null);
+
+      if (headerSecret !== managementSecret) {
+        return reply.status(401).send({
+          error: {
+            message: 'Unauthorized: Invalid management secret provided.',
+            type: 'management_auth_failed',
+            code: 'UNAUTHORIZED_MANAGEMENT_ACCESS',
+          },
+        });
+      }
     }
+  };
+
+  if (isUnified) {
+    publicGateway.addHook('onRequest', createManagementAuthHook());
     await publicGateway.register(managementRoutes);
   } else {
     // Block any attempt to reach management routes on the public gateway
@@ -133,29 +149,8 @@ export async function createServers() {
   });
   await managementServer.register(sensible);
 
-  // Management API secret access control
-  if (managementSecret) {
-    managementServer.addHook('onRequest', async (request, reply) => {
-      if (request.url.startsWith('/api') && request.method !== 'OPTIONS') {
-        const headerSecret =
-          request.headers['x-management-secret'] ||
-          request.headers['x-tanvelo-admin-token'] ||
-          (request.headers['authorization']?.startsWith('Bearer ')
-            ? request.headers['authorization'].slice(7)
-            : null);
-
-        if (headerSecret !== managementSecret) {
-          return reply.status(401).send({
-            error: {
-              message: 'Unauthorized: Invalid management secret provided.',
-              type: 'management_auth_failed',
-              code: 'UNAUTHORIZED_MANAGEMENT_ACCESS',
-            },
-          });
-        }
-      }
-    });
-  }
+  // Always enforce management secret authentication on the management listener
+  managementServer.addHook('onRequest', createManagementAuthHook());
 
   await managementServer.register(managementRoutes);
 
@@ -163,41 +158,48 @@ export async function createServers() {
   managementServer.get('/health', async (request, reply) => {
     return reply.send({
       status: 'healthy',
-      service: 'tanvelo-management-api',
-      bindHost: safeHost,
-      authEnforced: Boolean(managementSecret),
+      service: 'tanvelo-management-control-plane',
+      authenticated: hasSecret,
+      timestamp: new Date().toISOString(),
     });
   });
 
-  return { publicGateway, managementServer, safeHost };
+  return {
+    publicGateway,
+    managementServer,
+    safeManagementHost: safeHost,
+  };
 }
 
-async function main() {
+export async function startGateway() {
+  const { publicGateway, managementServer, safeManagementHost } = await createServers();
+
   const isUnified = process.env.UNIFIED_SERVER === 'true' || process.env.RENDER === 'true';
-  const { publicGateway, managementServer, safeHost } = await createServers();
-
-  const gatewayPort = parseInt(process.env.GATEWAY_PORT || process.env.PORT || '4000', 10);
-  const gatewayHost = process.env.GATEWAY_HOST || '0.0.0.0';
-
+  const publicPort = parseInt(process.env.PORT || process.env.GATEWAY_PORT || '4000', 10);
+  const publicHost = process.env.GATEWAY_HOST || '0.0.0.0';
   const managementPort = parseInt(process.env.MANAGEMENT_PORT || '4001', 10);
 
-  try {
-    await publicGateway.listen({ port: gatewayPort, host: gatewayHost });
-    console.log(`🚀 Tanvelo LLM Gateway (Public) running on http://${gatewayHost}:${gatewayPort}`);
-    console.log(`📡 Unified Endpoint: POST http://${gatewayHost}:${gatewayPort}/v1/chat/completions`);
+  if (isUnified) {
+    await publicGateway.listen({ port: publicPort, host: publicHost });
+    console.log(`[Tanvelo Unified Server] Live on http://${publicHost}:${publicPort} (Public Gateway & Authenticated Management)`);
+  } else {
+    await publicGateway.listen({ port: publicPort, host: publicHost });
+    console.log(`[Tanvelo Gateway] Public proxy live on http://${publicHost}:${publicPort}`);
 
-    if (!isUnified) {
-      await managementServer.listen({ port: managementPort, host: safeHost });
-      console.log(`🔒 Tanvelo Management API (Private) running on http://${safeHost}:${managementPort}/api/...`);
-    } else {
-      console.log(`⚡ Cloud Unified Server active: Gateway & Management routes running on port ${gatewayPort}`);
-    }
-  } catch (err) {
-    console.error('Failed to start servers:', err);
-    process.exit(1);
+    await managementServer.listen({ port: managementPort, host: safeManagementHost });
+    console.log(`[Tanvelo Management] Private API bound to http://${safeManagementHost}:${managementPort}`);
   }
+
+  return { publicGateway, managementServer };
 }
 
-if (process.env.NODE_ENV !== 'test') {
-  main();
+// Auto-start if executed directly
+if (process.env.NODE_ENV !== 'test' && !process.env.VITEST) {
+  const isDirectRun = process.argv[1]?.includes('server.ts') || process.argv[1]?.includes('server.js');
+  if (isDirectRun) {
+    startGateway().catch((err) => {
+      console.error('Fatal gateway start failure:', err);
+      process.exit(1);
+    });
+  }
 }

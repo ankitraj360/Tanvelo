@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import {
-  ShieldCheck,
   CheckCircle2,
   AlertTriangle,
   Key,
@@ -17,22 +16,15 @@ import {
   Plus,
   Trash2,
   Sparkles,
-  Server,
   Zap,
   Search,
   Copy,
   Check,
   Edit3,
   Terminal,
-  ExternalLink,
   Cpu,
-  Layers,
-  ArrowRight,
-  Shield,
-  Activity,
-  HardDrive,
 } from 'lucide-react';
-import { formatLatency } from '@/lib/utils';
+import { formatLatency, extractErrorMessage } from '@/lib/utils';
 
 interface ProviderConnection {
   id: string;
@@ -60,7 +52,7 @@ interface ProviderPreset {
 const PRESETS: ProviderPreset[] = [
   {
     id: 'openrouter',
-    name: 'OpenRouter Gateway',
+    name: 'OpenRouter',
     providerName: 'openrouter',
     baseUrl: 'https://openrouter.ai/api/v1',
     placeholderKey: 'sk-or-v1-...',
@@ -74,17 +66,17 @@ const PRESETS: ProviderPreset[] = [
     providerName: 'gemini',
     baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
     placeholderKey: 'AIzaSy...',
-    desc: 'Gemini 2.0 Flash, 1.5 Pro with native multimodality',
+    desc: 'Gemini 2.5 Flash, 2.5 Pro native models',
     category: 'cloud',
     tag: 'Cloud Frontier',
   },
   {
     id: 'openai',
-    name: 'OpenAI Primary',
+    name: 'OpenAI',
     providerName: 'openai',
     baseUrl: 'https://api.openai.com/v1',
     placeholderKey: 'sk-proj-...',
-    desc: 'GPT-4o, GPT-4o Mini, o1, embeddings',
+    desc: 'GPT-4o, GPT-4o Mini, o1, o3-mini',
     category: 'cloud',
     tag: 'Cloud Frontier',
   },
@@ -94,27 +86,27 @@ const PRESETS: ProviderPreset[] = [
     providerName: 'claude',
     baseUrl: 'https://api.anthropic.com/v1',
     placeholderKey: 'sk-ant-api03-...',
-    desc: 'Claude 3.5 Sonnet, Haiku, Opus reasoning models',
+    desc: 'Claude 3.5 Sonnet, Haiku reasoning models',
     category: 'cloud',
     tag: 'Cloud Frontier',
   },
   {
     id: 'deepseek',
-    name: 'DeepSeek AI',
+    name: 'DeepSeek',
     providerName: 'deepseek',
     baseUrl: 'https://api.deepseek.com',
     placeholderKey: 'sk-...',
-    desc: 'DeepSeek-V3, DeepSeek-R1 Reasoner',
+    desc: 'DeepSeek-V3, DeepSeek-R1',
     category: 'cloud',
     tag: 'Reasoning',
   },
   {
     id: 'groq',
-    name: 'Groq LPU',
+    name: 'Groq',
     providerName: 'groq',
     baseUrl: 'https://api.groq.com/openai/v1',
     placeholderKey: 'gsk_...',
-    desc: 'Ultra-fast inference (500+ tok/s) for Llama 3 & Mixtral',
+    desc: 'High-speed inference for Llama 3 & Mixtral',
     category: 'cloud',
     tag: 'Ultra-Fast',
   },
@@ -126,37 +118,27 @@ const PRESETS: ProviderPreset[] = [
     placeholderKey: '...',
     desc: 'Mistral Large, Codestral, Pixtral',
     category: 'cloud',
-    tag: 'European Frontier',
+    tag: 'Frontier',
   },
   {
     id: 'ollama',
-    name: 'Ollama (Local Server)',
+    name: 'Ollama (Local)',
     providerName: 'ollama',
     baseUrl: 'http://localhost:11434/v1',
     placeholderKey: 'ollama (or local token)',
-    desc: 'Run Llama 3, DeepSeek R1, Qwen locally on-prem',
+    desc: 'Run Llama 3, DeepSeek R1 locally',
     category: 'local',
     tag: 'Self-Hosted',
   },
   {
     id: 'vllm',
-    name: 'vLLM Inference Server',
+    name: 'vLLM Server',
     providerName: 'vllm',
     baseUrl: 'http://localhost:8000/v1',
     placeholderKey: 'token or local-key',
-    desc: 'High-throughput PagedAttention local inference engine',
+    desc: 'High-throughput local inference engine',
     category: 'local',
     tag: 'Self-Hosted',
-  },
-  {
-    id: 'lmstudio',
-    name: 'LM Studio Desktop',
-    providerName: 'lmstudio',
-    baseUrl: 'http://localhost:1234/v1',
-    placeholderKey: 'lm-studio or local',
-    desc: 'Local developer desktop runtime',
-    category: 'local',
-    tag: 'Desktop Local',
   },
 ];
 
@@ -166,10 +148,9 @@ function getProviderMeta(providerName: string) {
     return {
       label: 'OpenRouter',
       badgeColor: 'indigo',
-      accentBg: 'bg-indigo-950/70',
-      accentBorder: 'border-indigo-800/60',
-      accentText: 'text-indigo-400',
-      glow: 'shadow-indigo-500/20',
+      accentBg: 'bg-indigo-50',
+      accentBorder: 'border-indigo-200',
+      accentText: 'text-indigo-700',
       symbol: 'OR',
     };
   }
@@ -177,10 +158,9 @@ function getProviderMeta(providerName: string) {
     return {
       label: 'Google Gemini',
       badgeColor: 'blue',
-      accentBg: 'bg-blue-950/70',
-      accentBorder: 'border-blue-800/60',
-      accentText: 'text-blue-400',
-      glow: 'shadow-blue-500/20',
+      accentBg: 'bg-blue-50',
+      accentBorder: 'border-blue-200',
+      accentText: 'text-blue-700',
       symbol: 'GM',
     };
   }
@@ -188,10 +168,9 @@ function getProviderMeta(providerName: string) {
     return {
       label: 'OpenAI',
       badgeColor: 'success',
-      accentBg: 'bg-emerald-950/70',
-      accentBorder: 'border-emerald-800/60',
-      accentText: 'text-emerald-400',
-      glow: 'shadow-emerald-500/20',
+      accentBg: 'bg-emerald-50',
+      accentBorder: 'border-emerald-200',
+      accentText: 'text-emerald-700',
       symbol: 'OA',
     };
   }
@@ -199,10 +178,9 @@ function getProviderMeta(providerName: string) {
     return {
       label: 'Anthropic Claude',
       badgeColor: 'warning',
-      accentBg: 'bg-amber-950/70',
-      accentBorder: 'border-amber-800/60',
-      accentText: 'text-amber-400',
-      glow: 'shadow-amber-500/20',
+      accentBg: 'bg-amber-50',
+      accentBorder: 'border-amber-200',
+      accentText: 'text-amber-700',
       symbol: 'CL',
     };
   }
@@ -210,10 +188,9 @@ function getProviderMeta(providerName: string) {
     return {
       label: 'Groq',
       badgeColor: 'warning',
-      accentBg: 'bg-orange-950/70',
-      accentBorder: 'border-orange-800/60',
-      accentText: 'text-orange-400',
-      glow: 'shadow-orange-500/20',
+      accentBg: 'bg-orange-50',
+      accentBorder: 'border-orange-200',
+      accentText: 'text-orange-700',
       symbol: 'GQ',
     };
   }
@@ -221,10 +198,9 @@ function getProviderMeta(providerName: string) {
     return {
       label: 'DeepSeek',
       badgeColor: 'cyan',
-      accentBg: 'bg-cyan-950/70',
-      accentBorder: 'border-cyan-800/60',
-      accentText: 'text-cyan-400',
-      glow: 'shadow-cyan-500/20',
+      accentBg: 'bg-cyan-50',
+      accentBorder: 'border-cyan-200',
+      accentText: 'text-cyan-700',
       symbol: 'DS',
     };
   }
@@ -232,20 +208,18 @@ function getProviderMeta(providerName: string) {
     return {
       label: 'Local / Self-Hosted',
       badgeColor: 'cyan',
-      accentBg: 'bg-teal-950/70',
-      accentBorder: 'border-teal-800/60',
-      accentText: 'text-teal-400',
-      glow: 'shadow-teal-500/20',
+      accentBg: 'bg-teal-50',
+      accentBorder: 'border-teal-200',
+      accentText: 'text-teal-700',
       symbol: 'LOC',
     };
   }
   return {
     label: providerName,
     badgeColor: 'purple',
-    accentBg: 'bg-purple-950/70',
-    accentBorder: 'border-purple-800/60',
-    accentText: 'text-purple-400',
-    glow: 'shadow-purple-500/20',
+    accentBg: 'bg-purple-50',
+    accentBorder: 'border-purple-200',
+    accentText: 'text-purple-700',
     symbol: providerName.slice(0, 2).toUpperCase() || 'AI',
   };
 }
@@ -312,7 +286,6 @@ export default function ProvidersPage() {
   // Filter connected providers for left area
   const connectedProviders = useMemo(() => {
     return connections.filter((c) => {
-      // Must be configured
       const isConfigured = c.status === 'connected' || (c.apiKeyPreview && c.apiKeyPreview !== 'None');
       if (!isConfigured) return false;
 
@@ -384,7 +357,7 @@ export default function ProvidersPage() {
   // Modal: Test connection
   const handleModalTest = async () => {
     if (!formProvider.trim()) {
-      setModalError('Provider Name is required to run test');
+      setModalError('Provider name is required to run test');
       return;
     }
     if (!formBaseUrl.trim()) {
@@ -412,15 +385,36 @@ export default function ProvidersPage() {
         }),
       });
 
-      const data = await res.json();
-      setModalTestResult(data);
-      if (!res.ok && data.error) {
-        setModalError(data.error);
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch {
+        const text = await res.text().catch(() => '');
+        data = { success: false, message: text || `HTTP ${res.status}`, latencyMs: 0 };
+      }
+
+      const isSuccess = Boolean(res.ok && data?.success);
+      const msg = extractErrorMessage(
+        data?.message || data?.error,
+        isSuccess ? 'Connection verified successfully.' : 'Connection test failed.'
+      );
+
+      const safeResult = {
+        success: isSuccess,
+        message: msg,
+        latencyMs: typeof data?.latencyMs === 'number' ? data.latencyMs : 0,
+      };
+
+      setModalTestResult(safeResult);
+      if (!isSuccess) {
+        setModalError(msg);
       }
     } catch (err: any) {
+      const errMsg = extractErrorMessage(err, 'Network connection failed');
+      setModalError(errMsg);
       setModalTestResult({
         success: false,
-        message: err.message || 'Network connection failed',
+        message: errMsg,
         latencyMs: 0,
       });
     } finally {
@@ -438,7 +432,7 @@ export default function ProvidersPage() {
       return;
     }
     if (!formProvider.trim()) {
-      setModalError('Provider Name is required');
+      setModalError('Provider name is required');
       return;
     }
     if (!formBaseUrl.trim()) {
@@ -467,22 +461,27 @@ export default function ProvidersPage() {
           apiBaseUrl: formBaseUrl.trim(),
           apiKey: formApiKey.trim(),
           isCustom,
-          status: modalTestResult?.success ? 'connected' : 'connected',
+          status: 'connected',
         }),
       });
 
-      if (!res.ok) {
-        const d = await res.json();
-        throw new Error(d.error || 'Failed to save provider connection');
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error(`Server returned HTTP ${res.status}`);
       }
 
-      const saved = await res.json();
+      if (!res.ok) {
+        throw new Error(extractErrorMessage(data?.error || data?.message, 'Failed to save provider connection'));
+      }
+
       await fetchConnections();
-      setSelectedProviderId(saved.provider);
+      setSelectedProviderId(data?.provider || normProvider);
       setIsConnectModalOpen(false);
       resetForm();
     } catch (err: any) {
-      setModalError(err.message);
+      setModalError(extractErrorMessage(err, 'Failed to save provider connection'));
     } finally {
       setModalSubmitting(false);
     }
@@ -490,7 +489,7 @@ export default function ProvidersPage() {
 
   // Delete provider
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to disconnect ${name}? Your applications routing to this provider will fall back to other configured providers.`)) {
+    if (!confirm(`Are you sure you want to disconnect ${name}? Applications routing to this provider will fall back to other configured providers.`)) {
       return;
     }
 
@@ -505,7 +504,7 @@ export default function ProvidersPage() {
     }
   };
 
-  // Run connection ping from detail pane
+  // Run connection ping from detail pane or card
   const runConnectionTest = async (provider: string, baseUrl?: string | null) => {
     if (!currentProject) return;
     setTestingMap((prev) => ({ ...prev, [provider]: true }));
@@ -526,13 +525,35 @@ export default function ProvidersPage() {
         }),
       });
 
-      const data = await res.json();
-      setTestResultMap((prev) => ({ ...prev, [provider]: data }));
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch {
+        data = { success: false, message: `HTTP ${res.status} response`, latencyMs: 0 };
+      }
+
+      const isSuccess = Boolean(res.ok && data?.success);
+      const msg = extractErrorMessage(
+        data?.message || data?.error,
+        isSuccess ? 'Connection verified successfully.' : 'Connection test failed.'
+      );
+
+      const safeResult = {
+        success: isSuccess,
+        message: msg,
+        latencyMs: typeof data?.latencyMs === 'number' ? data.latencyMs : 0,
+      };
+
+      setTestResultMap((prev) => ({ ...prev, [provider]: safeResult }));
       await fetchConnections();
     } catch (err: any) {
       setTestResultMap((prev) => ({
         ...prev,
-        [provider]: { success: false, message: err.message, latencyMs: 0 },
+        [provider]: {
+          success: false,
+          message: extractErrorMessage(err, 'Network failure'),
+          latencyMs: 0,
+        },
       }));
     } finally {
       setTestingMap((prev) => ({ ...prev, [provider]: false }));
@@ -550,61 +571,50 @@ export default function ProvidersPage() {
     }
   };
 
+  const gatewayUrl =
+    typeof window !== 'undefined'
+      ? `${window.location.origin}`
+      : 'https://tanvelo-backend-zgyc.onrender.com';
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-16">
-      {/* Top Header Strip with Prominent Connect Button on Top-Right */}
+      {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2.5">
-              <span>Provider Connections</span>
-            </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-xs">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              AES-256-GCM Secure
-            </span>
-          </div>
-          <p className="text-xs text-slate-500 mt-1 max-w-2xl leading-relaxed">
-            Connect frontier cloud providers or local on-prem inference engines. Credentials are isolated inside a zero-knowledge hardware enclave and never logged.
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            Provider Connections
+          </h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Configure upstream AI providers and API credentials for gateway routing.
           </p>
         </div>
 
-        {/* Top-Right Connect Provider Button */}
-        <div className="flex items-center gap-3">
-          <Button
-            size="md"
-            onClick={openConnectModal}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md active:scale-[0.98] transition-all px-4 py-2"
-          >
-            <Plus className="w-4 h-4 mr-1.5" />
-            Connect Provider
-          </Button>
-        </div>
+        <Button
+          size="sm"
+          onClick={openConnectModal}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm"
+        >
+          <Plus className="w-4 h-4 mr-1.5" />
+          Connect Provider
+        </Button>
       </div>
 
-      {/* Main 2-Column Split Layout: Connected Providers on Left, Details & Telemetry on Right */}
+      {/* Main 2-Column Split Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Area: Connected Providers List */}
         <div className="lg:col-span-5 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                <span>Connected Providers</span>
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Connected Providers
               </h2>
-              <span className="px-2 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+              <span className="px-2 py-0.5 rounded-full text-[11px] font-mono font-medium bg-slate-100 text-slate-700">
                 {connectedProviders.length}
               </span>
             </div>
-
-            {connectedProviders.length > 0 && (
-              <span className="flex items-center gap-1.5 text-[11px] text-emerald-600 font-mono">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                Active Gateway
-              </span>
-            )}
           </div>
 
-          {/* Search bar if there are providers */}
+          {/* Search bar */}
           {connectedProviders.length > 2 && (
             <div className="relative">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -613,7 +623,7 @@ export default function ProvidersPage() {
                 placeholder="Search connected providers..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-sm"
+                className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-xs"
               />
             </div>
           )}
@@ -623,38 +633,24 @@ export default function ProvidersPage() {
             {loading ? (
               <div className="p-8 text-center rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-500 flex flex-col items-center justify-center gap-2">
                 <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                <span>Loading secure connections...</span>
+                <span>Loading provider connections...</span>
               </div>
             ) : connectedProviders.length === 0 ? (
-              /* High-Trust Zero State */
-              <div className="p-6 rounded-2xl border border-slate-200 bg-white text-center space-y-4 shadow-sm">
-                <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center mx-auto text-slate-500">
-                  <ShieldCheck className="w-6 h-6 text-emerald-600" />
+              <div className="p-6 rounded-2xl border border-slate-200 bg-white text-center space-y-3 shadow-xs">
+                <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center mx-auto text-slate-500">
+                  <Cpu className="w-5 h-5 text-slate-600" />
                 </div>
                 <div className="space-y-1">
-                  <h3 className="text-sm font-bold text-slate-900">No Providers Connected Yet</h3>
-                  <p className="text-xs text-slate-500 leading-relaxed max-w-xs mx-auto">
-                    Click the <strong className="text-slate-800">Connect Provider</strong> button in the top right to link OpenAI, Claude, Gemini, OpenRouter, or local models.
+                  <h3 className="text-sm font-semibold text-slate-900">No Providers Connected</h3>
+                  <p className="text-xs text-slate-500">
+                    Connect OpenAI, Anthropic, Gemini, Groq, or local inference models to start routing.
                   </p>
                 </div>
-
-                {/* Quick-Connect Preset Chips */}
-                <div className="pt-2 border-t border-slate-200 text-left">
-                  <p className="text-[10px] font-mono uppercase tracking-wider text-slate-500 mb-2">
-                    Quick Connect Presets:
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {PRESETS.slice(0, 5).map((preset) => (
-                      <button
-                        key={preset.id}
-                        onClick={() => openConnectModalWithPreset(preset)}
-                        className="px-2.5 py-1 rounded-md text-[11px] font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-200 transition flex items-center gap-1 cursor-pointer"
-                      >
-                        <Plus className="w-3 h-3 text-blue-600" />
-                        {preset.name.replace(/ Gateway| Primary/, '')}
-                      </button>
-                    ))}
-                  </div>
+                <div className="pt-2">
+                  <Button size="sm" onClick={openConnectModal}>
+                    <Plus className="w-3.5 h-3.5 mr-1" />
+                    Connect Provider
+                  </Button>
                 </div>
               </div>
             ) : (
@@ -669,25 +665,23 @@ export default function ProvidersPage() {
                   <div
                     key={conn.id}
                     onClick={() => setSelectedProviderId(conn.provider)}
-                    className={`p-3.5 rounded-xl border transition-all cursor-pointer relative group ${
+                    className={`p-3 rounded-xl border transition-all cursor-pointer relative group ${
                       isSelected
-                        ? 'border-blue-500 bg-blue-50/70 shadow-sm ring-1 ring-blue-400/40'
-                        : 'border-slate-200 bg-white hover:bg-slate-50/80 hover:border-slate-300 shadow-xs'
+                        ? 'border-blue-500 bg-blue-50/50 shadow-xs'
+                        : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
-                        {/* Avatar */}
                         <div
-                          className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs tracking-wider shadow-inner flex-shrink-0 ${meta.accentBg} ${meta.accentBorder} ${meta.accentText} border`}
+                          className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs tracking-wider flex-shrink-0 ${meta.accentBg} ${meta.accentBorder} ${meta.accentText} border`}
                         >
                           {meta.symbol}
                         </div>
 
-                        {/* Name & Details */}
                         <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <h3 className="text-xs font-bold text-slate-900 truncate">
+                          <div className="flex items-center gap-1.5">
+                            <h3 className="text-xs font-semibold text-slate-900 truncate">
                               {conn.customName || meta.label}
                             </h3>
                             {conn.isCustom && (
@@ -696,7 +690,7 @@ export default function ProvidersPage() {
                               </span>
                             )}
                           </div>
-                          <p className="text-[11px] text-slate-500 font-mono truncate max-w-[200px]">
+                          <p className="text-[11px] text-slate-500 font-mono truncate max-w-[180px]">
                             {conn.apiBaseUrl ? conn.apiBaseUrl.replace(/^https?:\/\//, '') : conn.provider}
                           </p>
                         </div>
@@ -705,8 +699,8 @@ export default function ProvidersPage() {
                       {/* Status indicator */}
                       <div className="flex flex-col items-end gap-1 flex-shrink-0">
                         {isOnline ? (
-                          <span className="flex items-center gap-1.5 text-[10px] text-emerald-700 font-medium px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                          <span className="flex items-center gap-1 text-[10px] text-emerald-700 font-medium px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
                             Connected
                           </span>
                         ) : conn.status === 'error' ? (
@@ -720,7 +714,7 @@ export default function ProvidersPage() {
                         )}
 
                         {testResult?.latencyMs ? (
-                          <span className="text-[10px] text-blue-600 font-mono font-medium">
+                          <span className="text-[10px] text-blue-600 font-mono">
                             ⚡ {formatLatency(testResult.latencyMs)}
                           </span>
                         ) : null}
@@ -741,8 +735,7 @@ export default function ProvidersPage() {
                             runConnectionTest(conn.provider, conn.apiBaseUrl);
                           }}
                           disabled={isTesting}
-                          className="text-[10px] font-medium text-slate-500 hover:text-blue-600 flex items-center gap-1 transition cursor-pointer"
-                          title="Test Connection Ping"
+                          className="text-[10px] font-medium text-slate-600 hover:text-blue-600 flex items-center gap-1 transition cursor-pointer"
                         >
                           <Play className="w-2.5 h-2.5 text-blue-600" />
                           {isTesting ? 'Testing...' : 'Ping'}
@@ -753,8 +746,7 @@ export default function ProvidersPage() {
                             e.stopPropagation();
                             openEditModal(conn);
                           }}
-                          className="text-[10px] font-medium text-slate-500 hover:text-slate-800 flex items-center gap-1 transition cursor-pointer"
-                          title="Edit Credentials"
+                          className="text-[10px] font-medium text-slate-600 hover:text-slate-900 flex items-center gap-1 transition cursor-pointer"
                         >
                           <Edit3 className="w-2.5 h-2.5" />
                           Edit
@@ -767,21 +759,21 @@ export default function ProvidersPage() {
             )}
           </div>
 
-          {/* Quick Presets Drawer for easy discovery */}
-          <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-xs space-y-2.5">
+          {/* Quick Presets */}
+          <div className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-                Popular Provider Presets
+                Popular Presets
               </span>
-              <span className="text-[10px] text-slate-500">1-Click Setup</span>
+              <span className="text-[10px] text-slate-500">Click to connect</span>
             </div>
             <div className="grid grid-cols-2 gap-1.5 text-xs">
-              {PRESETS.map((preset) => (
+              {PRESETS.slice(0, 6).map((preset) => (
                 <button
                   key={preset.id}
                   onClick={() => openConnectModalWithPreset(preset)}
-                  className="px-2.5 py-1.5 rounded-lg text-left bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 hover:border-slate-300 transition flex items-center justify-between group cursor-pointer"
+                  className="px-2.5 py-1.5 rounded-lg text-left bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 transition flex items-center justify-between group cursor-pointer"
                 >
                   <span className="truncate text-[11px] font-medium">{preset.name}</span>
                   <Plus className="w-3 h-3 text-slate-400 group-hover:text-blue-600 flex-shrink-0 ml-1" />
@@ -791,7 +783,7 @@ export default function ProvidersPage() {
           </div>
         </div>
 
-        {/* Right Area: Selected Provider Details, Diagnostics & Telemetry */}
+        {/* Right Area: Selected Provider Details */}
         <div className="lg:col-span-7">
           {selectedConnection ? (
             (() => {
@@ -800,34 +792,34 @@ export default function ProvidersPage() {
               const testResult = testResultMap[selectedConnection.provider];
 
               return (
-                <div className="space-y-5">
-                  {/* Active Provider Header Banner */}
-                  <Card className="border-slate-200 bg-white shadow-sm">
+                <div className="space-y-4">
+                  {/* Active Provider Header */}
+                  <Card className="border-slate-200 bg-white">
                     <CardHeader className="pb-4">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div className="flex items-center gap-3.5">
+                        <div className="flex items-center gap-3">
                           <div
-                            className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm tracking-wide ${meta.accentBg} ${meta.accentBorder} ${meta.accentText} border shadow-sm ${meta.glow}`}
+                            className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs ${meta.accentBg} ${meta.accentBorder} ${meta.accentText} border`}
                           >
                             {meta.symbol}
                           </div>
 
                           <div>
                             <div className="flex items-center gap-2">
-                              <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+                              <h2 className="text-base font-bold text-slate-900">
                                 {selectedConnection.customName || meta.label}
                               </h2>
                               <Badge variant={meta.badgeColor as any} className="font-mono text-[10px]">
                                 {selectedConnection.provider}
                               </Badge>
                             </div>
-                            <p className="text-xs text-slate-500 mt-0.5">
-                              Hardware AES-256-GCM encrypted provider link
+                            <p className="text-xs text-slate-500 mt-0.5 font-mono truncate max-w-sm">
+                              {selectedConnection.apiBaseUrl || 'Default Provider Endpoint'}
                             </p>
                           </div>
                         </div>
 
-                        {/* Top Actions: Ping, Edit, Delete */}
+                        {/* Actions */}
                         <div className="flex items-center gap-2">
                           <Button
                             size="sm"
@@ -836,17 +828,17 @@ export default function ProvidersPage() {
                             onClick={() =>
                               runConnectionTest(selectedConnection.provider, selectedConnection.apiBaseUrl)
                             }
-                            className="bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200 text-xs"
+                            className="text-xs"
                           >
                             <Play className="w-3 h-3 mr-1 text-emerald-600" />
-                            Test Ping
+                            Test Connection
                           </Button>
 
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => openEditModal(selectedConnection)}
-                            className="text-xs border-slate-200 hover:bg-slate-100 text-slate-700"
+                            className="text-xs"
                           >
                             <Edit3 className="w-3 h-3 mr-1" />
                             Edit
@@ -859,7 +851,7 @@ export default function ProvidersPage() {
                                 selectedConnection.customName || meta.label
                               )
                             }
-                            className="p-2 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition cursor-pointer"
+                            className="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition cursor-pointer"
                             title="Disconnect Provider"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -868,57 +860,37 @@ export default function ProvidersPage() {
                       </div>
                     </CardHeader>
 
-                    {/* Operational Metrics Strip */}
+                    {/* Operational Metrics */}
                     <CardContent className="pt-0">
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-slate-100">
-                        {/* Status */}
-                        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                          <span className="text-[10px] text-slate-500 uppercase font-mono tracking-wider">
-                            Health Status
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-3 border-t border-slate-100">
+                        <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+                          <span className="text-[10px] text-slate-500 uppercase font-mono block">Status</span>
+                          <span className="text-xs font-semibold text-emerald-700 mt-0.5 block">
+                            {selectedConnection.status === 'connected' ? 'Connected' : selectedConnection.status}
                           </span>
-                          <div className="flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                            <span className="text-xs font-semibold text-emerald-700">
-                              Operational & Ready
-                            </span>
-                          </div>
                         </div>
 
-                        {/* Latency */}
-                        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                          <span className="text-[10px] text-slate-500 uppercase font-mono tracking-wider">
-                            Roundtrip Latency
+                        <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+                          <span className="text-[10px] text-slate-500 uppercase font-mono block">Latency</span>
+                          <span className="text-xs font-mono font-semibold text-slate-800 mt-0.5 block">
+                            {testResult?.latencyMs ? formatLatency(testResult.latencyMs) : '—'}
                           </span>
-                          <div className="flex items-center gap-1.5">
-                            <Zap className="w-3.5 h-3.5 text-blue-600" />
-                            <span className="text-xs font-mono font-semibold text-blue-600">
-                              {testResult?.latencyMs
-                                ? formatLatency(testResult.latencyMs)
-                                : 'Verified'}
-                            </span>
-                          </div>
                         </div>
 
-                        {/* Encryption */}
-                        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                          <span className="text-[10px] text-slate-500 uppercase font-mono tracking-wider">
-                            Key Protection
+                        <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+                          <span className="text-[10px] text-slate-500 uppercase font-mono block">Key Token</span>
+                          <span className="text-xs font-mono font-semibold text-slate-800 mt-0.5 block">
+                            {selectedConnection.apiKeyPreview || '••••••••'}
                           </span>
-                          <div className="flex items-center gap-1.5">
-                            <Lock className="w-3.5 h-3.5 text-emerald-600" />
-                            <span className="text-xs font-mono font-semibold text-slate-800">
-                              AES-256-GCM
-                            </span>
-                          </div>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
 
-                  {/* Test Ping Diagnostic Banner if test was run */}
+                  {/* Ping Result Banner */}
                   {testResult && (
                     <div
-                      className={`p-4 rounded-xl text-xs border transition-all ${
+                      className={`p-3.5 rounded-xl text-xs border transition-all ${
                         testResult.success
                           ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
                           : 'bg-rose-50 border-rose-200 text-rose-800'
@@ -931,9 +903,7 @@ export default function ProvidersPage() {
                           ) : (
                             <AlertTriangle className="w-4 h-4 text-rose-600" />
                           )}
-                          {testResult.success
-                            ? 'Connection Verified Successfully'
-                            : 'Connection Test Failed'}
+                          {testResult.success ? 'Connection Verified' : 'Connection Failed'}
                         </span>
                         {testResult.latencyMs > 0 && (
                           <span className="font-mono text-[11px] bg-white text-slate-800 px-2 py-0.5 rounded border border-slate-200">
@@ -941,42 +911,36 @@ export default function ProvidersPage() {
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] opacity-90 leading-relaxed">{testResult.message}</p>
+                      <p className="text-[11px] opacity-90 leading-relaxed">
+                        {typeof testResult.message === 'string' ? testResult.message : JSON.stringify(testResult.message)}
+                      </p>
                     </div>
                   )}
 
-                  {/* Endpoint & Cryptographic Credentials Card */}
-                  <Card className="border-slate-200 bg-white shadow-sm">
+                  {/* Endpoint Configuration */}
+                  <Card className="border-slate-200 bg-white">
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-sm font-bold flex items-center gap-2">
-                        <Globe className="w-4 h-4 text-blue-600" />
-                        Endpoint & Enclave Configuration
+                      <CardTitle className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        Endpoint Details
                       </CardTitle>
-                      <CardDescription>
-                        Hardware-isolated proxy credentials for this provider connection
-                      </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                      {/* Base URL */}
                       <div>
                         <span className="text-[11px] font-medium text-slate-500 block mb-1">
-                          Base URL (Root Endpoint):
+                          Base URL:
                         </span>
                         <div className="flex items-center gap-2">
                           <input
                             type="text"
                             readOnly
                             value={selectedConnection.apiBaseUrl || 'Standard Provider Endpoint'}
-                            className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-900 focus:outline-none select-all"
+                            className="flex-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-900 select-all"
                           />
                           <Button
                             size="sm"
                             variant="secondary"
                             onClick={() =>
-                              copyToClipboard(
-                                selectedConnection.apiBaseUrl || '',
-                                'url'
-                              )
+                              copyToClipboard(selectedConnection.apiBaseUrl || '', 'url')
                             }
                             className="px-2.5 text-xs"
                           >
@@ -989,52 +953,28 @@ export default function ProvidersPage() {
                         </div>
                       </div>
 
-                      {/* Key Preview */}
-                      <div>
-                        <span className="text-[11px] font-medium text-slate-500 block mb-1">
-                          Encrypted Key Token Preview:
-                        </span>
-                        <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 flex items-center justify-between">
-                          <span>{selectedConnection.apiKeyPreview || '••••••••'}</span>
-                          <span className="text-[10px] text-emerald-700 font-sans flex items-center gap-1 font-medium">
-                            <Lock className="w-3 h-3 text-emerald-600" />
-                            Encrypted at Rest
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Security Trust Note */}
-                      <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 flex items-start gap-2.5 text-[11px] text-slate-600 leading-relaxed">
-                        <Shield className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-                        <span>
-                          <strong className="text-slate-800">Zero-Knowledge Isolation:</strong> Raw API keys are stored in an encrypted PostgreSQL enclave using authenticated AES-256-GCM. Plaintext secrets are decrypted strictly in ephemeral memory during gateway request forwarding.
-                        </span>
-                      </div>
+                      <p className="text-[11px] text-slate-500 flex items-center gap-1.5 pt-1">
+                        <Lock className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                        <span>API keys are encrypted at rest and used only during gateway request routing.</span>
+                      </p>
                     </CardContent>
                   </Card>
 
-                  {/* Developer Integration Code Snippet */}
-                  <Card className="border-slate-200 bg-white shadow-sm">
-                    <CardHeader className="pb-3 flex flex-row items-center justify-between">
-                      <div>
-                        <CardTitle className="text-sm font-bold flex items-center gap-2">
-                          <Terminal className="w-4 h-4 text-blue-600" />
-                          Gateway Request Integration
-                        </CardTitle>
-                        <CardDescription>
-                          Send requests through Tanvelo gateway with model prefixing
-                        </CardDescription>
-                      </div>
-
+                  {/* Integration Example */}
+                  <Card className="border-slate-200 bg-white">
+                    <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                      <CardTitle className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        Request Example
+                      </CardTitle>
                       <Button
                         size="sm"
                         variant="secondary"
                         onClick={() => {
-                          const code = `curl -X POST http://localhost:4000/v1/chat/completions \\
-  -H "Authorization: Bearer tanvelo_api_key" \\
+                          const code = `curl -X POST ${gatewayUrl}/v1/chat/completions \\
+  -H "Authorization: Bearer $TANVELO_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
-    "model": "${selectedConnection.provider}/gpt-4o",
+    "model": "${selectedConnection.provider}/model-name",
     "messages": [{"role": "user", "content": "Hello Tanvelo Gateway!"}]
   }'`;
                           copyToClipboard(code, 'snippet');
@@ -1052,16 +992,15 @@ export default function ProvidersPage() {
                         )}
                       </Button>
                     </CardHeader>
-
                     <CardContent>
-                      <pre className="p-4 rounded-xl bg-slate-900 border border-slate-800 text-[11px] font-mono text-slate-100 overflow-x-auto leading-relaxed">
-{`curl -X POST http://localhost:4000/v1/chat/completions \\
+                      <pre className="p-3.5 rounded-lg bg-slate-900 text-[11px] font-mono text-slate-100 overflow-x-auto leading-relaxed">
+{`curl -X POST ${gatewayUrl}/v1/chat/completions \\
   -H "Authorization: Bearer $TANVELO_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
     "model": "${selectedConnection.provider}/model-name",
     "messages": [
-      { "role": "user", "content": "High-speed AI routing via Tanvelo" }
+      { "role": "user", "content": "Hello Tanvelo!" }
     ]
   }'`}
                       </pre>
@@ -1071,99 +1010,51 @@ export default function ProvidersPage() {
               );
             })()
           ) : (
-            /* When no provider is selected or when none connected */
-            <div className="space-y-6">
-              <Card className="border-slate-200 bg-white p-8 text-center shadow-sm">
-                <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center mx-auto text-blue-600 mb-4 shadow-sm">
-                  <ShieldCheck className="w-8 h-8 text-blue-600" />
-                </div>
-
-                <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-                  Universal AI Federation Gateway
-                </h2>
-                <p className="text-xs text-slate-600 mt-2 max-w-lg mx-auto leading-relaxed">
-                  Tanvelo provides a unified, production-hardened API proxy across frontier cloud providers (OpenRouter, Gemini, OpenAI, Claude) and self-hosted runtimes (Ollama, vLLM).
-                </p>
-
-                {/* 4 Trust & Security Pillars */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6 text-left max-w-xl mx-auto">
-                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
-                      <Lock className="w-3.5 h-3.5" />
-                      Zero-Knowledge Enclave
-                    </div>
-                    <p className="text-[11px] text-slate-600 leading-normal">
-                      Credentials are encrypted at rest with hardware AES-256-GCM and never logged.
-                    </p>
-                  </div>
-
-                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-blue-600">
-                      <Zap className="w-3.5 h-3.5" />
-                      Sub-Millisecond Overhead
-                    </div>
-                    <p className="text-[11px] text-slate-600 leading-normal">
-                      Ultra-low latency streaming proxy architecture designed for microsecond routing.
-                    </p>
-                  </div>
-
-                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-blue-600">
-                      <Layers className="w-3.5 h-3.5" />
-                      Automatic Fallbacks
-                    </div>
-                    <p className="text-[11px] text-slate-600 leading-normal">
-                      Instant circuit breaking and failover when upstream providers experience rate limits.
-                    </p>
-                  </div>
-
-                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-purple-700">
-                      <HardDrive className="w-3.5 h-3.5" />
-                      Local & Cloud Unified
-                    </div>
-                    <p className="text-[11px] text-slate-600 leading-normal">
-                      Seamlessly combine proprietary cloud APIs with private on-prem Ollama & vLLM servers.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-6 pt-4 border-t border-slate-200 flex justify-center">
-                  <Button size="md" onClick={openConnectModal}>
-                    <Plus className="w-4 h-4 mr-1.5" />
-                    Connect Your First Provider
-                  </Button>
-                </div>
-              </Card>
-            </div>
+            <Card className="border-slate-200 bg-white p-8 text-center">
+              <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center mx-auto text-slate-500 mb-3">
+                <Cpu className="w-6 h-6 text-slate-600" />
+              </div>
+              <h2 className="text-base font-bold text-slate-900">
+                Provider Configuration
+              </h2>
+              <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                Select a connected provider on the left to test latency and view endpoints, or connect a new provider.
+              </p>
+              <div className="mt-4">
+                <Button size="sm" onClick={openConnectModal}>
+                  <Plus className="w-4 h-4 mr-1.5" />
+                  Connect Provider
+                </Button>
+              </div>
+            </Card>
           )}
         </div>
       </div>
 
-      {/* Connect Provider Modal (All 4 Fields Required: Name, Provider Name, Base URL, API Key + Test, Cancel, Save) */}
+      {/* Connect Provider Modal */}
       <Modal
         isOpen={isConnectModalOpen}
         onClose={() => {
           setIsConnectModalOpen(false);
           resetForm();
         }}
-        title={isEditing ? `Edit ${formName || 'Provider'} Credentials` : 'Connect AI Provider'}
-        description="All 4 fields are required. Credentials are authenticated and encrypted with AES-256-GCM in your isolated database."
+        title={isEditing ? `Edit ${formName || 'Provider'}` : 'Connect Provider'}
+        description="Configure your upstream AI model provider credentials."
         maxWidth="lg"
       >
         <form onSubmit={handleModalSave} className="space-y-4">
           {/* Modal Error Alert */}
           {modalError && (
-            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2">
+            <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5 text-rose-600" />
-              <span>{modalError}</span>
+              <span>{typeof modalError === 'string' ? modalError : JSON.stringify(modalError)}</span>
             </div>
           )}
 
           {/* Test Connection Inline Result */}
           {modalTestResult && (
             <div
-              className={`p-3.5 rounded-xl text-xs border transition-all ${
+              className={`p-3 rounded-lg text-xs border transition-all ${
                 modalTestResult.success
                   ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
                   : 'bg-rose-50 border-rose-200 text-rose-800'
@@ -1176,7 +1067,7 @@ export default function ProvidersPage() {
                   ) : (
                     <AlertTriangle className="w-4 h-4 text-rose-600" />
                   )}
-                  {modalTestResult.success ? '✓ Connection Succeeded' : '✕ Test Failed'}
+                  {modalTestResult.success ? 'Connection Succeeded' : 'Test Failed'}
                 </span>
                 {modalTestResult.latencyMs > 0 && (
                   <span className="font-mono text-[11px] bg-white text-slate-800 px-2 py-0.5 rounded border border-slate-200">
@@ -1184,15 +1075,19 @@ export default function ProvidersPage() {
                   </span>
                 )}
               </div>
-              <p className="text-[11px] opacity-90 leading-tight">{modalTestResult.message}</p>
+              <p className="text-[11px] opacity-90 leading-tight">
+                {typeof modalTestResult.message === 'string'
+                  ? modalTestResult.message
+                  : JSON.stringify(modalTestResult.message)}
+              </p>
             </div>
           )}
 
-          {/* Quick Preset Selector Buttons (Optional 1-Click helpers) */}
+          {/* Quick Presets inside modal */}
           {!isEditing && (
             <div>
-              <label className="block text-[11px] font-mono uppercase text-slate-500 mb-1.5">
-                Quick Preset Fill (Optional):
+              <label className="block text-[11px] font-medium text-slate-500 mb-1.5">
+                Quick Presets:
               </label>
               <div className="flex flex-wrap gap-1.5">
                 {PRESETS.map((preset) => (
@@ -1206,20 +1101,20 @@ export default function ProvidersPage() {
                       setModalError(null);
                       setModalTestResult(null);
                     }}
-                    className={`px-2 py-1 rounded-md text-[11px] font-medium border transition cursor-pointer ${
-                      formProvider === preset.providerName
-                        ? 'bg-blue-50 text-blue-700 border-blue-300 shadow-xs'
-                        : 'bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 border-slate-200'
+                    className={`px-2 py-1 rounded text-[11px] font-medium border transition cursor-pointer ${
+                      formProvider.toLowerCase() === preset.providerName.toLowerCase()
+                        ? 'bg-blue-50 text-blue-700 border-blue-300'
+                        : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
                     }`}
                   >
-                    {preset.name.replace(/ Gateway| Primary/, '')}
+                    {preset.name}
                   </button>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Field 1: Name (Required) */}
+          {/* Field 1: Custom Display Name */}
           <div>
             <label className="block text-xs font-semibold text-slate-800 mb-1">
               Connection Name <span className="text-rose-500">*</span>
@@ -1227,57 +1122,48 @@ export default function ProvidersPage() {
             <input
               type="text"
               required
-              placeholder="e.g. Production OpenAI or OpenRouter Gateway"
+              placeholder="e.g. OpenAI Production, Google Gemini, Ollama Local"
               value={formName}
               onChange={(e) => setFormName(e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition shadow-sm"
+              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-xs"
             />
-            <p className="text-[10px] text-slate-500 mt-1">
-              Friendly label displayed in dashboards and routing policies.
-            </p>
           </div>
 
-          {/* Field 2: Provider Name (Required) */}
+          {/* Field 2: Provider identifier */}
           <div>
             <label className="block text-xs font-semibold text-slate-800 mb-1">
-              Provider Name <span className="text-rose-500">*</span>
+              Provider Identifier <span className="text-rose-500">*</span>
             </label>
             <input
               type="text"
               required
-              placeholder="e.g. openrouter, gemini, openai, claude, ollama, vllm, or custom"
+              placeholder="openai, anthropic, gemini, groq, deepseek, ollama..."
               value={formProvider}
               onChange={(e) => setFormProvider(e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition shadow-sm"
+              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-xs"
             />
-            <p className="text-[10px] text-slate-500 mt-1">
-              Any provider: <code className="text-blue-600 font-mono">openrouter</code>, <code className="text-blue-600 font-mono">gemini</code>, <code className="text-blue-600 font-mono">openai</code>, <code className="text-blue-600 font-mono">claude</code>, <code className="text-blue-600 font-mono">ollama</code>, or local models.
-            </p>
           </div>
 
-          {/* Field 3: Base URL (Required) */}
+          {/* Field 3: Base URL */}
           <div>
             <label className="block text-xs font-semibold text-slate-800 mb-1">
-              Base URL (Endpoint) <span className="text-rose-500">*</span>
+              Base URL <span className="text-rose-500">*</span>
             </label>
             <input
               type="url"
               required
-              placeholder="https://api.openai.com/v1 or http://localhost:11434/v1"
+              placeholder="https://api.openai.com/v1"
               value={formBaseUrl}
               onChange={(e) => setFormBaseUrl(e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition shadow-sm"
+              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-xs"
             />
-            <p className="text-[10px] text-slate-500 mt-1">
-              Provider API root or OpenAI-compatible endpoint. Must support HTTP routing.
-            </p>
           </div>
 
-          {/* Field 4: API Key (Required) */}
+          {/* Field 4: API Key */}
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="text-xs font-semibold text-slate-800">
-                API Key / Token <span className="text-rose-500">*</span>
+                API Key / Secret Token <span className="text-rose-500">*</span>
               </label>
               <button
                 type="button"
@@ -1290,33 +1176,31 @@ export default function ProvidersPage() {
             <input
               type={showApiKey ? 'text' : 'password'}
               required
-              placeholder="Enter API key (or 'ollama' / 'local' for unauthenticated models)"
+              placeholder="Enter provider API key (or 'ollama' / 'local' for unauthenticated models)"
               value={formApiKey}
               onChange={(e) => setFormApiKey(e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition shadow-sm"
+              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-xs"
             />
-            <p className="text-[10px] text-slate-500 mt-1 flex items-center gap-1.5">
+            <p className="text-[10px] text-slate-500 mt-1 flex items-center gap-1">
               <Lock className="w-3 h-3 text-emerald-600 flex-shrink-0" />
-              <span>Hardware-encrypted with AES-256-GCM. Raw keys are never leaked to client bundles.</span>
+              <span>Keys are encrypted at rest and never returned in plaintext.</span>
             </p>
           </div>
 
-          {/* Action Buttons: Test Connection (Left), Cancel & Save (Right) */}
+          {/* Action Buttons */}
           <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-slate-200">
-            {/* Test Connection Button */}
             <Button
               type="button"
               variant="secondary"
               size="sm"
               loading={modalTesting}
               onClick={handleModalTest}
-              className="border-slate-200 hover:bg-slate-50 text-slate-700 text-xs"
+              className="text-xs"
             >
               <Play className="w-3.5 h-3.5 mr-1 text-emerald-600" />
               Test Connection
             </Button>
 
-            {/* Cancel & Save Buttons */}
             <div className="flex items-center gap-2 justify-end">
               <Button
                 type="button"
@@ -1335,7 +1219,7 @@ export default function ProvidersPage() {
                 type="submit"
                 size="sm"
                 loading={modalSubmitting}
-                className="text-xs bg-blue-600 hover:bg-blue-500 font-semibold text-white"
+                className="text-xs bg-blue-600 hover:bg-blue-700 font-semibold text-white"
               >
                 {isEditing ? 'Save Changes' : 'Save Provider'}
               </Button>

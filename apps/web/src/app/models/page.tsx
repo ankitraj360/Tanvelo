@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Edit3, Zap, Boxes, AlertCircle, RefreshCw } from 'lucide-react';
-import { formatNumber, parseApiResponse } from '@/lib/utils';
+import { formatNumber, parseApiResponse, extractErrorMessage } from '@/lib/utils';
 import { useProject } from '@/context/ProjectContext';
 
 interface Model {
@@ -45,15 +45,10 @@ export default function ModelsPage() {
     setError(null);
     try {
       const res = await fetch(`/api/models?projectId=${currentProject.id}`);
-      if (res.ok) {
-        setModels(await parseApiResponse(res));
-      } else {
-        const err = await res.json().catch(() => ({}));
-        setError(err.error || 'Failed to fetch models');
-      }
+      setModels(await parseApiResponse(res));
     } catch (e: any) {
       console.error(e);
-      setError(e.message || 'Failed to load models');
+      setError(extractErrorMessage(e, 'Failed to load models'));
     } finally {
       setLoading(false);
     }

@@ -11,8 +11,16 @@
       "require": "./dist/index.js"
     }
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc",
+    "prepublishOnly": "pnpm run build",
     "test": "vitest run"
   },
   "keywords": [

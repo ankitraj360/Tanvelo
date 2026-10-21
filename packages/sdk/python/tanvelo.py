@@ -5,6 +5,7 @@ Unified AI Gateway Client for OpenAI, Anthropic, Google Gemini, DeepSeek, Groq, 
 
 import json
 import os
+import re
 import urllib.request
 import urllib.error
 from typing import List, Dict, Any, Optional, Iterator, Union
@@ -178,6 +179,48 @@ class CompletionsResource:
             resp.close()
 
 
+class ModelsResource:
+    def __init__(self, client: "Tanvelo"):
+        self._client = client
+
+    def list(self, timeout: Optional[float] = None) -> List[Dict[str, Any]]:
+        """List available models from the Tanvelo gateway."""
+        url = f"{self._client.base_url}/models"
+        req = urllib.request.Request(url)
+        if self._client.api_key:
+            req.add_header("Authorization", f"Bearer {self._client.api_key}")
+
+        t = timeout if timeout is not None else self._client.timeout
+        try:
+            with urllib.request.urlopen(req, timeout=t) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                items = data.get("data", data) if isinstance(data, dict) else data
+                result = []
+                for m in items:
+                    mid = m.get("id", "")
+                    owned = m.get("owned_by") or m.get("provider") or (mid.split("/")[0] if "/" in mid else "openai")
+                    result.append({
+                        "id": mid,
+                        "provider": owned,
+                        "name": m.get("name", mid),
+                        "object": m.get("object", "model"),
+                        "created": m.get("created"),
+                        "owned_by": m.get("owned_by"),
+                    })
+                return result
+        except urllib.error.HTTPError as e:
+            try:
+                body = json.loads(e.read().decode("utf-8"))
+                msg = body.get("error", {}).get("message") or body.get("message") or str(e)
+            except Exception:
+                msg = str(e)
+            raise TanveloError(msg, status_code=e.code)
+        except Exception as e:
+            if isinstance(e, TanveloError):
+                raise e
+            raise TanveloError(str(e), status_code=500)
+
+
 class ChatResource:
     def __init__(self, client: "Tanvelo"):
         self.completions = CompletionsResource(client)
@@ -206,13 +249,14 @@ class Tanvelo:
         self.base_url = raw_url.rstrip("/")
         self.timeout = timeout
         self.chat = ChatResource(self)
+        self.models = ModelsResource(self)
 
-    def health(self) -> Dict[str, Any]:
+    def health(self, timeout: float = 5.0) -> Dict[str, Any]:
         """Check status of Tanvelo Gateway"""
-        root_url = self.base_url.replace("/v1", "")
+        root_url = re.sub(r"/v1/?$", "", self.base_url)
         req = urllib.request.Request(f"{root_url}/health")
         try:
-            with urllib.request.urlopen(req, timeout=5.0) as resp:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
                 return json.loads(resp.read().decode("utf-8"))
         except Exception as e:
             return {"status": "offline", "error": str(e)}

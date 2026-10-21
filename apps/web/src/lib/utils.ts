@@ -16,26 +16,55 @@ export function formatNumber(num: number): string {
   return new Intl.NumberFormat('en-US').format(num);
 }
 
-export function formatLatency(ms: number): string {
-  if (ms < 1000) return `${ms}ms`;
-  return `${(ms / 1000).toFixed(2)}s`;
+export function formatLatency(ms: number | null | undefined): string {
+  if (ms == null || isNaN(Number(ms))) return '0ms';
+  const n = Number(ms);
+  if (n < 1000) return `${Math.round(n)}ms`;
+  return `${(n / 1000).toFixed(2)}s`;
+}
+
+/**
+ * Safely extracts a clean human-readable error string from any error type,
+ * object, or API response body so it never crashes React with "Objects are not valid as a React child".
+ */
+export function extractErrorMessage(err: unknown, fallback = 'An unexpected error occurred'): string {
+  if (!err) return fallback;
+  if (typeof err === 'string') return err;
+  if (typeof err === 'object') {
+    const anyErr = err as any;
+    if (typeof anyErr.message === 'string') return anyErr.message;
+    if (typeof anyErr.error === 'string') return anyErr.error;
+    if (anyErr.error && typeof anyErr.error.message === 'string') return anyErr.error.message;
+    if (typeof anyErr.statusText === 'string') return anyErr.statusText;
+    try {
+      const json = JSON.stringify(err);
+      if (json && json !== '{}') return json;
+    } catch {
+      // ignore
+    }
+  }
+  return String(err) || fallback;
 }
 
 /**
  * Safely parse JSON from fetch Response, handling HTML/text error fallbacks
+ * and always returning clean error messages.
  */
 export async function parseApiResponse<T = any>(res: Response): Promise<T> {
   const text = await res.text();
+  let data: any;
   try {
-    const data = JSON.parse(text);
-    if (!res.ok) {
-      throw new Error(data.error || data.message || `Request failed with status ${res.status}`);
-    }
-    return data;
-  } catch (err: any) {
+    data = JSON.parse(text);
+  } catch {
     if (!res.ok) {
       throw new Error(text || `Request failed with status ${res.status}`);
     }
-    throw err;
+    throw new Error('Invalid JSON response from server');
   }
+
+  if (!res.ok) {
+    const msg = extractErrorMessage(data?.error || data?.message || data, `Request failed with status ${res.status}`);
+    throw new Error(msg);
+  }
+  return data;
 }

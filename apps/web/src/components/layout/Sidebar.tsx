@@ -18,9 +18,6 @@ import {
   Webhook,
   BookOpen,
   Settings,
-  ShieldCheck,
-  ShieldAlert,
-  FileText,
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -33,41 +30,34 @@ const navGroups = [
     title: 'Monitor & Traffic',
     items: [
       { name: 'Overview', href: '/overview', icon: LayoutDashboard },
-      { name: 'API Requests', href: '/requests', icon: Activity },
-      { name: 'Errors & Outages', href: '/errors', icon: AlertTriangle },
+      { name: 'Requests', href: '/requests', icon: Activity },
+      { name: 'Errors', href: '/errors', icon: AlertTriangle },
       { name: 'Analytics', href: '/analytics', icon: BarChart3 },
     ],
   },
   {
-    title: 'Providers & Models',
+    title: 'Routing & Models',
     items: [
-      { name: 'Providers & Custom', href: '/providers', icon: Cpu },
-      { name: 'Model Catalog', href: '/models', icon: Boxes },
-      { name: 'Routing & Fallbacks', href: '/routing', icon: GitFork },
+      { name: 'Providers', href: '/providers', icon: Cpu },
+      { name: 'Models', href: '/models', icon: Boxes },
+      { name: 'Routing', href: '/routing', icon: GitFork },
     ],
   },
   {
-    title: 'Governance & Security',
+    title: 'Control & Security',
     items: [
-      { name: 'Projects & Envs', href: '/projects', icon: FolderGit2 },
-      { name: 'Gateway API Keys', href: '/api-keys', icon: KeyRound },
+      { name: 'Projects', href: '/projects', icon: FolderGit2 },
+      { name: 'API Keys', href: '/api-keys', icon: KeyRound },
       { name: 'Rate Limits', href: '/rate-limits', icon: Gauge },
-      { name: 'Usage & Budgets', href: '/budgets', icon: Coins },
-      { name: 'Webhooks & Events', href: '/webhooks', icon: Webhook },
+      { name: 'Budgets', href: '/budgets', icon: Coins },
+      { name: 'Webhooks', href: '/webhooks', icon: Webhook },
     ],
   },
   {
-    title: 'Developer Center',
+    title: 'Developer',
     items: [
-      { name: 'API Documentation', href: '/docs', icon: BookOpen },
-      { name: 'Settings & Security', href: '/settings', icon: Settings },
-    ],
-  },
-  {
-    title: 'Legal & Trust',
-    items: [
-      { name: 'Privacy Policy', href: '/privacy', icon: ShieldCheck },
-      { name: 'Terms of Service', href: '/terms', icon: FileText },
+      { name: 'Documentation', href: '/docs', icon: BookOpen },
+      { name: 'Settings', href: '/settings', icon: Settings },
     ],
   },
 ];
@@ -114,7 +104,7 @@ function NavContent({ onClose }: { onClose?: () => void }) {
                     className={cn(
                       'flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all group relative',
                       isActive
-                        ? 'bg-sky-50 text-sky-800 font-semibold border border-sky-200 shadow-2xs'
+                        ? 'bg-blue-50 text-blue-800 font-semibold border border-blue-200'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     )}
                   >
@@ -122,14 +112,14 @@ function NavContent({ onClose }: { onClose?: () => void }) {
                       <Icon
                         className={cn(
                           'w-4 h-4 transition-colors flex-shrink-0',
-                          isActive ? 'text-sky-600' : 'text-slate-400 group-hover:text-slate-700'
+                          isActive ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-700'
                         )}
                       />
                       <span className="truncate">{item.name}</span>
                     </div>
 
                     {isActive && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-sky-600 flex-shrink-0" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-600 flex-shrink-0" />
                     )}
                   </Link>
                 );
@@ -139,8 +129,8 @@ function NavContent({ onClose }: { onClose?: () => void }) {
         ))}
       </nav>
 
-      {/* Security & User Footer */}
-      <div className="p-3.5 border-t border-slate-100 bg-slate-50/60 flex-shrink-0 space-y-2">
+      {/* User Footer */}
+      <div className="p-3.5 border-t border-slate-100 bg-slate-50/60 flex-shrink-0">
         <div className="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200 shadow-2xs">
           <div className="flex items-center gap-2 min-w-0 w-full">
             <UserButton
@@ -156,19 +146,6 @@ function NavContent({ onClose }: { onClose?: () => void }) {
             />
           </div>
         </div>
-
-        <div className="p-2.5 rounded-lg border border-slate-200 bg-white shadow-2xs">
-          <div className="flex items-center justify-between text-[11px] mb-1">
-            <span className="flex items-center gap-1.5 text-slate-800 font-medium">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
-              Security Active
-            </span>
-            <span className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0" />
-          </div>
-          <p className="text-[10px] text-slate-500 leading-normal">
-            Bound to <code className="text-sky-700 font-mono bg-sky-50 px-1 py-0.5 rounded">127.0.0.1</code>. Isolated gateway trust domain.
-          </p>
-        </div>
       </div>
     </>
   );
@@ -179,29 +156,29 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Desktop Static Sidebar */}
-      <aside className="hidden lg:flex w-64 flex-shrink-0 bg-white border-r border-slate-200 flex-col h-screen sticky top-0 select-none z-20 shadow-xs">
+      {/* Desktop Persistent Sidebar */}
+      <aside className="hidden lg:flex w-64 border-r border-slate-200 bg-white flex-col fixed inset-y-0 z-20">
         <NavContent />
       </aside>
 
-      {/* Mobile Drawer Backdrop */}
+      {/* Mobile Drawer Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-40 lg:hidden transition-opacity duration-200"
           onClick={close}
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-40 lg:hidden transition-opacity"
           aria-hidden="true"
         />
       )}
 
-      {/* Mobile Drawer Slide-over */}
-      <aside
+      {/* Mobile Sidebar Off-Canvas Drawer */}
+      <div
         className={cn(
-          'fixed inset-y-0 left-0 w-72 max-w-[85vw] bg-white z-50 lg:hidden flex flex-col shadow-2xl transition-transform duration-300 ease-in-out border-r border-slate-200 select-none',
-          isOpen ? 'translate-x-0' : '-translate-x-full pointer-events-none'
+          'fixed inset-y-0 left-0 w-72 bg-white z-50 lg:hidden flex flex-col shadow-2xl transition-transform duration-200 ease-in-out border-r border-slate-200',
+          isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         <NavContent onClose={close} />
-      </aside>
+      </div>
     </>
   );
 }

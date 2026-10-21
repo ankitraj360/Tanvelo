@@ -47,6 +47,50 @@ export interface ExecutionOutcome {
   attempts: AttemptLog[];
 }
 
+export interface FallbackTarget {
+  provider: string;
+  model: string;
+}
+
+export interface ResolvedRoute {
+  primaryProvider: string;
+  primaryModel: string;
+  secondaryProvider?: string | null;
+  secondaryModel?: string | null;
+  fallbackChain: FallbackTarget[];
+  timeoutMs: number;
+  maxRetries: number;
+  fallbackOnTimeout: boolean;
+  fallbackOnRateLimit: boolean;
+  fallbackOnError: boolean;
+}
+
+function parseFallbackTarget(rawTarget: string): FallbackTarget {
+  const trimmed = rawTarget.trim();
+  if (trimmed.includes('/')) {
+    const slashIdx = trimmed.indexOf('/');
+    return {
+      provider: trimmed.substring(0, slashIdx).toLowerCase(),
+      model: trimmed.substring(slashIdx + 1),
+    };
+  }
+  let inferredProvider = 'openai';
+  const lower = trimmed.toLowerCase();
+  if (lower.startsWith('claude')) {
+    inferredProvider = 'anthropic';
+  } else if (lower.startsWith('gemini')) {
+    inferredProvider = 'gemini';
+  } else if (lower.startsWith('groq') || lower.startsWith('llama')) {
+    inferredProvider = 'groq';
+  } else if (lower.startsWith('deepseek')) {
+    inferredProvider = 'deepseek';
+  }
+  return {
+    provider: inferredProvider,
+    model: trimmed,
+  };
+}
+
 export class RoutingEngine {
   /**
    * Resolves provider and model targets given requested model and active rules
@@ -55,17 +99,7 @@ export class RoutingEngine {
     requestedModel: string,
     rules: RoutingRuleConfig[],
     fallbacksHeader?: string | null
-  ): {
-    primaryProvider: string;
-    primaryModel: string;
-    secondaryProvider?: string | null;
-    secondaryModel?: string | null;
-    timeoutMs: number;
-    maxRetries: number;
-    fallbackOnTimeout: boolean;
-    fallbackOnRateLimit: boolean;
-    fallbackOnError: boolean;
-  } {
+  ): ResolvedRoute {
     // Sort rules by priority descending
     const sorted = [...rules].sort((a, b) => b.priority - a.priority);
 
@@ -108,33 +142,29 @@ export class RoutingEngine {
       resolvedPrimaryModel = requestedModel;
     }
 
-    // Support X-Tanvelo-Fallbacks per-request fallback header override
+    // Support X-Tanvelo-Fallbacks ordered fallback chain
+    let fallbackChain: FallbackTarget[] = [];
     if (fallbacksHeader) {
-      const parsedFallbacks = fallbacksHeader
+      const parsed = fallbacksHeader
         .split(',')
         .map((s) => s.trim())
         .filter(Boolean);
 
-      if (parsedFallbacks.length > 0) {
-        const fbTarget = parsedFallbacks[0];
-        if (fbTarget.includes('/')) {
-          const [p, m] = fbTarget.split('/');
-          resolvedSecondaryProvider = p;
-          resolvedSecondaryModel = m;
-        } else {
-          let fbProvider = 'openai';
-          if (fbTarget.toLowerCase().startsWith('claude')) {
-            fbProvider = 'anthropic';
-          } else if (fbTarget.toLowerCase().startsWith('gemini')) {
-            fbProvider = 'gemini';
-          }
-          resolvedSecondaryProvider = fbProvider;
-          resolvedSecondaryModel = fbTarget;
-        }
+      if (parsed.length > 0) {
+        fallbackChain = parsed.map(parseFallbackTarget);
+        resolvedSecondaryProvider = fallbackChain[0].provider;
+        resolvedSecondaryModel = fallbackChain[0].model;
         fallbackOnTimeout = true;
         fallbackOnRateLimit = true;
         fallbackOnError = true;
       }
+    } else if (resolvedSecondaryProvider && resolvedSecondaryModel) {
+      fallbackChain = [
+        {
+          provider: resolvedSecondaryProvider,
+          model: resolvedSecondaryModel,
+        },
+      ];
     }
 
     return {
@@ -142,6 +172,7 @@ export class RoutingEngine {
       primaryModel: resolvedPrimaryModel,
       secondaryProvider: resolvedSecondaryProvider,
       secondaryModel: resolvedSecondaryModel,
+      fallbackChain,
       timeoutMs,
       maxRetries,
       fallbackOnTimeout,
@@ -161,7 +192,7 @@ export class RoutingEngine {
   }
 
   /**
-   * Executes a standard non-streaming chat completion with deterministic routing & safe fallback
+   * Executes a standard non-streaming chat completion with deterministic routing & safe fallback chain
    */
   async executeChat(
     request: ChatCompletionRequest,
@@ -173,7 +204,7 @@ export class RoutingEngine {
     const attempts: AttemptLog[] = [];
 
     // Stage 1: Try primary provider
-    let shouldTrySecondary = false;
+    let shouldTryFallback = false;
 
     for (let pAttempt = 1; pAttempt <= route.maxRetries; pAttempt++) {
       const connection = connections.get(route.primaryProvider);
@@ -190,8 +221,8 @@ export class RoutingEngine {
           errorMessage: errorMsg,
         });
 
-        shouldTrySecondary = Boolean(route.secondaryProvider && route.secondaryModel);
-        if (!shouldTrySecondary) {
+        shouldTryFallback = route.fallbackChain.length > 0;
+        if (!shouldTryFallback) {
           throw new GatewayError(errorMsg, ErrorCategory.PROVIDER_UNAVAILABLE, 503, undefined, undefined, [...attempts]);
         }
         break;
@@ -255,7 +286,7 @@ export class RoutingEngine {
 
         // Determine if fallback is allowed
         const canFallback =
-          Boolean(route.secondaryProvider && route.secondaryModel) &&
+          route.fallbackChain.length > 0 &&
           ((category === ErrorCategory.TIMEOUT && route.fallbackOnTimeout) ||
             (category === ErrorCategory.PROVIDER_RATE_LIMIT_EXCEEDED && route.fallbackOnRateLimit) ||
             (category === ErrorCategory.PROVIDER_QUOTA_EXHAUSTED && route.fallbackOnRateLimit) ||
@@ -263,7 +294,7 @@ export class RoutingEngine {
             (statusCode >= 500 && route.fallbackOnError));
 
         if (canFallback) {
-          shouldTrySecondary = true;
+          shouldTryFallback = true;
           break;
         }
 
@@ -274,83 +305,111 @@ export class RoutingEngine {
       }
     }
 
-    // Stage 2: Secondary fallback (always executed when triggered, even if maxRetries was 1)
-    if (shouldTrySecondary && route.secondaryProvider && route.secondaryModel) {
-      const connection = connections.get(route.secondaryProvider);
-      if (!connection || connection.status !== 'connected' || !connection.apiKey) {
-        const errorMsg = `Secondary provider '${route.secondaryProvider}' is not configured or connected for this project.`;
-        attempts.push({
-          attemptNumber: attempts.length + 1,
-          provider: route.secondaryProvider,
-          model: route.secondaryModel,
-          statusCode: 503,
-          latencyMs: 0,
-          isSuccess: false,
-          errorCategory: ErrorCategory.PROVIDER_UNAVAILABLE,
-          errorMessage: errorMsg,
-        });
+    // Stage 2: Fallback chain execution
+    if (shouldTryFallback && route.fallbackChain.length > 0) {
+      for (let fbIndex = 0; fbIndex < route.fallbackChain.length; fbIndex++) {
+        const target = route.fallbackChain[fbIndex];
+        const isLastTarget = fbIndex === route.fallbackChain.length - 1;
+        const connection = connections.get(target.provider);
 
-        throw new GatewayError(errorMsg, ErrorCategory.PROVIDER_UNAVAILABLE, 503, undefined, undefined, [...attempts]);
-      }
+        if (!connection || connection.status !== 'connected' || !connection.apiKey) {
+          const errorMsg = `Fallback provider '${target.provider}' is not configured or connected for this project.`;
+          attempts.push({
+            attemptNumber: attempts.length + 1,
+            provider: target.provider,
+            model: target.model,
+            statusCode: 503,
+            latencyMs: 0,
+            isSuccess: false,
+            errorCategory: ErrorCategory.PROVIDER_UNAVAILABLE,
+            errorMessage: errorMsg,
+          });
 
-      const adapter = getProviderAdapter(route.secondaryProvider, connection.apiBaseUrl);
-      if (!adapter) {
-        throw new GatewayError(
-          `No adapter available for secondary provider '${route.secondaryProvider}'`,
-          ErrorCategory.INTERNAL_GATEWAY_ERROR,
-          500,
-          undefined,
-          undefined,
-          [...attempts]
-        );
-      }
+          if (isLastTarget) {
+            throw new GatewayError(errorMsg, ErrorCategory.PROVIDER_UNAVAILABLE, 503, undefined, undefined, [...attempts]);
+          }
+          continue;
+        }
 
-      try {
-        const reqWithModel: ChatCompletionRequest = {
-          ...request,
-          model: route.secondaryModel,
-        };
+        const adapter = getProviderAdapter(target.provider, connection.apiBaseUrl);
+        if (!adapter) {
+          const errorMsg = `No adapter available for fallback provider '${target.provider}'`;
+          attempts.push({
+            attemptNumber: attempts.length + 1,
+            provider: target.provider,
+            model: target.model,
+            statusCode: 500,
+            latencyMs: 0,
+            isSuccess: false,
+            errorCategory: ErrorCategory.INTERNAL_GATEWAY_ERROR,
+            errorMessage: errorMsg,
+          });
 
-        const result = await adapter.execute(
-          reqWithModel,
-          connection.apiKey,
-          connection.apiBaseUrl,
-          route.timeoutMs
-        );
+          if (isLastTarget) {
+            throw new GatewayError(errorMsg, ErrorCategory.INTERNAL_GATEWAY_ERROR, 500, undefined, undefined, [...attempts]);
+          }
+          continue;
+        }
 
-        attempts.push({
-          attemptNumber: attempts.length + 1,
-          provider: route.secondaryProvider,
-          model: route.secondaryModel,
-          statusCode: result.statusCode,
-          latencyMs: result.latencyMs,
-          isSuccess: true,
-        });
+        try {
+          const reqWithModel: ChatCompletionRequest = {
+            ...request,
+            model: target.model,
+          };
 
-        return {
-          result,
-          finalProvider: route.secondaryProvider,
-          finalModel: route.secondaryModel,
-          attempts,
-        };
-      } catch (err: any) {
-        const statusCode = err.statusCode || 500;
-        const category = err.category || ErrorCategory.INTERNAL_GATEWAY_ERROR;
-        const latencyMs = err.originalError?.latencyMs || 100;
+          const result = await adapter.execute(
+            reqWithModel,
+            connection.apiKey,
+            connection.apiBaseUrl,
+            route.timeoutMs
+          );
 
-        attempts.push({
-          attemptNumber: attempts.length + 1,
-          provider: route.secondaryProvider,
-          model: route.secondaryModel,
-          statusCode,
-          latencyMs,
-          isSuccess: false,
-          errorCategory: category,
-          errorMessage: err.message,
-        });
+          attempts.push({
+            attemptNumber: attempts.length + 1,
+            provider: target.provider,
+            model: target.model,
+            statusCode: result.statusCode,
+            latencyMs: result.latencyMs,
+            isSuccess: true,
+          });
 
-        err.attempts = attempts;
-        throw err;
+          return {
+            result,
+            finalProvider: target.provider,
+            finalModel: target.model,
+            attempts,
+          };
+        } catch (err: any) {
+          const statusCode = err.statusCode || 500;
+          const category = err.category || ErrorCategory.INTERNAL_GATEWAY_ERROR;
+          const latencyMs = err.originalError?.latencyMs || 100;
+
+          attempts.push({
+            attemptNumber: attempts.length + 1,
+            provider: target.provider,
+            model: target.model,
+            statusCode,
+            latencyMs,
+            isSuccess: false,
+            errorCategory: category,
+            errorMessage: err.message,
+          });
+
+          const canContinueFallback =
+            !isLastTarget &&
+            ((category === ErrorCategory.TIMEOUT && route.fallbackOnTimeout) ||
+              (category === ErrorCategory.PROVIDER_RATE_LIMIT_EXCEEDED && route.fallbackOnRateLimit) ||
+              (category === ErrorCategory.PROVIDER_QUOTA_EXHAUSTED && route.fallbackOnRateLimit) ||
+              (category === ErrorCategory.PROVIDER_UNAVAILABLE && route.fallbackOnError) ||
+              (statusCode >= 500 && route.fallbackOnError));
+
+          if (canContinueFallback) {
+            continue;
+          }
+
+          err.attempts = attempts;
+          throw err;
+        }
       }
     }
 
@@ -358,7 +417,7 @@ export class RoutingEngine {
   }
 
   /**
-   * Executes a streaming chat completion with deterministic routing & safe fallback
+   * Executes a streaming chat completion with deterministic routing & safe fallback chain
    */
   async executeStreamChat(
     request: ChatCompletionRequest,
@@ -369,7 +428,7 @@ export class RoutingEngine {
     const route = this.resolveRoute(request.model, rules, fallbacksHeader);
     const attempts: AttemptLog[] = [];
 
-    let shouldTrySecondary = false;
+    let shouldTryFallback = false;
 
     // Stage 1: Try primary provider
     for (let pAttempt = 1; pAttempt <= route.maxRetries; pAttempt++) {
@@ -387,8 +446,8 @@ export class RoutingEngine {
           errorMessage: errorMsg,
         });
 
-        shouldTrySecondary = Boolean(route.secondaryProvider && route.secondaryModel);
-        if (!shouldTrySecondary) {
+        shouldTryFallback = route.fallbackChain.length > 0;
+        if (!shouldTryFallback) {
           throw new GatewayError(errorMsg, ErrorCategory.PROVIDER_UNAVAILABLE, 503, undefined, undefined, [...attempts]);
         }
         break;
@@ -451,7 +510,7 @@ export class RoutingEngine {
         });
 
         const canFallback =
-          Boolean(route.secondaryProvider && route.secondaryModel) &&
+          route.fallbackChain.length > 0 &&
           ((category === ErrorCategory.TIMEOUT && route.fallbackOnTimeout) ||
             (category === ErrorCategory.PROVIDER_RATE_LIMIT_EXCEEDED && route.fallbackOnRateLimit) ||
             (category === ErrorCategory.PROVIDER_QUOTA_EXHAUSTED && route.fallbackOnRateLimit) ||
@@ -459,7 +518,7 @@ export class RoutingEngine {
             (statusCode >= 500 && route.fallbackOnError));
 
         if (canFallback) {
-          shouldTrySecondary = true;
+          shouldTryFallback = true;
           break;
         }
 
@@ -470,83 +529,111 @@ export class RoutingEngine {
       }
     }
 
-    // Stage 2: Secondary fallback
-    if (shouldTrySecondary && route.secondaryProvider && route.secondaryModel) {
-      const connection = connections.get(route.secondaryProvider);
-      if (!connection || connection.status !== 'connected' || !connection.apiKey) {
-        const errorMsg = `Secondary provider '${route.secondaryProvider}' is not configured or connected for this project.`;
-        attempts.push({
-          attemptNumber: attempts.length + 1,
-          provider: route.secondaryProvider,
-          model: route.secondaryModel,
-          statusCode: 503,
-          latencyMs: 0,
-          isSuccess: false,
-          errorCategory: ErrorCategory.PROVIDER_UNAVAILABLE,
-          errorMessage: errorMsg,
-        });
+    // Stage 2: Fallback chain execution
+    if (shouldTryFallback && route.fallbackChain.length > 0) {
+      for (let fbIndex = 0; fbIndex < route.fallbackChain.length; fbIndex++) {
+        const target = route.fallbackChain[fbIndex];
+        const isLastTarget = fbIndex === route.fallbackChain.length - 1;
+        const connection = connections.get(target.provider);
 
-        throw new GatewayError(errorMsg, ErrorCategory.PROVIDER_UNAVAILABLE, 503, undefined, undefined, [...attempts]);
-      }
+        if (!connection || connection.status !== 'connected' || !connection.apiKey) {
+          const errorMsg = `Fallback provider '${target.provider}' is not configured or connected for this project.`;
+          attempts.push({
+            attemptNumber: attempts.length + 1,
+            provider: target.provider,
+            model: target.model,
+            statusCode: 503,
+            latencyMs: 0,
+            isSuccess: false,
+            errorCategory: ErrorCategory.PROVIDER_UNAVAILABLE,
+            errorMessage: errorMsg,
+          });
 
-      const adapter = getProviderAdapter(route.secondaryProvider, connection.apiBaseUrl);
-      if (!adapter) {
-        throw new GatewayError(
-          `No adapter available for secondary provider '${route.secondaryProvider}'`,
-          ErrorCategory.INTERNAL_GATEWAY_ERROR,
-          500,
-          undefined,
-          undefined,
-          [...attempts]
-        );
-      }
+          if (isLastTarget) {
+            throw new GatewayError(errorMsg, ErrorCategory.PROVIDER_UNAVAILABLE, 503, undefined, undefined, [...attempts]);
+          }
+          continue;
+        }
 
-      try {
-        const reqWithModel: ChatCompletionRequest = {
-          ...request,
-          model: route.secondaryModel,
-        };
+        const adapter = getProviderAdapter(target.provider, connection.apiBaseUrl);
+        if (!adapter) {
+          const errorMsg = `No adapter available for fallback provider '${target.provider}'`;
+          attempts.push({
+            attemptNumber: attempts.length + 1,
+            provider: target.provider,
+            model: target.model,
+            statusCode: 500,
+            latencyMs: 0,
+            isSuccess: false,
+            errorCategory: ErrorCategory.INTERNAL_GATEWAY_ERROR,
+            errorMessage: errorMsg,
+          });
 
-        const streamingResult = await adapter.executeStream(
-          reqWithModel,
-          connection.apiKey,
-          connection.apiBaseUrl,
-          route.timeoutMs
-        );
+          if (isLastTarget) {
+            throw new GatewayError(errorMsg, ErrorCategory.INTERNAL_GATEWAY_ERROR, 500, undefined, undefined, [...attempts]);
+          }
+          continue;
+        }
 
-        attempts.push({
-          attemptNumber: attempts.length + 1,
-          provider: route.secondaryProvider,
-          model: route.secondaryModel,
-          statusCode: streamingResult.statusCode,
-          latencyMs: streamingResult.latencyMs,
-          isSuccess: true,
-        });
+        try {
+          const reqWithModel: ChatCompletionRequest = {
+            ...request,
+            model: target.model,
+          };
 
-        return {
-          streamingResult,
-          finalProvider: route.secondaryProvider,
-          finalModel: route.secondaryModel,
-          attempts,
-        };
-      } catch (err: any) {
-        const statusCode = err.statusCode || 500;
-        const category = err.category || ErrorCategory.INTERNAL_GATEWAY_ERROR;
-        const latencyMs = 100;
+          const streamingResult = await adapter.executeStream(
+            reqWithModel,
+            connection.apiKey,
+            connection.apiBaseUrl,
+            route.timeoutMs
+          );
 
-        attempts.push({
-          attemptNumber: attempts.length + 1,
-          provider: route.secondaryProvider,
-          model: route.secondaryModel,
-          statusCode,
-          latencyMs,
-          isSuccess: false,
-          errorCategory: category,
-          errorMessage: err.message,
-        });
+          attempts.push({
+            attemptNumber: attempts.length + 1,
+            provider: target.provider,
+            model: target.model,
+            statusCode: streamingResult.statusCode,
+            latencyMs: streamingResult.latencyMs,
+            isSuccess: true,
+          });
 
-        err.attempts = attempts;
-        throw err;
+          return {
+            streamingResult,
+            finalProvider: target.provider,
+            finalModel: target.model,
+            attempts,
+          };
+        } catch (err: any) {
+          const statusCode = err.statusCode || 500;
+          const category = err.category || ErrorCategory.INTERNAL_GATEWAY_ERROR;
+          const latencyMs = 100;
+
+          attempts.push({
+            attemptNumber: attempts.length + 1,
+            provider: target.provider,
+            model: target.model,
+            statusCode,
+            latencyMs,
+            isSuccess: false,
+            errorCategory: category,
+            errorMessage: err.message,
+          });
+
+          const canContinueFallback =
+            !isLastTarget &&
+            ((category === ErrorCategory.TIMEOUT && route.fallbackOnTimeout) ||
+              (category === ErrorCategory.PROVIDER_RATE_LIMIT_EXCEEDED && route.fallbackOnRateLimit) ||
+              (category === ErrorCategory.PROVIDER_QUOTA_EXHAUSTED && route.fallbackOnRateLimit) ||
+              (category === ErrorCategory.PROVIDER_UNAVAILABLE && route.fallbackOnError) ||
+              (statusCode >= 500 && route.fallbackOnError));
+
+          if (canContinueFallback) {
+            continue;
+          }
+
+          err.attempts = attempts;
+          throw err;
+        }
       }
     }
 

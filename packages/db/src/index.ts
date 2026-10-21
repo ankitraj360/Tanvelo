@@ -5,12 +5,19 @@ declare global {
   var prismaGlobal: PrismaClient | undefined;
 }
 
-const isTest = process.env.NODE_ENV === 'test';
+const isTest = process.env.NODE_ENV === 'test' || Boolean(process.env.VITEST);
 const testDbUrl = process.env.TEST_DATABASE_URL;
 const prodDbUrl = process.env.DATABASE_URL;
 
-if (isTest && testDbUrl && prodDbUrl && testDbUrl === prodDbUrl && process.env.ALLOW_SHARED_TEST_DB !== 'true') {
-  console.warn('WARNING: TEST_DATABASE_URL matches DATABASE_URL. Running in shared database mode with strict project-level isolation.');
+if (isTest) {
+  const resolvedUrl = testDbUrl || prodDbUrl;
+  if (resolvedUrl === prodDbUrl && process.env.ALLOW_SHARED_TEST_DB !== 'true') {
+    if (process.env.CI || process.env.STRICT_TEST_DB === 'true') {
+      throw new Error(
+        'SECURITY GUARD: Refusing to run test suite against production DATABASE_URL without explicit ALLOW_SHARED_TEST_DB=true or a dedicated TEST_DATABASE_URL.'
+      );
+    }
+  }
 }
 
 const activeDbUrl = (isTest && testDbUrl) ? testDbUrl : undefined;

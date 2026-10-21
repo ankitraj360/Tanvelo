@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { FastifyInstance } from 'fastify';
-import { createServers, isLoopbackHost, validateManagementSecurity } from '../src/server.js';
+import { createServers, isLoopbackHost, validateManagementSecurity, hasValidManagementSecret } from '../src/server.js';
 import { gatewayService } from '../src/services/gateway.service.js';
 import { prisma } from '@tanvelo/db';
 import { generateGatewayApiKey, dispatchWebhookWithRetries } from '@tanvelo/core';
@@ -174,6 +174,28 @@ describe('Gateway Architecture & Listener Isolation', () => {
     });
 
     expect(res.statusCode).toBe(401);
+  });
+
+  it('validates management secret string strength with hasValidManagementSecret (P0 #2)', () => {
+    expect(hasValidManagementSecret(undefined)).toBe(false);
+    expect(hasValidManagementSecret(null)).toBe(false);
+    expect(hasValidManagementSecret('')).toBe(false);
+    expect(hasValidManagementSecret('   ')).toBe(false);
+    expect(hasValidManagementSecret('1234567890123456789012345678901')).toBe(false); // 31 chars
+    expect(hasValidManagementSecret('12345678901234567890123456789012')).toBe(true); // 32 chars
+  });
+
+  it('serves root route GET / with service identity (P1 #4)', async () => {
+    const res = await publicGateway.inject({
+      method: 'GET',
+      url: '/',
+    });
+
+    expect(res.statusCode).toBe(200);
+    const body = JSON.parse(res.body);
+    expect(body.service).toContain('Tanvelo');
+    expect(body.status).toBe('operational');
+    expect(body.endpoints).toBeDefined();
   });
 
   it('reports consistent Redis state between /health and /api/settings without connection leaks (High #4)', async () => {

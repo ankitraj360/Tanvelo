@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { formatCurrency, parseApiResponse } from '@/lib/utils';
+import { formatCurrency, parseApiResponse, extractErrorMessage } from '@/lib/utils';
 import { Settings, ShieldCheck, CheckCircle2, Coins, AlertCircle, RefreshCw } from 'lucide-react';
 
 interface Budget {
@@ -58,26 +58,20 @@ export default function BudgetsPage() {
     try {
       const envParam = currentEnvironment?.id ? `&environmentId=${currentEnvironment.id}` : '';
       const res = await fetch(`/api/budgets?projectId=${currentProject.id}${envParam}`);
+      const data = await parseApiResponse(res);
+      const bData: Budget = data.budget;
+      setBudget(bData);
+      setAlerts(data.alerts || []);
 
-      if (res.ok) {
-        const data = await parseApiResponse(res);
-        const bData: Budget = data.budget;
-        setBudget(bData);
-        setAlerts(data.alerts || []);
-
-        if (bData) {
-          setMaxBudget(bData.maxBudgetUsd?.toString() || '100');
-          setWarningThreshold(bData.warningThresholdPercent?.toString() || '80');
-          setHardLimit(bData.hardLimitEnabled ?? true);
-          setPeriod(bData.period || 'monthly');
-        }
-      } else {
-        const err = await res.json().catch(() => ({}));
-        setError(err.error || 'Failed to fetch budget');
+      if (bData) {
+        setMaxBudget(bData.maxBudgetUsd?.toString() || '100');
+        setWarningThreshold(bData.warningThresholdPercent?.toString() || '80');
+        setHardLimit(bData.hardLimitEnabled ?? true);
+        setPeriod(bData.period || 'monthly');
       }
     } catch (e: any) {
       console.error(e);
-      setError(e.message || 'Failed to load budgets');
+      setError(extractErrorMessage(e, 'Failed to load budgets'));
     } finally {
       setLoading(false);
     }

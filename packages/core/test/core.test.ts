@@ -173,6 +173,91 @@ describe('Deterministic Routing Engine', () => {
     expect(matchWithFallback.fallbackOnError).toBe(true);
   });
 
+  it('supports ordered multi-entry X-Tanvelo-Fallbacks chains (P1 #5)', () => {
+    const rules = [
+      {
+        id: '1',
+        modelPattern: 'gpt-4o',
+        primaryProvider: 'openai',
+        primaryModel: 'gpt-4o',
+        fallbackOnTimeout: true,
+        fallbackOnRateLimit: true,
+        fallbackOnError: true,
+        timeoutMs: 15000,
+        maxRetries: 1,
+        priority: 10,
+      },
+    ];
+
+    const route = router.resolveRoute(
+      'gpt-4o',
+      rules,
+      'claude-3-5-sonnet, gemini/gemini-1.5-pro, groq/llama-3-70b'
+    );
+    expect(route.fallbackChain).toHaveLength(3);
+    expect(route.fallbackChain[0]).toEqual({ provider: 'anthropic', model: 'claude-3-5-sonnet' });
+    expect(route.fallbackChain[1]).toEqual({ provider: 'gemini', model: 'gemini-1.5-pro' });
+    expect(route.fallbackChain[2]).toEqual({ provider: 'groq', model: 'llama-3-70b' });
+  });
+
+  it('executes ordered multi-entry fallback chain until success (P1 #5)', async () => {
+    let callCount = 0;
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+      callCount++;
+      if (callCount === 1) {
+        // Primary fails with 500
+        return new Response(JSON.stringify({ error: 'Primary OpenAI failure' }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      if (callCount === 2) {
+        // 1st fallback (Anthropic) fails with 500
+        return new Response(JSON.stringify({ error: 'Anthropic failure' }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      // 2nd fallback (Gemini) succeeds
+      return new Response(
+        JSON.stringify({
+          candidates: [
+            {
+              content: { parts: [{ text: 'Gemini 2nd fallback succeeded!' }] },
+              finishReason: 'STOP',
+            },
+          ],
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    });
+
+    const connections = new Map<string, any>([
+      ['openai', { provider: 'openai', apiKey: 'sk-test', status: 'connected' }],
+      ['anthropic', { provider: 'anthropic', apiKey: 'sk-ant-test', status: 'connected' }],
+      ['gemini', { provider: 'gemini', apiKey: 'AIzaSyTest', status: 'connected' }],
+    ]);
+
+    const outcome = await router.executeChat(
+      { model: 'gpt-4o', messages: [{ role: 'user', content: 'Hi' }] },
+      [],
+      connections,
+      'claude-3-5-sonnet,gemini/gemini-1.5-flash'
+    );
+
+    expect(outcome.finalProvider).toBe('gemini');
+    expect(outcome.finalModel).toBe('gemini-1.5-flash');
+    expect(outcome.attempts).toHaveLength(3);
+    expect(outcome.attempts[0].isSuccess).toBe(false);
+    expect(outcome.attempts[1].isSuccess).toBe(false);
+    expect(outcome.attempts[2].isSuccess).toBe(true);
+
+    fetchSpy.mockRestore();
+  });
+
   it('attempts configured secondary fallback even when maxRetries is 1', async () => {
     let callCount = 0;
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {

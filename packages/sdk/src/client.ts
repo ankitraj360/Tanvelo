@@ -156,7 +156,7 @@ export class Tanvelo {
   /**
    * Internal executor for listing models
    */
-  public async _executeListModels(): Promise<{ id: string; provider: string; name: string }[]> {
+  public async _executeListModels(): Promise<{ id: string; provider: string; name: string; object?: string; created?: number; owned_by?: string }[]> {
     const url = `${this.baseUrl}/models`;
     const headers: Record<string, string> = {
       ...this.customHeaders,
@@ -167,13 +167,35 @@ export class Tanvelo {
 
     try {
       const res = await this.fetchFn(url, { headers });
-      if (res.ok) {
-        const data = await res.json();
-        return data.data || data;
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new TanveloError(
+          errData?.error?.message || errData?.message || `Failed to list models: HTTP ${res.status}`,
+          {
+            statusCode: res.status,
+            type: errData?.error?.type || 'api_error',
+            code: errData?.error?.code || 'models_list_failed',
+          }
+        );
       }
-      return [];
-    } catch {
-      return [];
+
+      const data = await res.json();
+      const items: any[] = data.data || (Array.isArray(data) ? data : []);
+      return items.map((m: any) => ({
+        id: m.id,
+        provider: m.owned_by || m.provider || (typeof m.id === 'string' && m.id.includes('/') ? m.id.split('/')[0] : 'openai'),
+        name: m.name || m.id,
+        object: m.object,
+        created: m.created,
+        owned_by: m.owned_by,
+      }));
+    } catch (err: any) {
+      if (err instanceof TanveloError) {
+        throw err;
+      }
+      throw new TanveloError(err?.message || 'Failed to connect to Tanvelo Gateway', {
+        statusCode: 500,
+      });
     }
   }
 
@@ -182,7 +204,7 @@ export class Tanvelo {
    */
   public async health(): Promise<{ status: string; uptime?: number }> {
     try {
-      const rootUrl = this.baseUrl.replace(/\/v1$/, '');
+      const rootUrl = this.baseUrl.replace(/\/v1\/?$/, '');
       const res = await this.fetchFn(`${rootUrl}/health`);
       if (res.ok) {
         return await res.json();

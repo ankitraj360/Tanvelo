@@ -140,12 +140,25 @@ export class TanveloError extends Error {
   public statusCode?: number;
   public responseBody?: any;
   public requestId?: string;
+  public type?: string;
+  public code?: string;
 
-  constructor(message: string, options?: { statusCode?: number; responseBody?: any; requestId?: string }) {
+  constructor(
+    message: string,
+    options?: {
+      statusCode?: number;
+      responseBody?: any;
+      requestId?: string;
+      type?: string;
+      code?: string;
+    }
+  ) {
     super(message);
     this.name = 'TanveloError';
     this.statusCode = options?.statusCode;
     this.responseBody = options?.responseBody;
     this.requestId = options?.requestId;
+    this.type = options?.type;
+    this.code = options?.code;
   }
 }

@@ -94,12 +94,11 @@ export function Header() {
 
       {/* Right Area: Gateway Status Pill & Quick Action Links */}
       <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
-        {/* Latency & Gateway Status Pill */}
+        {/* Gateway Status Pill */}
         <div className="hidden sm:flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800 font-mono shadow-2xs">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
-          <span className="hidden md:inline">Gateway</span>
-          <span>:4000</span>
-          {pingMs !== null && <span className="text-emerald-600 font-medium">({pingMs}ms)</span>}
+          <span className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0" />
+          <span>Gateway Active</span>
+          {pingMs !== null && <span className="text-emerald-600 font-medium font-sans">({pingMs}ms)</span>}
         </div>
 
         <Link

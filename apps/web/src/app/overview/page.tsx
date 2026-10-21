@@ -85,146 +85,103 @@ export default function OverviewPage() {
   );
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-12">
-      {/* Hero Welcome Banner */}
-      <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="relative flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <Badge variant="cyan" className="font-mono text-[10px]">
-                Active Gateway
-              </Badge>
-              <span className="text-xs text-slate-500 font-mono">v1.0.0 Stable</span>
-            </div>
-            <h1 className="text-2xl lg:text-3xl font-bold tracking-tight text-slate-900">
-              Tanvelo LLM Command Center
-            </h1>
-            <p className="text-xs text-slate-600 max-w-xl leading-relaxed">
-              Real-time telemetry, deterministic routing, and cost control for{' '}
-              <span className="text-sky-700 font-semibold">{currentProject?.name}</span> (
-              <span className="text-indigo-700">{currentEnvironment?.name || 'Production'}</span>).
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <Button size="sm" variant="outline" onClick={fetchData} loading={loading}>
-              <RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Refresh Live
-            </Button>
-
-            <Link
-              href="/docs"
-              className="flex items-center gap-1.5 text-xs text-white bg-slate-900 hover:bg-black px-4 py-2 rounded-lg font-medium shadow-xs transition"
-            >
-              <Terminal className="w-3.5 h-3.5" />
-              <span>Quickstart Docs</span>
-              <ArrowUpRight className="w-3 h-3 ml-0.5" />
-            </Link>
-          </div>
+    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            Overview
+          </h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Real-time metrics, request volume, and costs for{' '}
+            <span className="text-slate-800 font-medium">{currentProject?.name}</span> (
+            <span>{currentEnvironment?.name || 'Production'}</span>).
+          </p>
         </div>
 
-        {/* Live System Diagnostics Ribbon */}
-        <div className="mt-6 pt-4 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-slate-500">Gateway Port:</span>
-            <span className="text-slate-800 font-mono font-medium">:4000 Live</span>
-          </div>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={fetchData} loading={loading}>
+            <RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Refresh
+          </Button>
 
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-sky-500" />
-            <span className="text-slate-500">Storage Engine:</span>
-            <span className="text-slate-800 font-medium flex items-center gap-1.5">
-              Neon PostgreSQL <span className="px-1.5 py-0.2 rounded text-[10px] bg-emerald-50 text-emerald-700 font-mono border border-emerald-200">Production</span>
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-indigo-500" />
-            <span className="text-slate-500">Encryption:</span>
-            <span className="text-slate-800 font-medium">AES-256-GCM</span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span className="text-slate-500">Rate Limiter:</span>
-            <span className="text-slate-800 font-medium">Redis 7 Atomic</span>
-          </div>
+          <Link
+            href="/docs"
+            className="flex items-center gap-1.5 text-xs text-white bg-slate-900 hover:bg-black px-3.5 py-1.5 rounded-lg font-medium transition"
+          >
+            <Terminal className="w-3.5 h-3.5" />
+            <span>Docs</span>
+            <ArrowUpRight className="w-3 h-3 ml-0.5" />
+          </Link>
         </div>
       </div>
 
       {/* KPI Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Volume */}
-        <Card className="relative overflow-hidden group hover:border-slate-300 transition">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-sky-500" />
-          <CardContent className="p-5 flex items-center justify-between">
+        <Card className="hover:border-slate-300 transition">
+          <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-slate-500">Total Volume (7d)</p>
-              <h3 className="text-2xl font-black text-slate-900 mt-1 font-mono tracking-tight">
+              <p className="text-xs font-medium text-slate-500">Requests (7d)</p>
+              <h3 className="text-2xl font-bold text-slate-900 mt-1 font-mono tracking-tight">
                 {formatNumber(summary.totalRequests)}
               </h3>
-              <p className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1">
-                <span>Persisted gateway logs</span>
-              </p>
+              <p className="text-[11px] text-slate-400 mt-0.5">Total requests logged</p>
             </div>
-            <div className="w-11 h-11 rounded-xl bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-700 transition shadow-2xs">
+            <div className="w-10 h-10 rounded-lg bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-700">
               <Activity className="w-5 h-5" />
             </div>
           </CardContent>
         </Card>
 
         {/* Success Rate */}
-        <Card className="relative overflow-hidden group hover:border-slate-300 transition">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-teal-500" />
-          <CardContent className="p-5 flex items-center justify-between">
+        <Card className="hover:border-slate-300 transition">
+          <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-slate-500">Success Rate</p>
-              <h3 className="text-2xl font-black text-slate-900 mt-1 font-mono tracking-tight">
+              <h3 className="text-2xl font-bold text-slate-900 mt-1 font-mono tracking-tight">
                 {summary.totalRequests > 0 ? `${summary.successRate}%` : '—'}
               </h3>
-              <p className="text-[11px] text-slate-500 mt-0.5">
-                {summary.totalRequests > 0 ? `${summary.successfulRequests} successful` : 'No requests yet'}
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                {summary.totalRequests > 0 ? `${summary.successfulRequests} successful` : 'No traffic recorded'}
               </p>
             </div>
-            <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 transition shadow-2xs">
+            <div className="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
               <CheckCircle2 className="w-5 h-5" />
             </div>
           </CardContent>
         </Card>
 
-        {/* Latency (Avg & P95) */}
-        <Card className="relative overflow-hidden group hover:border-slate-300 transition">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-sky-500 to-blue-500" />
-          <CardContent className="p-5 flex items-center justify-between">
+        {/* Latency */}
+        <Card className="hover:border-slate-300 transition">
+          <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-slate-500">Average Latency</p>
-              <h3 className="text-2xl font-black text-sky-700 mt-1 font-mono tracking-tight">
+              <p className="text-xs font-medium text-slate-500">Avg Latency</p>
+              <h3 className="text-2xl font-bold text-slate-900 mt-1 font-mono tracking-tight">
                 {summary.totalRequests > 0 ? formatLatency(summary.averageLatencyMs) : '—'}
               </h3>
-              <p className="text-[11px] text-slate-500 mt-0.5 font-mono">
-                {summary.totalRequests > 0 ? `P95: ${formatLatency(summary.p95LatencyMs)}` : 'Exact provider latency'}
+              <p className="text-[11px] text-slate-400 mt-0.5 font-mono">
+                {summary.totalRequests > 0 ? `P95: ${formatLatency(summary.p95LatencyMs)}` : 'Roundtrip response'}
               </p>
             </div>
-            <div className="w-11 h-11 rounded-xl bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-700 transition shadow-2xs">
+            <div className="w-10 h-10 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700">
               <Clock className="w-5 h-5" />
             </div>
           </CardContent>
         </Card>
 
         {/* Estimated Spend */}
-        <Card className="relative overflow-hidden group hover:border-slate-300 transition">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-indigo-500" />
-          <CardContent className="p-5 flex items-center justify-between">
+        <Card className="hover:border-slate-300 transition">
+          <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-slate-500">Estimated Cost</p>
-              <h3 className="text-2xl font-black text-indigo-700 mt-1 font-mono tracking-tight">
+              <h3 className="text-2xl font-bold text-slate-900 mt-1 font-mono tracking-tight">
                 {formatCurrency(summary.totalCost)}
               </h3>
-              <p className="text-[11px] text-slate-500 mt-0.5">
-                {summary.totalTokens > 0 ? `${formatNumber(summary.totalTokens)} tokens` : 'From token accounting'}
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                {summary.totalTokens > 0 ? `${formatNumber(summary.totalTokens)} tokens` : 'Token spend'}
               </p>
             </div>
-            <div className="w-11 h-11 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-700 transition shadow-2xs">
+            <div className="w-10 h-10 rounded-lg bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-700">
               <DollarSign className="w-5 h-5" />
             </div>
           </CardContent>
@@ -233,18 +190,15 @@ export default function OverviewPage() {
 
       {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Cost & Volume Area Chart */}
+        {/* Request Volume Chart */}
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between pb-2 border-b border-slate-100">
             <div>
-              <CardTitle>Request Volume & Cost Trend</CardTitle>
+              <CardTitle className="text-sm font-semibold">Request Volume Trend</CardTitle>
               <CardDescription>Daily execution volume over the past 7 days</CardDescription>
             </div>
-            <Badge variant="outline" className="font-mono text-[10px]">
-              Persisted Records Only
-            </Badge>
           </CardHeader>
-          <CardContent className="h-72">
+          <CardContent className="h-64">
             {analytics?.timeSeries && analytics.timeSeries.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={analytics.timeSeries}>
@@ -264,7 +218,7 @@ export default function OverviewPage() {
                     dataKey="requests"
                     name="Requests"
                     stroke="#0284C7"
-                    strokeWidth={2.5}
+                    strokeWidth={2}
                     fillOpacity={1}
                     fill="url(#reqGradient)"
                   />
@@ -272,10 +226,10 @@ export default function OverviewPage() {
               </ResponsiveContainer>
             ) : (
               <div className="h-full flex flex-col items-center justify-center text-slate-500">
-                <Inbox className="w-8 h-8 mb-2 opacity-50" />
-                <p className="text-xs font-medium text-slate-700">No request activity recorded yet.</p>
-                <p className="text-[11px] text-slate-500 mt-1 max-w-sm text-center">
-                  Traffic from <code className="text-sky-700 font-mono bg-sky-50 px-1 py-0.5 rounded">POST /v1/chat/completions</code> will chart here automatically.
+                <Inbox className="w-8 h-8 mb-2 opacity-40" />
+                <p className="text-xs font-medium text-slate-700">No request activity recorded yet</p>
+                <p className="text-[11px] text-slate-400 mt-1 max-w-sm text-center">
+                  Requests sent to <code className="text-slate-800 font-mono bg-slate-100 px-1 py-0.5 rounded">POST /v1/chat/completions</code> will appear here.
                 </p>
               </div>
             )}
@@ -285,10 +239,10 @@ export default function OverviewPage() {
         {/* Provider Breakdown Donut */}
         <Card>
           <CardHeader className="pb-2 border-b border-slate-100">
-            <CardTitle>Traffic by Provider</CardTitle>
+            <CardTitle className="text-sm font-semibold">Traffic by Provider</CardTitle>
             <CardDescription>Share of gateway volume per provider</CardDescription>
           </CardHeader>
-          <CardContent className="h-72 flex flex-col items-center justify-center">
+          <CardContent className="h-64 flex flex-col items-center justify-center">
             {analytics?.byProvider && analytics.byProvider.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -298,8 +252,8 @@ export default function OverviewPage() {
                     nameKey="provider"
                     cx="50%"
                     cy="50%"
-                    outerRadius={85}
-                    innerRadius={55}
+                    outerRadius={80}
+                    innerRadius={50}
                     paddingAngle={4}
                   >
                     {analytics.byProvider.map((entry: any, index: number) => (
@@ -313,10 +267,10 @@ export default function OverviewPage() {
               </ResponsiveContainer>
             ) : (
               <div className="text-center text-slate-500">
-                <Cpu className="w-8 h-8 mb-2 mx-auto opacity-50" />
-                <p className="text-xs font-medium text-slate-700">No provider distribution yet.</p>
-                <p className="text-[11px] text-slate-500 mt-1">
-                  {connectedProviders.length} connected provider(s) ready.
+                <Cpu className="w-8 h-8 mb-2 mx-auto opacity-40" />
+                <p className="text-xs font-medium text-slate-700">No provider distribution yet</p>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  {connectedProviders.length} connected provider(s) configured.
                 </p>
               </div>
             )}
@@ -324,23 +278,23 @@ export default function OverviewPage() {
         </Card>
       </div>
 
-      {/* Upstream Connected Providers Strip */}
+      {/* Connected Providers Strip */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-slate-100">
           <div>
             <div className="flex items-center gap-2">
-              <CardTitle>Connected AI Providers</CardTitle>
+              <CardTitle className="text-sm font-semibold">Connected Providers</CardTitle>
               <Badge variant="cyan" className="font-mono text-[10px]">
-                {connectedProviders.length} Active
+                {connectedProviders.length}
               </Badge>
             </div>
             <CardDescription>
-              Hardware-isolated AES-256-GCM proxy links across cloud and local engines
+              Configured upstream model providers
             </CardDescription>
           </div>
           <Link
             href="/providers"
-            className="text-xs text-sky-600 hover:text-sky-700 font-medium flex items-center gap-1"
+            className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
           >
             Manage Providers <ChevronRight className="w-3.5 h-3.5" />
           </Link>
@@ -353,30 +307,30 @@ export default function OverviewPage() {
               </p>
               <Link
                 href="/providers"
-                className="inline-flex items-center gap-1 text-xs font-semibold text-sky-600 hover:text-sky-700 hover:underline"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline"
               >
-                Connect OpenAI, Claude, Gemini, DeepSeek, Groq, or local models &rarr;
+                Connect OpenAI, Anthropic, Gemini, Groq, or local models &rarr;
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
               {connectedProviders.slice(0, 8).map((conn) => {
                 const isOnline = conn.status === 'connected';
                 return (
                   <Link
                     key={conn.id}
                     href="/providers"
-                    className="p-3.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-xs transition flex items-center justify-between group shadow-2xs"
+                    className="p-3 rounded-lg border border-slate-200 bg-white hover:border-slate-300 hover:shadow-xs transition flex items-center justify-between group"
                   >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-sky-50 border border-sky-200 flex items-center justify-center font-bold uppercase text-xs text-sky-700 shrink-0">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-7 h-7 rounded-md bg-blue-50 border border-blue-200 flex items-center justify-center font-bold uppercase text-[10px] text-blue-700 shrink-0">
                         {conn.provider.slice(0, 2)}
                       </div>
                       <div className="min-w-0">
-                        <h4 className="text-xs font-semibold text-slate-900 capitalize truncate group-hover:text-sky-600 transition">
+                        <h4 className="text-xs font-semibold text-slate-900 capitalize truncate group-hover:text-blue-600 transition">
                           {conn.customName || conn.provider}
                         </h4>
-                        <span className="text-[10px] text-slate-500 font-mono block truncate">
+                        <span className="text-[10px] text-slate-400 font-mono block truncate">
                           {conn.apiKeyPreview || '••••••••'}
                         </span>
                       </div>
@@ -384,7 +338,7 @@ export default function OverviewPage() {
 
                     <div className="flex items-center gap-1.5 shrink-0">
                       {isOnline ? (
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
                       ) : (
                         <span className="w-2 h-2 rounded-full bg-slate-400" />
                       )}
@@ -401,22 +355,22 @@ export default function OverviewPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100">
           <div>
-            <CardTitle>Recent Gateway Requests</CardTitle>
-            <CardDescription>Live telemetry from client applications</CardDescription>
+            <CardTitle className="text-sm font-semibold">Recent Requests</CardTitle>
+            <CardDescription>Live incoming traffic through the gateway</CardDescription>
           </div>
           <Link
             href="/requests"
-            className="text-xs text-sky-600 hover:text-sky-700 font-medium flex items-center gap-1"
+            className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
           >
-            All Requests History <ChevronRight className="w-3.5 h-3.5" />
+            All Requests <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </CardHeader>
         <CardContent>
           {recentRequests.length === 0 ? (
             <EmptyState
-              title="No requests have been recorded yet"
-              description="Make a request to POST /v1/chat/completions using your Tanvelo API key to see live requests appear here."
-              actionLabel="Open Quickstart Guide"
+              title="No requests recorded yet"
+              description="Make a request to POST /v1/chat/completions using your Tanvelo API key to see live telemetry appear here."
+              actionLabel="View Documentation"
               onAction={() => {
                 window.location.href = '/docs';
               }}
@@ -429,25 +383,25 @@ export default function OverviewPage() {
                     <th className="py-2.5 px-3 font-medium">Request ID</th>
                     <th className="py-2.5 px-3 font-medium">Provider & Model</th>
                     <th className="py-2.5 px-3 font-medium">Status</th>
-                    <th className="py-2.5 px-3 font-medium">Total Latency</th>
+                    <th className="py-2.5 px-3 font-medium">Latency</th>
                     <th className="py-2.5 px-3 font-medium">Tokens</th>
-                    <th className="py-2.5 px-3 font-medium">Cost (Est.)</th>
+                    <th className="py-2.5 px-3 font-medium">Cost</th>
                     <th className="py-2.5 px-3 font-medium text-right">Time</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {recentRequests.map((req) => (
                     <tr key={req.id} className="hover:bg-slate-50 transition">
-                      <td className="py-3 px-3 font-mono text-slate-800 font-medium">
-                        <Link href={`/requests/${req.requestId}`} className="hover:text-sky-600 hover:underline">
+                      <td className="py-2.5 px-3 font-mono text-slate-800 font-medium">
+                        <Link href={`/requests/${req.requestId}`} className="hover:text-blue-600 hover:underline">
                           {req.requestId.slice(0, 18)}...
                         </Link>
                       </td>
-                      <td className="py-3 px-3 text-slate-800">
+                      <td className="py-2.5 px-3 text-slate-800">
                         <span className="font-semibold capitalize text-slate-900">{req.provider}</span>
                         <span className="text-slate-500 ml-1.5 font-mono text-[11px]">({req.model})</span>
                       </td>
-                      <td className="py-3 px-3">
+                      <td className="py-2.5 px-3">
                         <Badge
                           variant={
                             req.status === 'success'
@@ -460,10 +414,10 @@ export default function OverviewPage() {
                           {req.statusCode} {req.status}
                         </Badge>
                       </td>
-                      <td className="py-3 px-3 text-slate-800 font-mono">{formatLatency(req.totalLatencyMs)}</td>
-                      <td className="py-3 px-3 text-slate-800 font-mono">{formatNumber(req.totalTokens)}</td>
-                      <td className="py-3 px-3 text-slate-800 font-mono">{formatCurrency(req.estimatedCost)}</td>
-                      <td className="py-3 px-3 text-slate-500 text-right">
+                      <td className="py-2.5 px-3 text-slate-800 font-mono">{formatLatency(req.totalLatencyMs)}</td>
+                      <td className="py-2.5 px-3 text-slate-800 font-mono">{formatNumber(req.totalTokens)}</td>
+                      <td className="py-2.5 px-3 text-slate-800 font-mono">{formatCurrency(req.estimatedCost)}</td>
+                      <td className="py-2.5 px-3 text-slate-500 text-right">
                         {new Date(req.createdAt).toLocaleTimeString()}
                       </td>
                     </tr>
