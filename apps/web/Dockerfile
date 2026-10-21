@@ -3,7 +3,7 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
 
 # Copy workspace descriptors
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
@@ -11,6 +11,7 @@ COPY packages/db/package.json packages/db/
 COPY packages/db/prisma packages/db/prisma
 COPY packages/core/package.json packages/core/
 COPY packages/sdk/package.json packages/sdk/
+COPY apps/gateway/package.json apps/gateway/
 COPY apps/web/package.json apps/web/
 
 RUN pnpm install --frozen-lockfile
@@ -25,6 +26,12 @@ RUN pnpm --filter @tanvelo/core build
 
 # Next.js build with standalone output
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV OUTPUT_STANDALONE=true
+ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_live_Y2xlcmsudGFudmVsby5pbiQ"
+ENV NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+ARG CLERK_SECRET_KEY="sk_live_placeholder"
+ENV CLERK_SECRET_KEY=$CLERK_SECRET_KEY
+
 RUN pnpm --filter @tanvelo/web build
 
 # Stage 2: Production standalone runtime

@@ -48,6 +48,18 @@ function XSocialIcon({ className = "w-4 h-4" }: { className?: string }) {
   );
 }
 
+const PROVIDERS = [
+  'OpenAI',
+  'Anthropic Claude',
+  'Google Gemini',
+  'DeepSeek',
+  'Groq',
+  'Mistral AI',
+  'Ollama / Local',
+  'OpenRouter',
+  'Cohere',
+];
+
 export function LandingPage() {
   const [activeTab, setActiveTab] = useState<'python' | 'typescript' | 'curl'>('python');
   const [copied, setCopied] = useState(false);
@@ -279,11 +291,6 @@ for await (const chunk of stream) {
       <section className="pt-12 pb-12 sm:pt-16 sm:pb-16 md:pt-24 md:pb-20 overflow-hidden border-b border-slate-100">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           <div className="max-w-xl mx-auto lg:mx-0 text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-600 font-mono text-[11px] tracking-wider uppercase mb-5">
-              <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
-              <span>Unified LLM Gateway v1.0</span>
-            </div>
-
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-[-0.04em] text-slate-900 leading-[1.05] mb-4 sm:mb-5">
               Every model<span className="text-sky-500">.</span><br />
               One gateway<span className="text-sky-500">.</span><br />
@@ -325,13 +332,6 @@ for await (const chunk of stream) {
 
             {/* Subtle Overlay Chip */}
             <div className="absolute bottom-3 left-3 right-3 sm:right-auto sm:left-4 sm:bottom-4 bg-white/95 border border-slate-200/90 rounded-xl p-2.5 sm:p-3 shadow-md backdrop-blur-sm pointer-events-none font-mono text-[10px] sm:text-xs">
-              <div className="flex items-center justify-between gap-4 mb-1">
-                <span className="text-[10px] text-slate-400 tracking-wider">DETERMINISTIC ROUTE</span>
-                <span className="flex items-center gap-1 text-[10px] text-emerald-600 font-medium">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  Active 60fps
-                </span>
-              </div>
               <div className="text-slate-800 flex items-center gap-1 sm:gap-1.5 font-medium flex-wrap">
                 <span>gpt-4o</span>
                 <span className="text-sky-500">→</span>
@@ -346,24 +346,29 @@ for await (const chunk of stream) {
         </div>
       </section>
 
-      {/* Provider Ecosystem Strip */}
-      <section className="py-5 bg-slate-50/80 border-b border-slate-100 overflow-x-auto">
-        <div className="max-w-6xl mx-auto px-6 flex flex-wrap items-center justify-between gap-4">
-          <span className="font-mono text-xs uppercase tracking-wider text-slate-400 font-medium">
-            ONE API · 10+ PROVIDERS & LOCAL MODELS
-          </span>
-          <div className="flex items-center gap-6 text-sm font-medium text-slate-600 overflow-x-auto py-1">
-            <span className="hover:text-slate-900 transition-colors whitespace-nowrap">OpenAI</span>
-            <span className="hover:text-slate-900 transition-colors whitespace-nowrap">Anthropic Claude</span>
-            <span className="hover:text-slate-900 transition-colors whitespace-nowrap">Google Gemini</span>
-            <span className="hover:text-slate-900 transition-colors whitespace-nowrap">DeepSeek</span>
-            <span className="hover:text-slate-900 transition-colors whitespace-nowrap">Groq</span>
-            <span className="hover:text-slate-900 transition-colors whitespace-nowrap">Mistral AI</span>
-            <span className="hover:text-slate-900 transition-colors whitespace-nowrap">Ollama / Local</span>
-            <span className="hover:text-slate-900 transition-colors whitespace-nowrap">OpenRouter</span>
-            <span className="hover:text-slate-900 transition-colors whitespace-nowrap">Cohere</span>
+      {/* Provider Ecosystem Strip (Moving Horizontally) */}
+      <section className="py-4 bg-slate-50/80 border-b border-slate-100 overflow-hidden relative" aria-label="Supported Providers">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center gap-4">
+          <div className="shrink-0 flex items-center gap-2">
+            <span className="font-mono text-[11px] uppercase tracking-wider text-slate-400 font-medium whitespace-nowrap">
+              ONE API · 10+ PROVIDERS & LOCAL MODELS
+            </span>
           </div>
-          <div className="flex items-center gap-1.5 px-3 py-1 bg-white border border-slate-200 rounded-full font-mono text-xs text-slate-600 shrink-0">
+
+          <div className="flex-1 w-full overflow-hidden relative [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
+            <div className="animate-marquee flex items-center gap-8 py-1">
+              {[...PROVIDERS, ...PROVIDERS].map((provider, idx) => (
+                <div key={idx} className="flex items-center gap-3 shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-sky-500/70" />
+                  <span className="text-sm font-medium text-slate-700 hover:text-slate-950 transition-colors whitespace-nowrap">
+                    {provider}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="shrink-0 hidden lg:flex items-center gap-1.5 px-3 py-1 bg-white border border-slate-200 rounded-full font-mono text-xs text-slate-600">
             <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2.5]" />
             <span>OpenAI SDK Compatible</span>
           </div>
