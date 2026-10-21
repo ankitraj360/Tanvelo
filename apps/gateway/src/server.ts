@@ -16,6 +16,7 @@ import sensible from '@fastify/sensible';
 import { gatewayRoutes } from './routes/gateway.routes.js';
 import { managementRoutes } from './routes/management.routes.js';
 import { gatewayService } from './services/gateway.service.js';
+import { metricsService } from './services/metrics.service.js';
 import { validateEncryptionConfig } from '@tanvelo/core';
 
 export function isLoopbackHost(host: string): boolean {
@@ -116,6 +117,7 @@ export async function createServers() {
       const headerSecret = cleanSecret(rawHeaderSecret);
 
       if (!headerSecret || headerSecret !== managementSecret) {
+        metricsService.recordManagementAuthFailure();
         return reply.status(401).send({
           error: {
             message: 'Unauthorized: Invalid management secret provided.',

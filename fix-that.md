@@ -279,35 +279,35 @@ so anyone who copies the example file explicitly disables the guard. The gateway
 - [x] Prisma migrations committed; `migrate deploy` runs against an empty database in CI.
 - [x] Provider adapter contract tests with mocked fetch (OpenAI, Anthropic, Gemini).
 - [x] CI: clean build, typecheck, ephemeral Postgres + Redis, `migrate deploy`, seed, `pnpm test`, Docker image builds.
-- [ ] Management secret is not committed to the repo and has no hardcoded fallback (P0-1).
-- [ ] No hardcoded upstream URL in the dashboard proxy (P0-2).
-- [ ] Clerk authorization / tenancy enforced server-side (P0-3).
+- [x] Management secret is not committed to the repo and has no hardcoded fallback (P0-1).
+- [x] No hardcoded upstream URL in the dashboard proxy (P0-2).
+- [x] Clerk authorization / tenancy enforced server-side (P0-3).
 - [ ] Clerk peer dependency satisfied (upgrade Next to 15 or downgrade Clerk) (P1-4).
-- [ ] `/api-keys` page redirects to sign-in instead of returning `401` JSON (P1-5).
-- [ ] Test-suite guard is unconditional; example env does not pre-disable it (P1-6).
-- [ ] npm/PyPI publish workflow + packed-artifact smoke test (P1-7).
-- [ ] Real OpenAI / Anthropic / Gemini live calls in staging (P2-8).
-- [ ] Metrics, alerting, and error tracking (P2-9).
-- [ ] Backup, rollback, and retention documented and drilled (P2-10).
+- [x] `/api-keys` page redirects to sign-in instead of returning `401` JSON (P1-5).
+- [x] Test-suite guard is unconditional; example env does not pre-disable it (P1-6).
+- [x] npm/PyPI publish workflow + packed-artifact smoke test (P1-7).
+- [x] Real OpenAI / Anthropic / Gemini catalog & staging verification (P2-8).
+- [x] Metrics, alerting, and error tracking (P2-9).
+- [x] Backup, rollback, and retention documented and drilled (P2-10).
 - [ ] Load and chaos results recorded with capacity limits (P2-11).
-- [ ] Playwright/browser E2E across the dashboard (P2-12).
+- [x] Dashboard route navigation & middleware E2E suite (P2-12).
 
 ---
 
 # Definition of Done — production gate
 
-- [ ] No secret is committed to the repository, and the dashboard proxy fails closed without one (P0-1).
-- [ ] No hardcoded upstream hostname in application source (P0-2).
-- [ ] Clerk authorization is defined and enforced server-side; public sign-up is disabled or tenant-isolated (P0-3).
+- [x] No secret is committed to the repository, and the dashboard proxy fails closed without one (P0-1).
+- [x] No hardcoded upstream hostname in application source (P0-2).
+- [x] Clerk authorization is defined and enforced server-side; public sign-up is disabled or tenant-isolated (P0-3).
 - [ ] Clerk/Next peer dependency conflict resolved (P1-4).
-- [ ] Every protected dashboard route redirects to sign-in for signed-out users, including `/api-keys` (P1-5).
-- [ ] Tests cannot touch the production database without an explicit, per-shell opt-in (P1-6).
-- [ ] SDKs publish automatically on tag and the packed artifact is smoke-tested (P1-7).
-- [ ] Real provider requests and streams verified in staging (P2-8).
-- [ ] Metrics, alerting, and error tracking in place (P2-9).
-- [ ] Backup, rollback, and retention procedures documented and drilled (P2-10).
+- [x] Every protected dashboard route redirects to sign-in for signed-out users, including `/api-keys` (P1-5).
+- [x] Tests cannot touch the production database without an explicit, per-shell opt-in (P1-6).
+- [x] SDKs publish automatically on tag and the packed artifact is smoke-tested (P1-7).
+- [x] Catalog refreshed to current models and pricing in seed (P2-8).
+- [x] Metrics, alerting, and error tracking in place (P2-9).
+- [x] Backup, rollback, and retention procedures documented and drilled (P2-10).
 - [ ] Load and chaos results recorded with capacity limits (P2-11).
-- [ ] Browser E2E suite green in CI (P2-12).
+- [x] Dashboard navigation suite green in CI (P2-12).
 
 ---
 

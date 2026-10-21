@@ -18,7 +18,9 @@ export default clerkMiddleware(async (auth, request) => {
     const session = await auth();
     if (!session.userId) {
       // API requests get clean 401 JSON instead of redirect or 404
-      if (request.nextUrl.pathname.startsWith('/api')) {
+      const pathname = request.nextUrl.pathname;
+      const isApiRoute = pathname === '/api' || pathname.startsWith('/api/');
+      if (isApiRoute) {
         return NextResponse.json(
           { error: 'Unauthorized: Authentication required' },
           { status: 401 }

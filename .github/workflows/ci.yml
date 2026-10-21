@@ -84,8 +84,8 @@ jobs:
       DIRECT_URL: "postgresql://test_user:test_password@localhost:5432/test_tanvelo"
       TEST_DATABASE_URL: "postgresql://test_user:test_password@localhost:5432/test_tanvelo"
       REDIS_URL: "redis://localhost:6379"
-      ENCRYPTION_SECRET: "e98b0f71923fa53df7ceae650630ba1ef1ec55152eb9b8f2bf29a8a7ca208359"
-      MANAGEMENT_API_SECRET: "c8e6f1a4d9b2e7c3a0f5d8b1e4c7a2f9c8e6f1a4d9b2e7c3a0f5d8b1e4c7a2f9"
+      ENCRYPTION_SECRET: "ci0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      MANAGEMENT_API_SECRET: "ci_test_management_secret_minimum_32_chars_long_0123456789"
 
     steps:
       - uses: actions/checkout@v4
@@ -117,6 +117,16 @@ jobs:
 
       - name: Run complete test suite
         run: pnpm test
+
+      - name: Verify @tanvelo/sdk packaging & tarball installation
+        run: |
+          pnpm --filter @tanvelo/sdk build
+          cd packages/sdk
+          TARBALL=$(npm pack)
+          mkdir -p /tmp/sdk-smoke && cd /tmp/sdk-smoke
+          npm init -y
+          npm install "${GITHUB_WORKSPACE}/packages/sdk/${TARBALL}"
+          node -e "const { TanveloClient } = require('@tanvelo/sdk'); const client = new TanveloClient({ apiKey: 'tan_test' }); console.log('SDK smoke test passed:', typeof client.chat.completions.create);"
 
   docker-verification:
     name: Docker Image Build Verification

@@ -9,6 +9,7 @@
     "migrate": "prisma migrate dev --name init",
     "migrate:deploy": "prisma migrate deploy",
     "seed": "tsx src/seed.ts",
+    "prune": "tsx src/cleanup.ts",
     "studio": "prisma studio"
   },
   "dependencies": {

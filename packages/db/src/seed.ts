@@ -87,6 +87,24 @@ async function main() {
         contextWindow: 1000000,
         supportsStreaming: true,
       },
+      {
+        modelId: 'gemini-2.0-flash',
+        name: 'Gemini 2.0 Flash',
+        provider: 'gemini',
+        inputPricePerMillion: 0.10,
+        outputPricePerMillion: 0.40,
+        contextWindow: 1048576,
+        supportsStreaming: true,
+      },
+      {
+        modelId: 'deepseek-chat',
+        name: 'DeepSeek V3',
+        provider: 'deepseek',
+        inputPricePerMillion: 0.14,
+        outputPricePerMillion: 0.28,
+        contextWindow: 64000,
+        supportsStreaming: true,
+      },
     ];
 
     for (const m of defaultModels) {

@@ -1,12 +1,18 @@
 import crypto from 'crypto';
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { GatewayService } from '../services/gateway.service.js';
+import { metricsService } from '../services/metrics.service.js';
 import { ErrorCategory, GatewayError, calculateCost } from '@tanvelo/core';
 import { prisma } from '@tanvelo/db';
 
 const gatewayService = new GatewayService();
 
 export async function gatewayRoutes(fastify: FastifyInstance) {
+  // Global response hook for metrics tracking
+  fastify.addHook('onResponse', async (request, reply) => {
+    metricsService.recordRequest(reply.statusCode, reply.elapsedTime);
+  });
+
   // Root welcome / status endpoint
   fastify.get('/', async (_request: FastifyRequest, reply: FastifyReply) => {
     return reply.status(200).send({
@@ -15,11 +21,28 @@ export async function gatewayRoutes(fastify: FastifyInstance) {
       version: '1.0.0',
       endpoints: {
         health: '/health',
+        metrics: '/metrics',
         chatCompletions: '/v1/chat/completions',
         models: '/v1/models',
         documentation: 'https://www.tanvelo.in/docs',
       },
     });
+  });
+
+  // Prometheus & Operational Metrics endpoint
+  fastify.get('/metrics', async (request: FastifyRequest, reply: FastifyReply) => {
+    const rateLimiterStatus = gatewayService.getRateLimiter().getStatus();
+    const isRedisOk = Boolean(rateLimiterStatus.distributed);
+    const acceptHeader = request.headers['accept'] || '';
+
+    if (acceptHeader.includes('application/json')) {
+      return reply.status(200).send(metricsService.getSnapshot());
+    }
+
+    return reply
+      .status(200)
+      .header('Content-Type', 'text/plain; version=0.0.4; charset=utf-8')
+      .send(metricsService.toPrometheus(isRedisOk));
   });
 
   // Liveness check (process is alive)

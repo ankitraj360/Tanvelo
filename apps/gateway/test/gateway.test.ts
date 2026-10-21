@@ -12,7 +12,7 @@ let testKeyId: string;
 let testProjectId: string;
 let testEnvId: string;
 let initialDefaultProvidersCount: number;
-const testManagementSecret = process.env.MANAGEMENT_API_SECRET || 'c8e6f1a4d9b2e7c3a0f5d8b1e4c7a2f9c8e6f1a4d9b2e7c3a0f5d8b1e4c7a2f9';
+const testManagementSecret = process.env.MANAGEMENT_API_SECRET || 'test_suite_management_secret_minimum_32_chars_ok';
 
 beforeAll(async () => {
   const servers = await createServers();
@@ -753,6 +753,34 @@ describe('Production Readiness & Hardening Verifications (P0/P1 items)', () => {
     } finally {
       await prisma.gatewayApiKey.delete({ where: { id: restrictedKey.id } });
     }
+  });
+
+  it('exposes Prometheus metrics at GET /metrics (P2 #9)', async () => {
+    const res = await publicGateway.inject({
+      method: 'GET',
+      url: '/metrics',
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.headers['content-type']).toContain('text/plain');
+    expect(res.body).toContain('tanvelo_gateway_up 1');
+    expect(res.body).toContain('tanvelo_requests_total');
+  });
+
+  it('exposes JSON metrics at GET /metrics with Accept: application/json', async () => {
+    const res = await publicGateway.inject({
+      method: 'GET',
+      url: '/metrics',
+      headers: {
+        accept: 'application/json',
+      },
+    });
+
+    expect(res.statusCode).toBe(200);
+    const body = JSON.parse(res.body);
+    expect(body).toHaveProperty('uptimeSeconds');
+    expect(body).toHaveProperty('totalRequests');
+    expect(body).toHaveProperty('statusCounts');
   });
 });
 

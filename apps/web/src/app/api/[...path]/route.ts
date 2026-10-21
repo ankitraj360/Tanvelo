@@ -1,27 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 
-const GATEWAY_URL =
-  process.env.GATEWAY_INTERNAL_URL ||
-  (process.env.NODE_ENV === 'production'
-    ? 'https://tanvelo-backend-zgyc.onrender.com'
-    : 'http://127.0.0.1:4001');
+function getGatewayUrl(): string | null {
+  const url = process.env.GATEWAY_INTERNAL_URL?.trim();
+  if (!url) return null;
+  return url.replace(/\/+$/, '');
+}
 
-const FALLBACK_MANAGEMENT_SECRET = 'c8e6f1a4d9b2e7c3a0f5d8b1e4c7a2f9c8e6f1a4d9b2e7c3a0f5d8b1e4c7a2f9';
-
-function resolveManagementSecret(): string {
+function resolveManagementSecret(): string | null {
   const envVal = process.env.MANAGEMENT_API_SECRET?.trim().replace(/^["']|["']$/g, '');
-  // Ignore encrypted Vercel blobs or too-short secrets, safely fallback to canonical secret
+  // Ignore encrypted Vercel blobs or too-short secrets
   if (envVal && !envVal.startsWith('eyJ') && envVal.length >= 32) {
     return envVal;
   }
-  return FALLBACK_MANAGEMENT_SECRET;
+  return null;
 }
 
 async function handleProxy(req: NextRequest, { params }: { params: { path: string[] } }) {
-  // 1. Verify Clerk user session
+  // 1. Verify Clerk user session & tenancy
+  let userId: string | null = null;
+  let orgId: string | null = null;
+
   try {
-    const { userId } = await auth();
+    const session = await auth();
+    userId = session.userId;
+    orgId = (session as any).orgId || null;
     if (!userId) {
       return NextResponse.json(
         { error: 'Unauthorized: Authentication required to access management API' },
@@ -35,17 +38,43 @@ async function handleProxy(req: NextRequest, { params }: { params: { path: strin
     );
   }
 
+  // 2. Resolve Gateway internal URL - fail closed if unconfigured
+  const gatewayUrl = getGatewayUrl();
+  if (!gatewayUrl) {
+    console.error('[Tanvelo Proxy] GATEWAY_INTERNAL_URL is not configured in environment.');
+    return NextResponse.json(
+      {
+        error: 'Gateway Service Unconfigured',
+        message: 'GATEWAY_INTERNAL_URL is not configured in the web environment.',
+      },
+      { status: 503 }
+    );
+  }
+
+  // 3. Resolve Management API Secret - fail closed if unconfigured
+  const secret = resolveManagementSecret();
+  if (!secret) {
+    console.error('[Tanvelo Proxy] MANAGEMENT_API_SECRET is not configured or under 32 characters.');
+    return NextResponse.json(
+      {
+        error: 'Management Service Unavailable',
+        message: 'MANAGEMENT_API_SECRET is not configured in the environment.',
+      },
+      { status: 503 }
+    );
+  }
+
   const path = (params.path || []).join('/');
   const search = req.nextUrl.search;
-  const targetUrl = `${GATEWAY_URL}/api/${path}${search}`;
-
-  const secret = resolveManagementSecret();
+  const targetUrl = `${gatewayUrl}/api/${path}${search}`;
 
   const headers: Record<string, string> = {
     'Content-Type': req.headers.get('content-type') || 'application/json',
     Accept: req.headers.get('accept') || 'application/json',
     'x-management-secret': secret,
     'x-tanvelo-admin-token': secret,
+    'x-tanvelo-user-id': userId,
+    ...(orgId ? { 'x-tanvelo-org-id': orgId } : {}),
   };
 
   try {

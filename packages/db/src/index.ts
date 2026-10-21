@@ -11,12 +11,10 @@ const prodDbUrl = process.env.DATABASE_URL;
 
 if (isTest) {
   const resolvedUrl = testDbUrl || prodDbUrl;
-  if (resolvedUrl === prodDbUrl && process.env.ALLOW_SHARED_TEST_DB !== 'true') {
-    if (process.env.CI || process.env.STRICT_TEST_DB === 'true') {
-      throw new Error(
-        'SECURITY GUARD: Refusing to run test suite against production DATABASE_URL without explicit ALLOW_SHARED_TEST_DB=true or a dedicated TEST_DATABASE_URL.'
-      );
-    }
+  if (resolvedUrl && resolvedUrl === prodDbUrl && process.env.ALLOW_SHARED_TEST_DB !== 'true') {
+    throw new Error(
+      'SECURITY GUARD: Refusing to run test suite against production DATABASE_URL. Provide a dedicated TEST_DATABASE_URL or explicitly run with ALLOW_SHARED_TEST_DB=true.'
+    );
   }
 }
 
