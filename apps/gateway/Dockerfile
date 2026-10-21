@@ -24,6 +24,7 @@ COPY apps/gateway/ ./apps/gateway/
 
 # Generate Prisma client and compile TypeScript
 RUN pnpm --filter @tanvelo/db generate
+RUN pnpm --filter @tanvelo/db build
 RUN pnpm --filter @tanvelo/core build
 RUN pnpm --filter @tanvelo/gateway build
 

@@ -38,8 +38,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Generate Prisma client
-        run: pnpm --filter @tanvelo/db generate
+      - name: Generate Prisma client and build database package
+        run: pnpm --filter @tanvelo/db generate && pnpm --filter @tanvelo/db build
 
       - name: Clean stale .next cache
         run: rm -rf apps/web/.next
@@ -81,6 +81,7 @@ jobs:
     env:
       NODE_ENV: test
       DATABASE_URL: "postgresql://test_user:test_password@localhost:5432/test_tanvelo"
+      DIRECT_URL: "postgresql://test_user:test_password@localhost:5432/test_tanvelo"
       TEST_DATABASE_URL: "postgresql://test_user:test_password@localhost:5432/test_tanvelo"
       REDIS_URL: "redis://localhost:6379"
       ENCRYPTION_SECRET: "e98b0f71923fa53df7ceae650630ba1ef1ec55152eb9b8f2bf29a8a7ca208359"
@@ -102,8 +103,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Generate Prisma client
-        run: pnpm --filter @tanvelo/db generate
+      - name: Generate Prisma client and build database package
+        run: pnpm --filter @tanvelo/db generate && pnpm --filter @tanvelo/db build
 
       - name: Run Prisma migrations on fresh database
         run: pnpm db:migrate:deploy

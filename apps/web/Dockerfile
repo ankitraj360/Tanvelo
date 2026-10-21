@@ -22,6 +22,7 @@ COPY apps/web/ ./apps/web/
 
 # Generate Prisma client and compile core
 RUN pnpm --filter @tanvelo/db generate
+RUN pnpm --filter @tanvelo/db build
 RUN pnpm --filter @tanvelo/core build
 
 # Next.js build with standalone output
