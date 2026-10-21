@@ -1,4 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
 
 const isPublicRoute = createRouteMatcher([
   '/',
@@ -18,15 +19,15 @@ export default clerkMiddleware(async (auth, request) => {
     if (!session.userId) {
       // API requests get clean 401 JSON instead of redirect or 404
       if (request.nextUrl.pathname.startsWith('/api')) {
-        return new Response(JSON.stringify({ error: 'Unauthorized: Authentication required' }), {
-          status: 401,
-          headers: { 'Content-Type': 'application/json' },
-        });
+        return NextResponse.json(
+          { error: 'Unauthorized: Authentication required' },
+          { status: 401 }
+        );
       }
       // Protected dashboard pages redirect to /sign-in with return URL
       const signInUrl = new URL('/sign-in', request.url);
       signInUrl.searchParams.set('redirect_url', request.url);
-      return Response.redirect(signInUrl);
+      return NextResponse.redirect(signInUrl);
     }
   }
 });
