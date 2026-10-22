@@ -2,12 +2,24 @@ import path from 'path';
 import dotenv from 'dotenv';
 
 // Load root .env first, then package .env without letting empty strings shadow root secrets
-dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
-dotenv.config({ path: path.resolve(process.cwd(), '.env'), override: false });
+const envCandidates = [
+  path.resolve(process.cwd(), '../../.env'),
+  path.resolve(process.cwd(), '../.env'),
+  path.resolve(process.cwd(), '.env'),
+];
+for (const envPath of envCandidates) {
+  dotenv.config({ path: envPath, override: false });
+}
 
 if (!process.env.MANAGEMENT_API_SECRET || process.env.MANAGEMENT_API_SECRET.trim() === '') {
   delete process.env.MANAGEMENT_API_SECRET;
-  dotenv.config({ path: path.resolve(process.cwd(), '../../.env'), override: true });
+  for (const envPath of envCandidates) {
+    dotenv.config({ path: envPath, override: true });
+    const current = process.env.MANAGEMENT_API_SECRET as string | undefined;
+    if (current && current.trim() !== '') {
+      break;
+    }
+  }
 }
 
 import Fastify from 'fastify';
@@ -30,6 +42,9 @@ export function isLoopbackHost(host: string): boolean {
 }
 
 export function cleanSecret(secret?: unknown): string {
+  if (Array.isArray(secret)) {
+    secret = secret[0];
+  }
   if (typeof secret !== 'string') return '';
   return secret.trim().replace(/^["']|["']$/g, '').trim();
 }

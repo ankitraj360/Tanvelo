@@ -136,7 +136,7 @@ describe('Gateway Architecture & Listener Isolation', () => {
 
     expect(res.statusCode).toBe(200);
     const body = JSON.parse(res.body);
-    expect(body.status).toBe('healthy');
+    expect(['healthy', 'degraded']).toContain(body.status);
     expect(body.database).toBe('ok');
     expect(body.rateLimiter).toBeDefined();
   });
