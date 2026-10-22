@@ -89,8 +89,8 @@ async function handleProxy(req: NextRequest, { params }: { params: { path: strin
   const search = req.nextUrl.search;
   const targetUrl = `${gatewayUrl}/api/${path}${search}`;
 
+  const rawContentType = req.headers.get('content-type');
   const headers: Record<string, string> = {
-    'Content-Type': req.headers.get('content-type') || 'application/json',
     Accept: req.headers.get('accept') || 'application/json',
     Authorization: `Bearer ${secret}`,
     'x-management-secret': secret,
@@ -109,6 +109,9 @@ async function handleProxy(req: NextRequest, { params }: { params: { path: strin
       const bodyText = await req.text();
       if (bodyText) {
         fetchOptions.body = bodyText;
+        headers['Content-Type'] = rawContentType || 'application/json';
+      } else if (rawContentType) {
+        headers['Content-Type'] = rawContentType;
       }
     }
 
