@@ -68,8 +68,8 @@ export function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const codeSnippets = {
-    typescript: `// npm install @tanvelo/sdk (or npm i git+https://github.com/ankitraj360/Tanvelo.git#subdirectory=packages/sdk)
-import { Tanvelo } from "@tanvelo/sdk";
+    typescript: `// npm install tanvelo
+import { Tanvelo } from "tanvelo";
 
 const tanvelo = new Tanvelo({
   apiKey: process.env.TANVELO_API_KEY, // or "tv_live_..."

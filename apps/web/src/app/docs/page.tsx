@@ -15,7 +15,7 @@ export default function DocsPage() {
     setTimeout(() => setCopiedIndex(null), 2000);
   };
 
-  const tanveloTsSnippet = `import { Tanvelo } from '@tanvelo/sdk';
+  const tanveloTsSnippet = `import { Tanvelo } from 'tanvelo';
 
 // Initialize the Tanvelo Client (automatically connects to production gateway)
 const tanvelo = new Tanvelo({
@@ -162,7 +162,7 @@ function verifyTanveloWebhook(payloadRaw, signatureHeader, secret) {
             </span>
             <h4 className="font-semibold text-slate-900 text-xs">Call Any Model via SDK</h4>
             <p className="text-[11px] text-slate-500">
-              Use <code className="text-blue-600 font-mono text-[10px]">@tanvelo/sdk</code> in TypeScript or <code className="text-blue-600 font-mono text-[10px]">tanvelo</code> in Python, or drop in the standard <code className="text-blue-600 font-mono text-[10px]">openai</code> SDK.
+              Use <code className="text-blue-600 font-mono text-[10px]">tanvelo</code> in TypeScript & Python, or drop in the standard <code className="text-blue-600 font-mono text-[10px]">openai</code> SDK.
             </p>
           </CardContent>
         </Card>
@@ -187,9 +187,9 @@ function verifyTanveloWebhook(payloadRaw, signatureHeader, secret) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <div>
-              <CardTitle className="text-xs font-mono text-blue-600">TypeScript / Node.js SDK (@tanvelo/sdk)</CardTitle>
+              <CardTitle className="text-xs font-mono text-blue-600">TypeScript / Node.js SDK (tanvelo)</CardTitle>
               <CardDescription>
-                Install: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-800 font-mono">npm install @tanvelo/sdk</code> or directly from GitHub: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-800 font-mono">npm i git+https://github.com/ankitraj360/Tanvelo.git#subdirectory=packages/sdk</code>
+                Install: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-800 font-mono">npm install tanvelo</code> (or <code className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-800 font-mono">npm i tanvelo-sdk</code>)
               </CardDescription>
             </div>
             <Button size="sm" variant="ghost" onClick={() => copyCode(tanveloTsSnippet, 10)}>

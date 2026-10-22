@@ -125,7 +125,9 @@ curl -X POST https://tanvelo-backend-zgyc.onrender.com/v1/chat/completions \
 
 #### TypeScript & Node.js
 ```bash
-npm install @tanvelo/sdk
+npm install tanvelo
+# or:
+npm install tanvelo-sdk
 # or directly from GitHub:
 npm install git+https://github.com/ankitraj360/Tanvelo.git#subdirectory=packages/sdk
 # or use the official OpenAI SDK drop-in:
@@ -133,7 +135,7 @@ npm install openai
 ```
 
 ```typescript
-import { Tanvelo } from '@tanvelo/sdk';
+import { Tanvelo } from 'tanvelo';
 
 const tanvelo = new Tanvelo({ apiKey: process.env.TANVELO_API_KEY });
 const res = await tanvelo.chat.completions.create({

@@ -1,5 +1,5 @@
 {
-  "name": "@tanvelo/sdk",
+  "name": "tanvelo",
   "version": "1.0.0",
   "description": "Official TypeScript & Node.js SDK for Tanvelo LLM Federation Gateway",
   "main": "dist/index.js",

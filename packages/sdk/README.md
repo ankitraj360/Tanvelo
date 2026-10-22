@@ -9,8 +9,10 @@ Official client libraries for **Tanvelo LLM Federation Gateway**. Call any LLM p
 ### Installation
 
 ```bash
-# Standard npm install:
-npm install @tanvelo/sdk
+# Install Tanvelo:
+npm install tanvelo
+# or:
+npm install tanvelo-sdk
 # or directly from GitHub:
 npm install git+https://github.com/ankitraj360/Tanvelo.git#subdirectory=packages/sdk
 # or use the official OpenAI SDK drop-in:
@@ -20,7 +22,7 @@ npm install openai
 ### Quickstart
 
 ```typescript
-import { Tanvelo } from '@tanvelo/sdk';
+import { Tanvelo } from 'tanvelo';
 
 // Automatically connects to production Tanvelo Gateway (https://tanvelo-backend-zgyc.onrender.com/v1)
 const tanvelo = new Tanvelo({
