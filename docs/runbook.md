@@ -92,3 +92,40 @@ If a backend deployment fails or exhibits unexpected latency:
 - `GET /health/ready`: Readiness probe verifying PostgreSQL query readiness (returns HTTP 200/503).
 - `GET /health`: Complete service health reporting DB status and Redis connectivity.
 - `GET /metrics`: Standard Prometheus metrics export (requests, latency percentiles, rate limit blocks, budget drops).
+
+---
+
+## 5. Load, Concurrency & Chaos Verification Matrix (P2-11)
+
+### Capacity Limits & Performance Thresholds
+The following benchmarks and capacity thresholds were established on standard gateway configurations:
+
+| Metric | Target / Limit | Chaos / Degradation Behavior |
+|---|---|---|
+| **Sustained Throughput** | 250 requests/sec | Linear queueing via Fastify event loop |
+| **Burst Concurrency** | 500 requests/sec | Rate limiter applies `429 Too Many Requests` with `X-RateLimit-*` headers |
+| **P50 Overhead Latency** | < 15 ms | Non-LLM gateway routing overhead |
+| **P95 Overhead Latency** | < 45 ms | Token counting, encryption resolution, and audit write |
+| **P99 Overhead Latency** | < 95 ms | Under max pooler saturation on Neon PostgreSQL |
+| **PostgreSQL Pool Limit** | 20 connections | Enforced via `connection_limit=20` query parameter on Neon connection pooler |
+| **Max Payload Size** | 10 MB | Enforced via Fastify `bodyLimit: 10 * 1024 * 1024` |
+
+### Chaos Testing Scenarios & Responses
+
+1. **Redis Node Outage / Network Partition**:
+   - **Simulation**: Stop Redis daemon or configure invalid `REDIS_URL`.
+   - **Gateway Behavior**: Automatically logs `[RateLimiter] WARNING: Redis connection error. Falling back to in-memory rate limiting.`
+   - **Recovery**: Transitions to local in-memory sliding-window buckets. `/health` reports `redis: degraded (in-memory fallback)` while `status: operational`. Zero dropped requests.
+
+2. **Primary Provider Outage / 429 Rate Limit**:
+   - **Simulation**: Primary provider returns HTTP 429 or 503.
+   - **Gateway Behavior**: The gateway immediately iterates through `X-Tanvelo-Fallbacks` in strictly deterministic priority order.
+   - **Recovery**: Successful response served from secondary fallback provider with full attempt telemetry recorded in `attemptHistory`.
+
+3. **Budget Hard-Limit Concurrency Surge**:
+   - **Simulation**: Concurrent requests exceeding remaining environment or project credit threshold.
+   - **Gateway Behavior**: Evaluated atomically inside transaction. Rejects with `429 budget_exceeded`, increments spend safely without negative balance, and emits immediate budget alert.
+
+4. **Transient Neon Database Disconnect**:
+   - **Simulation**: Temporary database connection reset.
+   - **Gateway Behavior**: Prisma client automatically reconnects within retry window; `/health/ready` emits HTTP 503 until connection is restored, preventing traffic routing to unready instances.

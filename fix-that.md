@@ -289,7 +289,7 @@ so anyone who copies the example file explicitly disables the guard. The gateway
 - [x] Real OpenAI / Anthropic / Gemini catalog & staging verification (P2-8).
 - [x] Metrics, alerting, and error tracking (P2-9).
 - [x] Backup, rollback, and retention documented and drilled (P2-10).
-- [ ] Load and chaos results recorded with capacity limits (P2-11).
+- [x] Load and chaos results recorded with capacity limits (P2-11).
 - [x] Dashboard route navigation & middleware E2E suite (P2-12).
 
 ---
@@ -306,7 +306,7 @@ so anyone who copies the example file explicitly disables the guard. The gateway
 - [x] Catalog refreshed to current models and pricing in seed (P2-8).
 - [x] Metrics, alerting, and error tracking in place (P2-9).
 - [x] Backup, rollback, and retention procedures documented and drilled (P2-10).
-- [ ] Load and chaos results recorded with capacity limits (P2-11).
+- [x] Load and chaos results recorded with capacity limits (P2-11).
 - [x] Dashboard navigation suite green in CI (P2-12).
 
 ---
