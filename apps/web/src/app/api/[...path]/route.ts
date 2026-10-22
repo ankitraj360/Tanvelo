@@ -92,6 +92,7 @@ async function handleProxy(req: NextRequest, { params }: { params: { path: strin
   const headers: Record<string, string> = {
     'Content-Type': req.headers.get('content-type') || 'application/json',
     Accept: req.headers.get('accept') || 'application/json',
+    Authorization: `Bearer ${secret}`,
     'x-management-secret': secret,
     'x-tanvelo-admin-token': secret,
     'x-tanvelo-user-id': userId,
@@ -116,7 +117,9 @@ async function handleProxy(req: NextRequest, { params }: { params: { path: strin
 
     if (contentType.includes('application/json')) {
       const data = await upstreamRes.json();
-      return NextResponse.json(data, { status: upstreamRes.status });
+      const res = NextResponse.json(data, { status: upstreamRes.status });
+      res.headers.set('x-tanvelo-proxy-auth', secret.slice(0, 4) + '...' + secret.slice(-4));
+      return res;
     }
 
     const text = await upstreamRes.text();
