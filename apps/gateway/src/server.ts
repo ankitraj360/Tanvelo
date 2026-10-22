@@ -145,13 +145,6 @@ export async function createServers() {
             message: 'Unauthorized: Invalid management secret provided.',
             type: 'management_auth_failed',
             code: 'UNAUTHORIZED_MANAGEMENT_ACCESS',
-            authDebug: {
-              receivedHeaders: Object.keys(request.headers),
-              rawHeaderSecretType: typeof rawHeaderSecret,
-              rawHeaderSecretLength: rawHeaderSecret ? String(rawHeaderSecret).length : 0,
-              cleanHeaderSecretLength: headerSecret ? headerSecret.length : 0,
-              expectedSecretLength: managementSecret.length,
-            },
           },
         });
       }

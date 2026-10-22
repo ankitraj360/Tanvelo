@@ -117,9 +117,7 @@ async function handleProxy(req: NextRequest, { params }: { params: { path: strin
 
     if (contentType.includes('application/json')) {
       const data = await upstreamRes.json();
-      const res = NextResponse.json(data, { status: upstreamRes.status });
-      res.headers.set('x-tanvelo-proxy-auth', secret.slice(0, 4) + '...' + secret.slice(-4));
-      return res;
+      return NextResponse.json(data, { status: upstreamRes.status });
     }
 
     const text = await upstreamRes.text();
