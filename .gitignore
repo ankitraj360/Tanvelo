@@ -29,3 +29,12 @@ pnpm-debug.log*
 .DS_Store
 *.pem
 *.tsbuildinfo
+
+# Python & Packaging builds
+*.egg-info/
+*.tgz
+*.tar.gz
+*.whl
+dist/
+build/
+__pycache__/

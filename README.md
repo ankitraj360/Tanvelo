@@ -107,7 +107,7 @@ Authorization: Bearer YOUR_TANVELO_API_KEY
 
 ### Making a Chat Completion Request
 ```bash
-curl -X POST http://localhost:4000/v1/chat/completions \
+curl -X POST https://tanvelo-backend-zgyc.onrender.com/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_TANVELO_API_KEY" \
   -H "X-Tanvelo-Fallbacks: claude-3-5-sonnet,gemini-1.5-flash" \
@@ -118,6 +118,52 @@ curl -X POST http://localhost:4000/v1/chat/completions \
     ],
     "temperature": 0.7,
     "max_tokens": 1024
+  }'
+```
+
+### SDK Installation & Usage
+
+#### TypeScript & Node.js
+```bash
+npm install @tanvelo/sdk
+# or directly from GitHub:
+npm install git+https://github.com/ankitraj360/Tanvelo.git#subdirectory=packages/sdk
+# or use the official OpenAI SDK drop-in:
+npm install openai
+```
+
+```typescript
+import { Tanvelo } from '@tanvelo/sdk';
+
+const tanvelo = new Tanvelo({ apiKey: process.env.TANVELO_API_KEY });
+const res = await tanvelo.chat.completions.create({
+  model: 'gpt-4o',
+  fallbacks: ['claude-3-5-sonnet', 'gemini-1.5-pro'],
+  messages: [{ role: 'user', content: 'Explain federated gateways.' }],
+});
+console.log(res.choices[0].message.content);
+```
+
+#### Python
+```bash
+pip install tanvelo
+# or directly from GitHub:
+pip install git+https://github.com/ankitraj360/Tanvelo.git#subdirectory=packages/sdk/python
+# or use the official OpenAI SDK drop-in:
+pip install openai
+```
+
+```python
+from tanvelo import Tanvelo
+
+client = Tanvelo(api_key="YOUR_TANVELO_API_KEY")
+res = client.chat.completions.create(
+    model="gpt-4o",
+    fallbacks=["claude-3-5-sonnet", "gemini-1.5-pro"],
+    messages=[{"role": "user", "content": "Explain federated gateways."}]
+)
+print(res.content)
+```
   }'
 ```
 

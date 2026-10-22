@@ -12,6 +12,8 @@ function evaluateMiddleware(pathname: string, userId: string | null = null, orig
     '/terms',
     '/sitemap.xml',
     '/robots.txt',
+    '/v1',
+    '/api/v1',
   ];
 
   const isPublic = publicRoutes.some((route) => pathname === route || pathname.startsWith(route + '/'));
@@ -92,7 +94,7 @@ describe('Dashboard Route Protection & Middleware (P1 #5 & P2 #12)', () => {
   });
 
   it('allows public routes without authentication', () => {
-    const publicPaths = ['/', '/sign-in', '/sign-up', '/docs', '/privacy', '/terms', '/sitemap.xml', '/robots.txt'];
+    const publicPaths = ['/', '/sign-in', '/sign-up', '/docs', '/privacy', '/terms', '/sitemap.xml', '/robots.txt', '/v1/chat/completions', '/v1/models'];
     for (const path of publicPaths) {
       const res = evaluateMiddleware(path, null);
       expect(res.status).toBe(200);

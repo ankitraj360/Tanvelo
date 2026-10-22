@@ -747,8 +747,14 @@ export async function managementRoutes(fastify: FastifyInstance) {
       p95Latency = latencies[p95Idx] || 0;
     }
 
-    // Time series grouping by date
+    // Time series grouping by date (pre-populate requested range so charts render a smooth timeline)
     const timeMap: Record<string, { date: string; requests: number; success: number; error: number; cost: number }> = {};
+    const now = new Date();
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      timeMap[d] = { date: d, requests: 0, success: 0, error: 0, cost: 0 };
+    }
+
     for (const r of records) {
       const d = r.createdAt.toISOString().slice(0, 10);
       if (!timeMap[d]) {

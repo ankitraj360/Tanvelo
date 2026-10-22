@@ -230,7 +230,7 @@ class Tanvelo:
     """
     Tanvelo LLM Gateway Client.
     Usage:
-        client = Tanvelo(api_key="tanvelo_live_...", base_url="http://localhost:4000/v1")
+        client = Tanvelo(api_key="tv_live_...", base_url="https://tanvelo-backend-zgyc.onrender.com/v1")
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[{"role": "user", "content": "Hello!"}]
@@ -245,7 +245,7 @@ class Tanvelo:
         timeout: float = 60.0
     ):
         self.api_key = api_key or os.environ.get("TANVELO_API_KEY", "")
-        raw_url = base_url or os.environ.get("TANVELO_BASE_URL", "http://localhost:4000/v1")
+        raw_url = base_url or os.environ.get("TANVELO_BASE_URL", "https://tanvelo-backend-zgyc.onrender.com/v1")
         self.base_url = raw_url.rstrip("/")
         self.timeout = timeout
         self.chat = ChatResource(self)

@@ -3,14 +3,15 @@
 import React, { useEffect, useState } from 'react';
 import { useProject } from '@/context/ProjectContext';
 import { useMobileNav } from '@/context/MobileNavContext';
-import { FolderGit2, Layers, KeyRound, Cpu, Menu } from 'lucide-react';
+import { FolderGit2, Layers, KeyRound, Cpu, PanelLeft, PanelLeftOpen } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
+import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { UserButton } from '@clerk/nextjs';
 
 export function Header() {
   const { projects, currentProject, currentEnvironment, setCurrentProject, setCurrentEnvironment } = useProject();
-  const { toggle } = useMobileNav();
+  const { isCollapsed, toggleSidebar } = useMobileNav();
   const [pingMs, setPingMs] = useState<number | null>(null);
 
   useEffect(() => {
@@ -33,24 +34,35 @@ export function Header() {
 
   return (
     <header className="h-16 border-b border-slate-200 bg-white/95 backdrop-blur-md px-3 sm:px-6 flex items-center justify-between sticky top-0 z-10 shadow-2xs">
-      {/* Left Area: Mobile Menu Button & Project Selectors */}
+      {/* Left Area: Sidebar Toggle & Project Selectors */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-        {/* Mobile Hamburger Menu Toggle */}
+        {/* Unified Sidebar / Menu Bar Toggle Button (Desktop & Mobile) */}
         <button
-          onClick={toggle}
-          className="p-2 -ml-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg lg:hidden transition"
-          aria-label="Open Mobile Menu"
+          onClick={toggleSidebar}
+          className="p-2 -ml-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition flex items-center justify-center cursor-pointer"
+          aria-label={isCollapsed ? 'Expand sidebar (Ctrl+B)' : 'Collapse sidebar (Ctrl+B)'}
+          title={isCollapsed ? 'Expand sidebar (Ctrl+B)' : 'Collapse sidebar (Ctrl+B)'}
         >
-          <Menu className="w-5 h-5" />
+          {isCollapsed ? (
+            <PanelLeftOpen className="w-5 h-5 text-slate-700" />
+          ) : (
+            <PanelLeft className="w-5 h-5 text-slate-700" />
+          )}
         </button>
 
-        {/* Mobile Logo on small screens */}
-        <Link href="/" className="lg:hidden flex-shrink-0 mr-1">
+        {/* Brand Logo: shown when sidebar is collapsed on desktop, or always on mobile */}
+        <Link
+          href="/"
+          className={cn(
+            'flex-shrink-0 mr-1 transition-all',
+            isCollapsed ? 'flex' : 'lg:hidden flex'
+          )}
+        >
           <Logo size="sm" />
         </Link>
 
-        {/* Project Selector */}
-        <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-50 border border-slate-200 hover:border-slate-300 transition rounded-lg px-2 sm:px-3 py-1.5 text-xs text-slate-700 shadow-2xs max-w-[130px] sm:max-w-[200px]">
+        {/* Workspace / Project Selector */}
+        <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-50 border border-slate-200 hover:border-slate-300 transition rounded-lg px-2 sm:px-3 py-1.5 text-xs text-slate-700 shadow-2xs max-w-[150px] sm:max-w-[220px]">
           <FolderGit2 className="w-3.5 h-3.5 text-sky-600 flex-shrink-0" />
           <span className="text-slate-500 font-mono text-[11px] hidden md:inline">Workspace:</span>
           <select
@@ -69,7 +81,7 @@ export function Header() {
           </select>
         </div>
 
-        {/* Environment Selector (collapses cleanly on tiny screens) */}
+        {/* Environment Selector */}
         {currentProject && currentProject.environments?.length > 0 && (
           <div className="hidden sm:flex items-center gap-1.5 sm:gap-2 bg-slate-50 border border-slate-200 hover:border-slate-300 transition rounded-lg px-2 sm:px-3 py-1.5 text-xs text-slate-700 shadow-2xs">
             <Layers className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />

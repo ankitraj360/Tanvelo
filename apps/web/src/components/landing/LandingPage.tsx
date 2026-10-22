@@ -68,7 +68,7 @@ export function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const codeSnippets = {
-    typescript: `// npm install @tanvelo/sdk
+    typescript: `// npm install @tanvelo/sdk (or npm i git+https://github.com/ankitraj360/Tanvelo.git#subdirectory=packages/sdk)
 import { Tanvelo } from "@tanvelo/sdk";
 
 const tanvelo = new Tanvelo({
@@ -86,7 +86,7 @@ const stream = await tanvelo.chat.completions.create({
 for await (const chunk of stream) {
   process.stdout.write(chunk.choices[0]?.delta?.content || "");
 }`,
-    python: `# pip install tanvelo
+    python: `# pip install tanvelo (or pip install git+https://github.com/ankitraj360/Tanvelo.git#subdirectory=packages/sdk/python)
 from tanvelo import Tanvelo
 
 tanvelo = Tanvelo(
@@ -103,7 +103,7 @@ stream = tanvelo.chat.completions.create(
 
 for chunk in stream:
     print(chunk.delta, end="", flush=True)`,
-    curl: `curl https://api.tanvelo.in/v1/chat/completions \\
+    curl: `curl https://tanvelo-backend-zgyc.onrender.com/v1/chat/completions \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $TANVELO_API_KEY" \\
   -d '{

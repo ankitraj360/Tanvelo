@@ -61,7 +61,11 @@ export class Tanvelo {
     const envBaseUrl = typeof process !== 'undefined' ? process.env?.TANVELO_BASE_URL : undefined;
 
     this.apiKey = options.apiKey || envApiKey || '';
-    this.baseUrl = (options.baseUrl || envBaseUrl || 'http://localhost:4000/v1').replace(/\/+$/, '');
+    this.baseUrl = (
+      options.baseUrl ||
+      envBaseUrl ||
+      'https://tanvelo-backend-zgyc.onrender.com/v1'
+    ).replace(/\/+$/, '');
     this.timeout = options.timeout || 60000;
     this.customHeaders = options.headers || {};
     this.fetchFn = options.fetch || globalThis.fetch.bind(globalThis);

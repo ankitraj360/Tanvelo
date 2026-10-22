@@ -9,11 +9,12 @@ Official client libraries for **Tanvelo LLM Federation Gateway**. Call any LLM p
 ### Installation
 
 ```bash
+# Standard npm install:
 npm install @tanvelo/sdk
-# or
-pnpm add @tanvelo/sdk
-# or
-yarn add @tanvelo/sdk
+# or directly from GitHub:
+npm install git+https://github.com/ankitraj360/Tanvelo.git#subdirectory=packages/sdk
+# or use the official OpenAI SDK drop-in:
+npm install openai
 ```
 
 ### Quickstart
@@ -21,9 +22,9 @@ yarn add @tanvelo/sdk
 ```typescript
 import { Tanvelo } from '@tanvelo/sdk';
 
+// Automatically connects to production Tanvelo Gateway (https://tanvelo-backend-zgyc.onrender.com/v1)
 const tanvelo = new Tanvelo({
-  apiKey: process.env.TANVELO_API_KEY, // or pass directly
-  baseUrl: 'http://localhost:4000/v1', // Tanvelo gateway URL
+  apiKey: process.env.TANVELO_API_KEY, // or 'tv_live_...'
 });
 
 async function main() {
@@ -75,14 +76,25 @@ const response = await tanvelo.chat.completions.create({
 
 ## 🐍 Python SDK
 
+### Installation
+
+```bash
+# Standard pip install:
+pip install tanvelo
+# or directly from GitHub:
+pip install git+https://github.com/ankitraj360/Tanvelo.git#subdirectory=packages/sdk/python
+# or use the official OpenAI SDK drop-in:
+pip install openai
+```
+
 ### Usage
 
 ```python
 from tanvelo import Tanvelo
 
+# Automatically connects to production Tanvelo Gateway
 client = Tanvelo(
-    api_key="YOUR_TANVELO_API_KEY",
-    base_url="http://localhost:4000/v1"
+    api_key="YOUR_TANVELO_API_KEY", # or set TANVELO_API_KEY env var
 )
 
 # 1. Non-streaming call

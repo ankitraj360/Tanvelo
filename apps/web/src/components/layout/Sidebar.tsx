@@ -19,6 +19,7 @@ import {
   BookOpen,
   Settings,
   X,
+  PanelLeftClose,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Logo } from '@/components/ui/Logo';
@@ -62,7 +63,13 @@ const navGroups = [
   },
 ];
 
-function NavContent({ onClose }: { onClose?: () => void }) {
+function NavContent({
+  onClose,
+  onCollapse,
+}: {
+  onClose?: () => void;
+  onCollapse?: () => void;
+}) {
   const pathname = usePathname();
 
   return (
@@ -72,15 +79,27 @@ function NavContent({ onClose }: { onClose?: () => void }) {
         <Link href="/" onClick={onClose} className="hover:opacity-90 transition">
           <Logo size="md" />
         </Link>
-        {onClose && (
-          <button
-            onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg lg:hidden transition"
-            aria-label="Close Navigation"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        )}
+        <div className="flex items-center gap-1">
+          {onCollapse && (
+            <button
+              onClick={onCollapse}
+              className="hidden lg:flex p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition"
+              title="Collapse sidebar (Ctrl+B)"
+              aria-label="Collapse sidebar"
+            >
+              <PanelLeftClose className="w-4 h-4" />
+            </button>
+          )}
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg lg:hidden transition"
+              aria-label="Close Navigation"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Navigation List */}
@@ -152,13 +171,18 @@ function NavContent({ onClose }: { onClose?: () => void }) {
 }
 
 export function Sidebar() {
-  const { isOpen, close } = useMobileNav();
+  const { isOpen, close, isCollapsed, toggleCollapsed } = useMobileNav();
 
   return (
     <>
-      {/* Desktop Persistent Sidebar */}
-      <aside className="hidden lg:flex w-64 border-r border-slate-200 bg-white flex-col fixed inset-y-0 z-20">
-        <NavContent />
+      {/* Desktop Persistent / Collapsible Sidebar */}
+      <aside
+        className={cn(
+          'hidden lg:flex w-64 border-r border-slate-200 bg-white flex-col fixed inset-y-0 left-0 z-20 transition-transform duration-300 ease-in-out shadow-xs',
+          isCollapsed ? '-translate-x-full' : 'translate-x-0'
+        )}
+      >
+        <NavContent onCollapse={toggleCollapsed} />
       </aside>
 
       {/* Mobile Drawer Overlay */}

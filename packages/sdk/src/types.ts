@@ -5,7 +5,7 @@ export interface TanveloClientOptions {
   apiKey?: string;
 
   /**
-   * Tanvelo Gateway Base URL (defaults to process.env.TANVELO_BASE_URL or 'http://localhost:4000/v1')
+   * Tanvelo Gateway Base URL (defaults to process.env.TANVELO_BASE_URL or 'https://tanvelo-backend-zgyc.onrender.com/v1')
    */
   baseUrl?: string;
 
