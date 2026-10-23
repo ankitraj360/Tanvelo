@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useProject } from '@/context/ProjectContext';
 import { useMobileNav } from '@/context/MobileNavContext';
-import { FolderGit2, Layers, KeyRound, Cpu, PanelLeft, PanelLeftOpen } from 'lucide-react';
+import { FolderGit2, Layers, KeyRound, PanelLeft, PanelLeftOpen } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -112,15 +112,6 @@ export function Header() {
           <span>Gateway Active</span>
           {pingMs !== null && <span className="text-emerald-600 font-medium font-sans">({pingMs}ms)</span>}
         </div>
-
-        <Link
-          href="/providers"
-          className="flex items-center gap-1.5 text-xs text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200 px-2.5 sm:px-3 py-1.5 rounded-lg transition shadow-2xs"
-          title="Configure Providers"
-        >
-          <Cpu className="w-3.5 h-3.5 text-sky-600" />
-          <span className="hidden sm:inline">Providers</span>
-        </Link>
 
         <Link
           href="/api-keys"
