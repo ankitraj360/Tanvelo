@@ -97,6 +97,17 @@ export async function createServers() {
   const publicGateway = Fastify({
     logger: process.env.NODE_ENV === 'test' ? false : true,
     bodyLimit: 10 * 1024 * 1024,
+    routerOptions: {
+      ignoreTrailingSlash: true,
+      ignoreDuplicateSlashes: true,
+    },
+    rewriteUrl(req) {
+      const url = req.url || '';
+      return url
+        .replace(/(?:%20|\s|\\)+$/gi, '')
+        .replace(/%20\/?$/gi, '/')
+        .replace(/[\s\\]+$/gi, '');
+    },
   });
 
   await publicGateway.register(cors, {
@@ -171,6 +182,10 @@ export async function createServers() {
   const managementServer = Fastify({
     logger: process.env.NODE_ENV === 'test' ? false : true,
     bodyLimit: 10 * 1024 * 1024,
+    routerOptions: {
+      ignoreTrailingSlash: true,
+      ignoreDuplicateSlashes: true,
+    },
   });
 
   await managementServer.register(cors, {

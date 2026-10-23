@@ -29,6 +29,37 @@ export async function gatewayRoutes(fastify: FastifyInstance) {
     });
   });
 
+  // GET /v1 version info
+  fastify.get('/v1', async (_request: FastifyRequest, reply: FastifyReply) => {
+    return reply.status(200).send({
+      service: 'Tanvelo LLM Federation Gateway',
+      version: 'v1',
+      status: 'operational',
+      endpoints: {
+        chatCompletions: '/v1/chat/completions',
+        models: '/v1/models',
+        documentation: 'https://www.tanvelo.in/docs',
+      },
+    });
+  });
+
+  // GET /v1/chat/completions - Informative operational status for browser and GET requests
+  fastify.get('/v1/chat/completions', async (_request: FastifyRequest, reply: FastifyReply) => {
+    return reply.status(200).send({
+      service: 'Tanvelo LLM Federation Gateway',
+      endpoint: '/v1/chat/completions',
+      status: 'operational',
+      method: 'POST',
+      message: 'The Tanvelo chat completions endpoint is operational. Send an HTTP POST request with an Authorization header (Bearer YOUR_TANVELO_API_KEY) and JSON body to execute completions.',
+      usage: {
+        curl: 'curl -X POST https://tanvelo-backend-zgyc.onrender.com/v1/chat/completions -H "Content-Type: application/json" -H "Authorization: Bearer YOUR_TANVELO_API_KEY" -d \'{"model": "claude-3-5-sonnet", "messages": [{"role": "user", "content": "Hello Tanvelo"}]}\'',
+        npm: 'npm install tanvelo',
+        pip: 'pip install tanvelo',
+      },
+      documentation: 'https://www.tanvelo.in/docs',
+    });
+  });
+
   // Prometheus & Operational Metrics endpoint
   fastify.get('/metrics', async (request: FastifyRequest, reply: FastifyReply) => {
     const rateLimiterStatus = gatewayService.getRateLimiter().getStatus();

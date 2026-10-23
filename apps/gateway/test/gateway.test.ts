@@ -198,6 +198,44 @@ describe('Gateway Architecture & Listener Isolation', () => {
     expect(body.endpoints).toBeDefined();
   });
 
+  it('serves GET /v1 and GET /v1/chat/completions with operational info and usage instructions', async () => {
+    // 1. Direct GET /v1
+    const resV1 = await publicGateway.inject({
+      method: 'GET',
+      url: '/v1',
+    });
+    expect(resV1.statusCode).toBe(200);
+    const bodyV1 = JSON.parse(resV1.body);
+    expect(bodyV1.service).toContain('Tanvelo');
+    expect(bodyV1.version).toBe('v1');
+
+    // 2. Direct GET /v1/chat/completions
+    const resChat = await publicGateway.inject({
+      method: 'GET',
+      url: '/v1/chat/completions',
+    });
+    expect(resChat.statusCode).toBe(200);
+    const bodyChat = JSON.parse(resChat.body);
+    expect(bodyChat.service).toContain('Tanvelo');
+    expect(bodyChat.status).toBe('operational');
+    expect(bodyChat.method).toBe('POST');
+    expect(bodyChat.usage).toBeDefined();
+
+    // 3. GET /v1/chat/completions/ with trailing slash
+    const resTrailingSlash = await publicGateway.inject({
+      method: 'GET',
+      url: '/v1/chat/completions/',
+    });
+    expect(resTrailingSlash.statusCode).toBe(200);
+
+    // 4. GET /v1/chat/completions%20/ with encoded trailing space and slash
+    const resTrailingSpace = await publicGateway.inject({
+      method: 'GET',
+      url: '/v1/chat/completions%20/',
+    });
+    expect(resTrailingSpace.statusCode).toBe(200);
+  });
+
   it('reports consistent Redis state between /health and /api/settings without connection leaks (High #4)', async () => {
     const healthRes = await publicGateway.inject({
       method: 'GET',
