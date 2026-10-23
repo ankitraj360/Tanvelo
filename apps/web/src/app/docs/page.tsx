@@ -53,8 +53,8 @@ const tanvelo = new Tanvelo({
 
 async function main() {
   const response = await tanvelo.chat.completions.create({
-    model: "your-model",
-    fallbacks: ["your-fallback-model"],
+    model: "provider/your-model-name",
+    fallbacks: ["fallback-provider/your-fallback-model-name"],
     messages: [
       { role: "system", content: "You are a concise production AI engineer." },
       { role: "user", content: "Explain deterministic circuit breakers." }
@@ -74,8 +74,8 @@ main();`;
 client = Tanvelo(api_key="tv_live_...")
 
 response = client.chat.completions.create(
-    model="your-model",
-    fallbacks=["your-fallback-model"],
+    model="provider/your-model-name",
+    fallbacks=["fallback-provider/your-fallback-model-name"],
     messages=[
         {"role": "system", "content": "You are a concise production AI engineer."},
         {"role": "user", "content": "Explain deterministic circuit breakers."}
@@ -90,8 +90,8 @@ print("Latency:", response.headers.get("x-tanvelo-latency-ms"), "ms")`;
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer tv_live_..." \\
   -d '{
-    "model": "your-model",
-    "fallbacks": ["your-fallback-model"],
+    "model": "provider/your-model-name",
+    "fallbacks": ["fallback-provider/your-fallback-model-name"],
     "messages": [
       {"role": "user", "content": "Explain deterministic circuit breakers."}
     ],
@@ -103,8 +103,8 @@ print("Latency:", response.headers.get("x-tanvelo-latency-ms"), "ms")`;
 const tanvelo = new Tanvelo({ apiKey: process.env.TANVELO_API_KEY });
 
 const stream = await tanvelo.chat.completions.create({
-  model: "your-model",
-  fallbacks: ["your-fallback-model"],
+  model: "provider/your-model-name",
+  fallbacks: ["fallback-provider/your-fallback-model-name"],
   messages: [{ role: "user", content: "Stream a high-availability checklist." }],
   stream: true,
 });
@@ -118,8 +118,8 @@ for await (const chunk of stream) {
 client = Tanvelo()
 
 stream = client.chat.completions.create(
-    model="your-model",
-    fallbacks=["your-fallback-model"],
+    model="provider/your-model-name",
+    fallbacks=["fallback-provider/your-fallback-model-name"],
     messages=[{"role": "user", "content": "Stream a high-availability checklist."}],
     stream=True
 )
@@ -452,7 +452,7 @@ def verify_tanvelo_webhook(payload_raw: bytes, signature_header: str, secret: st
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg font-mono text-[11px] text-slate-700 space-y-0.5">
                     <div>Content-Type: application/json</div>
                     <div>Authorization: Bearer tv_live_...</div>
-                    <div>X-Tanvelo-Fallbacks: your-fallback-model</div>
+                    <div>X-Tanvelo-Fallbacks: fallback-provider/your-fallback-model-name</div>
                   </div>
                 </div>
 
@@ -471,7 +471,7 @@ def verify_tanvelo_webhook(payload_raw: bytes, signature_header: str, secret: st
                         <td className="p-3 font-mono font-medium text-sky-700">model</td>
                         <td className="p-3 font-mono text-slate-500">string</td>
                         <td className="p-3 font-semibold text-rose-600">Yes</td>
-                        <td className="p-3">Primary model identifier (e.g. &quot;your-model&quot;)</td>
+                        <td className="p-3">Primary model identifier in format &quot;provider/your-model-name&quot;</td>
                       </tr>
                       <tr>
                         <td className="p-3 font-mono font-medium text-sky-700">messages</td>
@@ -483,7 +483,7 @@ def verify_tanvelo_webhook(payload_raw: bytes, signature_header: str, secret: st
                         <td className="p-3 font-mono font-medium text-sky-700">fallbacks</td>
                         <td className="p-3 font-mono text-slate-500">string[]</td>
                         <td className="p-3 text-slate-400">No</td>
-                        <td className="p-3">Ordered backup models to execute on failure (e.g. [&quot;your-fallback-model&quot;])</td>
+                        <td className="p-3">Ordered backup models to execute on failure (e.g. [&quot;fallback-provider/your-fallback-model-name&quot;])</td>
                       </tr>
                       <tr>
                         <td className="p-3 font-mono font-medium text-sky-700">stream</td>
@@ -506,27 +506,27 @@ def verify_tanvelo_webhook(payload_raw: bytes, signature_header: str, secret: st
                 </h2>
               </div>
               <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                Like LiteLLM, Tanvelo provides out-of-the-box routing and parameter translation across 140+ foundational providers and inference engines. You can invoke any provider using explicit prefix notation (<code className="text-slate-800 font-mono bg-slate-100 px-1 py-0.5 rounded">&lt;provider&gt;/&lt;model&gt;</code>) or configure automated routing rules.
+                Like LiteLLM, Tanvelo provides out-of-the-box routing and parameter translation across 140+ foundational providers and inference engines. You can invoke any provider using explicit prefix notation (<code className="text-slate-800 font-mono bg-slate-100 px-1 py-0.5 rounded">&lt;provider&gt;/&lt;your-model-name&gt;</code>) or configure automated routing rules.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                 <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-1.5">
                   <div className="font-semibold text-slate-900 text-xs">Prefix Routing Examples</div>
                   <pre className="p-2.5 rounded-lg bg-slate-950 font-mono text-[11px] text-slate-200 overflow-x-auto">
-{`// Wafer-Scale Cerebras
-model: "cerebras/llama3.3-70b"
+{`// Wafer-Scale Fast Silicon
+model: "cerebras/your-model-name"
 
-// Together AI Open-Weights
-model: "together/meta-llama/Llama-3.3-70B-Turbo"
+// Open-Weights Provider
+model: "together/your-model-name"
 
-// DeepSeek Reasoning
-model: "deepseek/deepseek-r1"
+// Frontier Reasoning Provider
+model: "openai/your-model-name"
 
-// xAI Grok
-model: "xai/grok-2"
+// Enterprise Managed Cloud
+model: "azure/your-model-name"
 
-// Self-Hosted vLLM / Ollama
-model: "vllm/meta-llama/Llama-3.1-8B"`}
+// Self-Hosted / On-Prem vLLM
+model: "vllm/your-model-name"`}
                   </pre>
                 </div>
 

@@ -131,8 +131,8 @@ const tanvelo = new Tanvelo({
 
 // Unified routing across 147+ providers with sub-180ms failover
 const stream = await tanvelo.chat.completions.create({
-  model: "cerebras/llama3.3-70b", // Wafer-scale silicon inference
-  fallbacks: ["deepseek/deepseek-r1", "openai/gpt-4o"], // Multi-provider backup chain
+  model: "provider/your-model-name",
+  fallbacks: ["fallback-provider/your-fallback-model-name"],
   messages: [{ role: "user", content: "Ship to production with zero downtime." }],
   stream: true,
 });
@@ -148,8 +148,8 @@ client = Tanvelo(
 
 # Automated sub-180ms failover across 147+ providers
 stream = client.chat.completions.create(
-    model="cerebras/llama3.3-70b",
-    fallbacks=["deepseek/deepseek-r1", "openai/gpt-4o"],
+    model="provider/your-model-name",
+    fallbacks=["fallback-provider/your-fallback-model-name"],
     messages=[{"role": "user", "content": "Ship to production with zero downtime."}],
     stream=True,
 )
@@ -160,8 +160,8 @@ for chunk in stream:
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $TANVELO_API_KEY" \\
   -d '{
-    "model": "cerebras/llama3.3-70b",
-    "fallbacks": ["deepseek/deepseek-r1", "openai/gpt-4o"],
+    "model": "provider/your-model-name",
+    "fallbacks": ["fallback-provider/your-fallback-model-name"],
     "messages": [{"role": "user", "content": "Ship to production with zero downtime."}],
     "stream": true
   }'`,
@@ -574,7 +574,7 @@ for chunk in stream:
                 Cerebras, Groq (LPUs), SambaNova, Together AI, Fireworks AI, DeepInfra, Lepton AI, Novita.
               </p>
               <div className="font-mono text-[11px] text-slate-500 bg-white border border-slate-200 rounded-md p-1.5">
-                model: &quot;cerebras/llama3.3-70b&quot;
+                model: &quot;cerebras/your-model-name&quot;
               </div>
             </div>
 
@@ -593,10 +593,10 @@ for chunk in stream:
                 <p className="text-xs text-slate-500 mt-0.5">Top-tier intelligence and multimodal models</p>
               </div>
               <p className="text-xs text-slate-600 leading-relaxed">
-                OpenAI (o1/o3/GPT-4o), Anthropic Claude 3.7, Google Gemini 2.5, xAI Grok, Mistral Large, Cohere.
+                OpenAI, Anthropic Claude, Google Gemini, xAI Grok, Mistral Large, Cohere.
               </p>
               <div className="font-mono text-[11px] text-slate-500 bg-white border border-slate-200 rounded-md p-1.5">
-                model: &quot;anthropic/claude-3-7-sonnet&quot;
+                model: &quot;anthropic/your-model-name&quot;
               </div>
             </div>
 
@@ -618,7 +618,7 @@ for chunk in stream:
                 Azure OpenAI, AWS Bedrock Proxy, Cloudflare Workers AI, Perplexity, Voyage AI, Databricks.
               </p>
               <div className="font-mono text-[11px] text-slate-500 bg-white border border-slate-200 rounded-md p-1.5">
-                model: &quot;azure/gpt-4o&quot;
+                model: &quot;azure/your-model-name&quot;
               </div>
             </div>
 
@@ -637,10 +637,10 @@ for chunk in stream:
                 <p className="text-xs text-slate-500 mt-0.5">World-class open-weights and multilingual AI</p>
               </div>
               <p className="text-xs text-slate-600 leading-relaxed">
-                DeepSeek (R1/V3), Alibaba Qwen (DashScope), Moonshot Kimi, Zhipu GLM, 01.AI (Yi), Upstage Solar.
+                DeepSeek, Alibaba Qwen (DashScope), Moonshot Kimi, Zhipu GLM, 01.AI (Yi), Upstage Solar.
               </p>
               <div className="font-mono text-[11px] text-slate-500 bg-white border border-slate-200 rounded-md p-1.5">
-                model: &quot;deepseek/deepseek-r1&quot;
+                model: &quot;deepseek/your-model-name&quot;
               </div>
             </div>
 
@@ -662,7 +662,7 @@ for chunk in stream:
                 vLLM, Ollama, LM Studio, Text Generation Inference (TGI), LocalAI, llama.cpp, Aphrodite.
               </p>
               <div className="font-mono text-[11px] text-slate-500 bg-white border border-slate-200 rounded-md p-1.5">
-                model: &quot;vllm/meta-llama/Llama-3.1-8B&quot;
+                model: &quot;vllm/your-model-name&quot;
               </div>
             </div>
 
@@ -684,7 +684,7 @@ for chunk in stream:
                 Private corporate clusters, custom fine-tuned weights, or internal gateways. Supports Bearer, Azure api-key, custom headers, or unauthenticated runners.
               </p>
               <div className="font-mono text-[11px] text-sky-300 bg-slate-900 border border-slate-800 rounded-md p-1.5">
-                model: &quot;my-cluster/internal-llama&quot;
+                model: &quot;custom-provider/your-model-name&quot;
               </div>
             </div>
           </div>
@@ -696,7 +696,7 @@ for chunk in stream:
                 Universal Prefix Syntax
               </div>
               <div className="text-sm font-semibold text-slate-900">
-                Call any model using <code className="font-mono bg-white px-1.5 py-0.5 rounded border border-slate-200 text-slate-800">&lt;provider&gt;/&lt;model&gt;</code> notation
+                Call any model using <code className="font-mono bg-white px-1.5 py-0.5 rounded border border-slate-200 text-slate-800">model=&quot;provider/your-model-name&quot;</code> notation
               </div>
               <p className="text-xs text-slate-500 max-w-xl">
                 Automatic key injection, URL resolution, and sub-180ms failover across providers without modifying your application client.
@@ -817,7 +817,7 @@ for chunk in stream:
               </div>
               <h3 className="font-semibold text-slate-900 text-xs">Client Request Initiated</h3>
               <p className="text-xs text-slate-500 font-mono">
-                model: &quot;claude-3-7-sonnet&quot;, fallbacks: [&quot;gpt-4o&quot;]
+                model: &quot;provider/your-model-name&quot;, fallbacks: [&quot;fallback-provider/your-fallback-model-name&quot;]
               </p>
               <div className="text-[11px] text-slate-400 font-mono pt-1">
                 Active SSE connection maintained
