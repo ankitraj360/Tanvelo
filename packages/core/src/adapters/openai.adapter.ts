@@ -8,6 +8,7 @@ import {
 } from './types.js';
 import { ErrorCategory, GatewayError, categorizeProviderError } from '../errors.js';
 import { TokenUsage } from '../cost-calculator.js';
+import { buildAuthHeaders } from './openai-compatible.adapter.js';
 
 export class OpenAIAdapter implements ProviderAdapter {
   providerName = 'openai';
@@ -26,10 +27,7 @@ export class OpenAIAdapter implements ProviderAdapter {
     try {
       const res = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
+        headers: buildAuthHeaders(apiKey, this.providerName),
         body: JSON.stringify({
           ...request,
           stream: false,
@@ -91,10 +89,7 @@ export class OpenAIAdapter implements ProviderAdapter {
     try {
       const res = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
+        headers: buildAuthHeaders(apiKey, this.providerName),
         body: JSON.stringify({
           ...request,
           stream: true,
@@ -183,9 +178,7 @@ export class OpenAIAdapter implements ProviderAdapter {
     try {
       const res = await fetch(url, {
         method: 'GET',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-        },
+        headers: buildAuthHeaders(apiKey, this.providerName),
       });
       const latencyMs = Date.now() - start;
       if (res.ok) {

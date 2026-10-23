@@ -443,6 +443,6 @@ All error responses from Tanvelo adhere to the standard JSON error schema:
 
 ### Need Help or Have Enterprise Requirements?
 - **Email**: [tanvelo@zohomail.in](mailto:tanvelo@zohomail.in)
-- **X (formerly Twitter)**: [@tanvelo_in](https://x.com/tanvelo_in)
-- **Instagram**: [@tanvelo_in](https://instagram.com/tanvelo_in)
+- **X (formerly Twitter)**: [@tanvelo_xyz](https://x.com/tanvelo_xyz)
+- **Instagram**: [@tanvelo_xyz](https://instagram.com/tanvelo_xyz)
 - **Web Console**: [https://www.tanvelo.in](https://www.tanvelo.in)

@@ -29,6 +29,8 @@ pnpm-debug.log*
 .DS_Store
 *.pem
 *.tsbuildinfo
+*.jpeg
+*.jpg
 
 # Python & Packaging builds
 *.egg-info/

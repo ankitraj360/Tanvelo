@@ -260,6 +260,7 @@ export class GatewayService {
       rules,
       connectionMap,
       pricingMap,
+      modelConfigs,
     };
   }
 

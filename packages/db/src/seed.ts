@@ -130,48 +130,6 @@ async function main() {
       });
     }
 
-    // Create a default routing rule for the development & production environments
-    const devEnv = project.environments.find((e) => e.slug === 'development');
-    const prodEnv = project.environments.find((e) => e.slug === 'production');
-
-    if (devEnv) {
-      await prisma.routingRule.create({
-        data: {
-          projectId: project.id,
-          environmentId: devEnv.id,
-          modelPattern: '*',
-          primaryProvider: 'openai',
-          primaryModel: 'gpt-4o',
-          secondaryProvider: 'anthropic',
-          secondaryModel: 'claude-3-5-sonnet-20241022',
-          fallbackOnTimeout: true,
-          fallbackOnRateLimit: true,
-          fallbackOnError: true,
-          timeoutMs: 30000,
-          maxRetries: 2,
-        },
-      });
-    }
-
-    if (prodEnv) {
-      await prisma.routingRule.create({
-        data: {
-          projectId: project.id,
-          environmentId: prodEnv.id,
-          modelPattern: '*',
-          primaryProvider: 'openai',
-          primaryModel: 'gpt-4o',
-          secondaryProvider: 'anthropic',
-          secondaryModel: 'claude-3-5-sonnet-20241022',
-          fallbackOnTimeout: true,
-          fallbackOnRateLimit: true,
-          fallbackOnError: true,
-          timeoutMs: 30000,
-          maxRetries: 2,
-        },
-      });
-    }
-
     console.log('Seeding completed successfully.');
   } else {
     console.log('Database already initialized.');

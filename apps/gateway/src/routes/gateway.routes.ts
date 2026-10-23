@@ -315,13 +315,19 @@ export async function gatewayRoutes(fastify: FastifyInstance) {
     }
 
     const fallbacksHeader = (request.headers['x-tanvelo-fallbacks'] as string) || null;
-    const { rules, connectionMap, pricingMap } = await gatewayService.getRoutingContext(ctx);
+    const { rules, connectionMap, pricingMap, modelConfigs } = await gatewayService.getRoutingContext(ctx);
     const routingEngine = gatewayService.getRoutingEngine();
 
     if (body.stream) {
       // Streaming execution
       try {
-        const outcome = await routingEngine.executeStreamChat(body, rules as any, connectionMap, fallbacksHeader);
+        const outcome = await routingEngine.executeStreamChat(
+          body,
+          rules as any,
+          connectionMap,
+          fallbacksHeader,
+          modelConfigs as any
+        );
         const pricing = pricingMap.get(outcome.finalModel);
 
         reply.raw.writeHead(200, {
@@ -405,7 +411,13 @@ export async function gatewayRoutes(fastify: FastifyInstance) {
     } else {
       // Non-streaming execution
       try {
-        const outcome = await routingEngine.executeChat(body, rules as any, connectionMap, fallbacksHeader);
+        const outcome = await routingEngine.executeChat(
+          body,
+          rules as any,
+          connectionMap,
+          fallbacksHeader,
+          modelConfigs as any
+        );
         const totalLatency = Date.now() - startTime;
         const pricing = pricingMap.get(outcome.finalModel);
 

@@ -632,13 +632,13 @@ def verify_tanvelo_webhook(payload_raw: bytes, signature_header: str, secret: st
             <a href="mailto:tanvelo@zohomail.in" className="hover:text-slate-900 transition">
               tanvelo@zohomail.in
             </a>
-            <a href="https://x.com/tanvelo_in" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 hover:text-slate-900 transition">
+            <a href="https://x.com/tanvelo_xyz" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 hover:text-slate-900 transition">
               <XSocialIcon className="w-3.5 h-3.5" />
-              <span>@tanvelo_in</span>
+              <span>@tanvelo_xyz</span>
             </a>
-            <a href="https://instagram.com/tanvelo_in" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 hover:text-slate-900 transition">
+            <a href="https://instagram.com/tanvelo_xyz" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 hover:text-slate-900 transition">
               <InstagramIcon className="w-3.5 h-3.5" />
-              <span>@tanvelo_in</span>
+              <span>@tanvelo_xyz</span>
             </a>
             <Link href="/privacy" className="hover:text-slate-900 transition font-sans">
               Privacy

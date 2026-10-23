@@ -10,6 +10,10 @@ import {
   dispatchWebhook,
   dispatchWebhookWithRetries,
   WebhookPayload,
+  searchProviders,
+  getProviderCategories,
+  findProvider,
+  KNOWN_PROVIDER_BASE_URLS,
 } from '@tanvelo/core';
 import { gatewayService } from '../services/gateway.service.js';
 
@@ -60,33 +64,7 @@ export async function managementRoutes(fastify: FastifyInstance) {
       include: { environments: true },
     });
 
-    // Seed default models for project
-    const defaultModels = [
-      { modelId: 'gpt-4o', name: 'GPT-4o', provider: 'openai', inputPricePerMillion: 2.50, outputPricePerMillion: 10.00 },
-      { modelId: 'gpt-4o-mini', name: 'GPT-4o Mini', provider: 'openai', inputPricePerMillion: 0.15, outputPricePerMillion: 0.60 },
-      { modelId: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', provider: 'anthropic', inputPricePerMillion: 3.00, outputPricePerMillion: 15.00 },
-      { modelId: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', provider: 'gemini', inputPricePerMillion: 1.25, outputPricePerMillion: 5.00 },
-      { modelId: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', provider: 'gemini', inputPricePerMillion: 0.075, outputPricePerMillion: 0.30 },
-    ];
-    for (const m of defaultModels) {
-      await prisma.modelConfig.create({
-        data: { projectId: project.id, ...m },
-      });
-    }
-
-    // Seed initial providers
-    for (const p of ['openai', 'anthropic', 'gemini']) {
-      await prisma.providerConnection.create({
-        data: {
-          projectId: project.id,
-          provider: p,
-          apiKeyEncrypted: '',
-          apiKeyPreview: '',
-          status: 'unconfigured',
-        },
-      });
-    }
-
+    // For new projects, leave models blank so the user can configure their own models
     return reply.status(201).send(project);
   });
 
@@ -168,6 +146,17 @@ export async function managementRoutes(fastify: FastifyInstance) {
   });
 
   // ================= PROVIDERS =================
+  fastify.get('/api/providers/catalog', async (req: FastifyRequest, reply: FastifyReply) => {
+    const { query, category } = req.query as any;
+    const providers = searchProviders(query, category);
+    const categories = getProviderCategories();
+    return reply.send({
+      total: providers.length,
+      categories,
+      providers,
+    });
+  });
+
   fastify.get('/api/providers', async (req: FastifyRequest, reply: FastifyReply) => {
     const { projectId } = req.query as any;
     if (!projectId) return reply.status(400).send({ error: 'projectId is required' });
@@ -201,12 +190,16 @@ export async function managementRoutes(fastify: FastifyInstance) {
       return reply.status(400).send({ error: 'projectId and provider are required' });
     }
 
+    const normProvider = provider.toLowerCase().trim();
+    const defaultCatalogUrl = KNOWN_PROVIDER_BASE_URLS[normProvider] || findProvider(normProvider)?.baseUrl || null;
+    const effectiveBaseUrl = apiBaseUrl && apiBaseUrl.trim() ? apiBaseUrl.trim() : defaultCatalogUrl;
+
     const isLocalProvider =
-      provider === 'ollama' ||
-      provider.startsWith('local') ||
-      provider === 'vllm' ||
-      provider === 'lmstudio' ||
-      Boolean(apiBaseUrl && (apiBaseUrl.includes('localhost') || apiBaseUrl.includes('127.0.0.1')));
+      normProvider === 'ollama' ||
+      normProvider.startsWith('local') ||
+      normProvider === 'vllm' ||
+      normProvider === 'lmstudio' ||
+      Boolean(effectiveBaseUrl && (effectiveBaseUrl.includes('localhost') || effectiveBaseUrl.includes('127.0.0.1')));
 
     const keyVal = apiKey || (isLocalProvider ? 'local-key' : '');
     const encrypted = keyVal ? encryptApiKey(keyVal) : '';
@@ -223,10 +216,10 @@ export async function managementRoutes(fastify: FastifyInstance) {
         finalStatus = 'error';
         storedError = clientLastError || 'Connection test failed';
       } else {
-        const adapter = getProviderAdapter(provider, apiBaseUrl);
+        const adapter = getProviderAdapter(normProvider, effectiveBaseUrl);
         if (adapter) {
           try {
-            const testRes = await adapter.testConnection(keyVal, apiBaseUrl);
+            const testRes = await adapter.testConnection(keyVal, effectiveBaseUrl);
             finalStatus = testRes.success ? 'connected' : 'error';
             storedTestedAt = new Date();
             storedError = testRes.success ? null : testRes.message;
@@ -241,15 +234,15 @@ export async function managementRoutes(fastify: FastifyInstance) {
     }
 
     const conn = await prisma.providerConnection.upsert({
-      where: { projectId_provider: { projectId, provider } },
+      where: { projectId_provider: { projectId, provider: normProvider } },
       create: {
         projectId,
-        provider,
+        provider: normProvider,
         customName: customName || null,
         isCustom: Boolean(isCustom),
         apiKeyEncrypted: encrypted,
         apiKeyPreview: preview,
-        apiBaseUrl: apiBaseUrl || null,
+        apiBaseUrl: effectiveBaseUrl || null,
         status: finalStatus,
         lastError: storedError,
         lastTestedAt: storedTestedAt,
@@ -259,7 +252,7 @@ export async function managementRoutes(fastify: FastifyInstance) {
         isCustom: isCustom !== undefined ? Boolean(isCustom) : undefined,
         apiKeyEncrypted: encrypted,
         apiKeyPreview: preview,
-        apiBaseUrl: apiBaseUrl !== undefined ? apiBaseUrl : undefined,
+        apiBaseUrl: effectiveBaseUrl !== undefined ? effectiveBaseUrl : undefined,
         status: finalStatus,
         lastError: storedError,
         lastTestedAt: storedTestedAt || undefined,
@@ -286,12 +279,13 @@ export async function managementRoutes(fastify: FastifyInstance) {
 
   fastify.post('/api/providers/test', async (req: FastifyRequest, reply: FastifyReply) => {
     const { projectId, provider, apiKey, apiBaseUrl } = req.body as any;
+    const normProvider = (provider || '').toLowerCase().trim();
     let keyToTest = apiKey;
     let effectiveBaseUrl = apiBaseUrl;
 
     if (projectId) {
       const existing = await prisma.providerConnection.findUnique({
-        where: { projectId_provider: { projectId, provider } },
+        where: { projectId_provider: { projectId, provider: normProvider } },
       });
       if (existing) {
         if (!keyToTest && existing.apiKeyEncrypted) {
@@ -303,11 +297,15 @@ export async function managementRoutes(fastify: FastifyInstance) {
       }
     }
 
+    if (!effectiveBaseUrl) {
+      effectiveBaseUrl = KNOWN_PROVIDER_BASE_URLS[normProvider] || findProvider(normProvider)?.baseUrl || null;
+    }
+
     const isLocal =
-      provider === 'ollama' ||
-      provider.startsWith('local') ||
-      provider === 'vllm' ||
-      provider === 'lmstudio' ||
+      normProvider === 'ollama' ||
+      normProvider.startsWith('local') ||
+      normProvider === 'vllm' ||
+      normProvider === 'lmstudio' ||
       Boolean(effectiveBaseUrl && (effectiveBaseUrl.includes('localhost') || effectiveBaseUrl.includes('127.0.0.1')));
 
     if (!keyToTest && isLocal) {
@@ -318,9 +316,9 @@ export async function managementRoutes(fastify: FastifyInstance) {
       return reply.status(400).send({ error: 'No API key provided to test' });
     }
 
-    const adapter = getProviderAdapter(provider, effectiveBaseUrl);
+    const adapter = getProviderAdapter(normProvider, effectiveBaseUrl);
     if (!adapter) {
-      return reply.status(400).send({ error: `Unsupported provider: ${provider}` });
+      return reply.status(400).send({ error: `Unsupported provider: ${normProvider}` });
     }
 
     const result = await adapter.testConnection(keyToTest, effectiveBaseUrl);
@@ -328,7 +326,7 @@ export async function managementRoutes(fastify: FastifyInstance) {
     // Update status in DB
     if (projectId) {
       await prisma.providerConnection.updateMany({
-        where: { projectId, provider },
+        where: { projectId, provider: normProvider },
         data: {
           status: result.success ? 'connected' : 'error',
           lastTestedAt: new Date(),
@@ -350,6 +348,68 @@ export async function managementRoutes(fastify: FastifyInstance) {
       orderBy: { provider: 'asc' },
     });
     return reply.send(models);
+  });
+
+  fastify.post('/api/models', async (req: FastifyRequest, reply: FastifyReply) => {
+    const {
+      projectId,
+      modelId,
+      name,
+      provider,
+      inputPricePerMillion = 0,
+      outputPricePerMillion = 0,
+      contextWindow = 128000,
+      supportsStreaming = true,
+      isEnabled = true,
+    } = req.body as any;
+
+    if (!projectId || !modelId || !provider) {
+      return reply.status(400).send({ error: 'projectId, modelId, and provider are required' });
+    }
+
+    const cleanModelId = String(modelId).trim();
+    const cleanProvider = String(provider).trim().toLowerCase();
+    const displayName = name ? String(name).trim() : cleanModelId;
+
+    const existing = await prisma.modelConfig.findUnique({
+      where: {
+        projectId_modelId: {
+          projectId,
+          modelId: cleanModelId,
+        },
+      },
+    });
+
+    if (existing) {
+      return reply.status(409).send({ error: `Model '${cleanModelId}' already exists in this project.` });
+    }
+
+    const newModel = await prisma.modelConfig.create({
+      data: {
+        projectId,
+        modelId: cleanModelId,
+        name: displayName,
+        provider: cleanProvider,
+        inputPricePerMillion: parseFloat(String(inputPricePerMillion)) || 0,
+        outputPricePerMillion: parseFloat(String(outputPricePerMillion)) || 0,
+        contextWindow: parseInt(String(contextWindow), 10) || 128000,
+        supportsStreaming: Boolean(supportsStreaming),
+        isEnabled: isEnabled !== false,
+      },
+    });
+
+    return reply.status(201).send(newModel);
+  });
+
+  fastify.delete('/api/models/:id', async (req: FastifyRequest, reply: FastifyReply) => {
+    const { id } = req.params as any;
+    const model = await prisma.modelConfig.findUnique({ where: { id } });
+    if (!model) {
+      return reply.status(404).send({ error: 'Model not found' });
+    }
+
+    await prisma.modelConfig.delete({ where: { id } });
+    return reply.send({ success: true, message: `Model '${model.name}' removed.` });
   });
 
   fastify.patch('/api/models/:id', async (req: FastifyRequest, reply: FastifyReply) => {

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useProject } from '@/context/ProjectContext';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
@@ -12,7 +12,6 @@ import {
   Key,
   Globe,
   Play,
-  Lock,
   Plus,
   Trash2,
   Sparkles,
@@ -21,10 +20,20 @@ import {
   Copy,
   Check,
   Edit3,
-  Terminal,
   Cpu,
+  Layers,
+  Server,
+  Code2,
+  ExternalLink,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { formatLatency, extractErrorMessage } from '@/lib/utils';
+import {
+  PROVIDER_CATALOG,
+  ProviderDefinition,
+  ProviderCategory,
+  getProviderMeta,
+} from '@/lib/providers';
 
 interface ProviderConnection {
   id: string;
@@ -38,207 +47,39 @@ interface ProviderConnection {
   lastError?: string | null;
 }
 
-interface ProviderPreset {
-  id: string;
-  name: string;
-  providerName: string;
-  baseUrl: string;
-  placeholderKey: string;
-  desc: string;
-  category: 'cloud' | 'local' | 'unified';
-  tag: string;
-}
-
-const PRESETS: ProviderPreset[] = [
-  {
-    id: 'openrouter',
-    name: 'OpenRouter',
-    providerName: 'openrouter',
-    baseUrl: 'https://openrouter.ai/api/v1',
-    placeholderKey: 'sk-or-v1-...',
-    desc: 'Unified multi-provider aggregation network',
-    category: 'unified',
-    tag: 'Unified',
-  },
-  {
-    id: 'gemini',
-    name: 'Google Gemini',
-    providerName: 'gemini',
-    baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
-    placeholderKey: 'AIzaSy...',
-    desc: 'Google multimodal intelligence and frontier reasoning provider',
-    category: 'cloud',
-    tag: 'Cloud Frontier',
-  },
-  {
-    id: 'openai',
-    name: 'OpenAI',
-    providerName: 'openai',
-    baseUrl: 'https://api.openai.com/v1',
-    placeholderKey: 'sk-proj-...',
-    desc: 'Industry-standard frontier AI provider with high-concurrency endpoints',
-    category: 'cloud',
-    tag: 'Cloud Frontier',
-  },
-  {
-    id: 'claude',
-    name: 'Anthropic Claude',
-    providerName: 'claude',
-    baseUrl: 'https://api.anthropic.com/v1',
-    placeholderKey: 'sk-ant-api03-...',
-    desc: 'Frontier AI reasoning and coding provider with safety-first inference',
-    category: 'cloud',
-    tag: 'Cloud Frontier',
-  },
-  {
-    id: 'deepseek',
-    name: 'DeepSeek',
-    providerName: 'deepseek',
-    baseUrl: 'https://api.deepseek.com',
-    placeholderKey: 'sk-...',
-    desc: 'Advanced reasoning and high-efficiency intelligence provider',
-    category: 'cloud',
-    tag: 'Reasoning',
-  },
-  {
-    id: 'groq',
-    name: 'Groq',
-    providerName: 'groq',
-    baseUrl: 'https://api.groq.com/openai/v1',
-    placeholderKey: 'gsk_...',
-    desc: 'Ultra-low latency inference provider powered by LPU architecture',
-    category: 'cloud',
-    tag: 'Ultra-Fast',
-  },
-  {
-    id: 'mistral',
-    name: 'Mistral AI',
-    providerName: 'mistral',
-    baseUrl: 'https://api.mistral.ai/v1',
-    placeholderKey: '...',
-    desc: 'Frontier European multilingual intelligence provider',
-    category: 'cloud',
-    tag: 'Frontier',
-  },
-  {
-    id: 'ollama',
-    name: 'Ollama (Local)',
-    providerName: 'ollama',
-    baseUrl: 'http://localhost:11434/v1',
-    placeholderKey: 'ollama (or local token)',
-    desc: 'Self-hosted local inference provider on your private infrastructure',
-    category: 'local',
-    tag: 'Self-Hosted',
-  },
-  {
-    id: 'vllm',
-    name: 'vLLM Server',
-    providerName: 'vllm',
-    baseUrl: 'http://localhost:8000/v1',
-    placeholderKey: 'token or local-key',
-    desc: 'High-throughput self-hosted inference engine provider',
-    category: 'local',
-    tag: 'Self-Hosted',
-  },
+const CATEGORY_TABS: { id: ProviderCategory | 'all'; label: string }[] = [
+  { id: 'all', label: 'All Providers' },
+  { id: 'cloud', label: 'Frontier Cloud' },
+  { id: 'fast', label: 'Ultra-Fast & Silicon' },
+  { id: 'enterprise', label: 'Enterprise Cloud' },
+  { id: 'regional', label: 'Regional & Asian' },
+  { id: 'local', label: 'Self-Hosted / Local' },
+  { id: 'unified', label: 'Routers & Unified' },
+  { id: 'specialized', label: 'Specialized' },
+  { id: 'custom', label: 'Custom / Any API' },
 ];
-
-function getProviderMeta(providerName: string) {
-  const norm = (providerName || '').toLowerCase().trim();
-  if (norm.includes('openrouter')) {
-    return {
-      label: 'OpenRouter',
-      badgeColor: 'indigo',
-      accentBg: 'bg-indigo-50',
-      accentBorder: 'border-indigo-200',
-      accentText: 'text-indigo-700',
-      symbol: 'OR',
-    };
-  }
-  if (norm.includes('gemini') || norm.includes('google')) {
-    return {
-      label: 'Google Gemini',
-      badgeColor: 'blue',
-      accentBg: 'bg-blue-50',
-      accentBorder: 'border-blue-200',
-      accentText: 'text-blue-700',
-      symbol: 'GM',
-    };
-  }
-  if (norm.includes('openai')) {
-    return {
-      label: 'OpenAI',
-      badgeColor: 'success',
-      accentBg: 'bg-emerald-50',
-      accentBorder: 'border-emerald-200',
-      accentText: 'text-emerald-700',
-      symbol: 'OA',
-    };
-  }
-  if (norm.includes('claude') || norm.includes('anthropic')) {
-    return {
-      label: 'Anthropic Claude',
-      badgeColor: 'warning',
-      accentBg: 'bg-amber-50',
-      accentBorder: 'border-amber-200',
-      accentText: 'text-amber-700',
-      symbol: 'CL',
-    };
-  }
-  if (norm.includes('groq')) {
-    return {
-      label: 'Groq',
-      badgeColor: 'warning',
-      accentBg: 'bg-orange-50',
-      accentBorder: 'border-orange-200',
-      accentText: 'text-orange-700',
-      symbol: 'GQ',
-    };
-  }
-  if (norm.includes('deepseek')) {
-    return {
-      label: 'DeepSeek',
-      badgeColor: 'cyan',
-      accentBg: 'bg-cyan-50',
-      accentBorder: 'border-cyan-200',
-      accentText: 'text-cyan-700',
-      symbol: 'DS',
-    };
-  }
-  if (norm.includes('ollama') || norm.includes('local') || norm.includes('vllm') || norm.includes('lmstudio')) {
-    return {
-      label: 'Local / Self-Hosted',
-      badgeColor: 'cyan',
-      accentBg: 'bg-teal-50',
-      accentBorder: 'border-teal-200',
-      accentText: 'text-teal-700',
-      symbol: 'LOC',
-    };
-  }
-  return {
-    label: providerName,
-    badgeColor: 'purple',
-    accentBg: 'bg-purple-50',
-    accentBorder: 'border-purple-200',
-    accentText: 'text-purple-700',
-    symbol: providerName.slice(0, 2).toUpperCase() || 'AI',
-  };
-}
 
 export default function ProvidersPage() {
   const { currentProject } = useProject();
   const [connections, setConnections] = useState<ProviderConnection[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchConnectedQuery, setSearchConnectedQuery] = useState('');
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
+
+  // Catalog Explorer state
+  const [catalogSearch, setCatalogSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<ProviderCategory | 'all'>('all');
 
   // Connect Provider Modal State
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
+  const [modalTab, setModalTab] = useState<'preset' | 'custom'>('preset');
   const [isEditing, setIsEditing] = useState(false);
   const [formName, setFormName] = useState('');
   const [formProvider, setFormProvider] = useState('');
   const [formBaseUrl, setFormBaseUrl] = useState('');
   const [formApiKey, setFormApiKey] = useState('');
-  const [showApiKey, setShowApiKey] = useState(false);
+  const [formAuthType, setFormAuthType] = useState<'bearer' | 'azure' | 'custom' | 'none'>('bearer');
+  const [formCustomHeaderName, setFormCustomHeaderName] = useState('X-API-Key');
   const [modalSubmitting, setModalSubmitting] = useState(false);
   const [modalTesting, setModalTesting] = useState(false);
   const [modalTestResult, setModalTestResult] = useState<{
@@ -247,6 +88,7 @@ export default function ProvidersPage() {
     latencyMs: number;
   } | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
+  const [presetSearch, setPresetSearch] = useState('');
 
   // Page-level testing
   const [testingMap, setTestingMap] = useState<Record<string, boolean>>({});
@@ -255,6 +97,9 @@ export default function ProvidersPage() {
   >({});
   const [copiedSnippet, setCopiedSnippet] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
+  const [activeCodeTab, setActiveCodeTab] = useState<'curl' | 'ts' | 'py'>('ts');
+  const [addingModelMap, setAddingModelMap] = useState<Record<string, boolean>>({});
+  const [addedModelSuccess, setAddedModelSuccess] = useState<string | null>(null);
 
   const fetchConnections = async () => {
     if (!currentProject) return;
@@ -289,15 +134,15 @@ export default function ProvidersPage() {
       const isConfigured = c.status === 'connected' || (c.apiKeyPreview && c.apiKeyPreview !== 'None');
       if (!isConfigured) return false;
 
-      if (!searchQuery.trim()) return true;
-      const q = searchQuery.toLowerCase().trim();
+      if (!searchConnectedQuery.trim()) return true;
+      const q = searchConnectedQuery.toLowerCase().trim();
       return (
         c.provider.toLowerCase().includes(q) ||
         (c.customName && c.customName.toLowerCase().includes(q)) ||
         (c.apiBaseUrl && c.apiBaseUrl.toLowerCase().includes(q))
       );
     });
-  }, [connections, searchQuery]);
+  }, [connections, searchConnectedQuery]);
 
   // Keep selected provider valid
   useEffect(() => {
@@ -315,31 +160,79 @@ export default function ProvidersPage() {
     return connections.find((c) => c.provider === selectedProviderId) || null;
   }, [connections, selectedProviderId]);
 
+  const selectedCatalogEntry = useMemo(() => {
+    if (!selectedConnection) return null;
+    const norm = selectedConnection.provider.toLowerCase();
+    return PROVIDER_CATALOG.find((p) => p.id === norm || (p.aliases && p.aliases.includes(norm))) || null;
+  }, [selectedConnection]);
+
+  // Filtered catalog list for bottom exploration area
+  const filteredCatalog = useMemo(() => {
+    let list = PROVIDER_CATALOG;
+    if (selectedCategory !== 'all') {
+      list = list.filter((p) => p.category === selectedCategory);
+    }
+    if (!catalogSearch.trim()) return list;
+    const q = catalogSearch.toLowerCase().trim();
+    return list.filter(
+      (p) =>
+        p.id.toLowerCase().includes(q) ||
+        p.name.toLowerCase().includes(q) ||
+        p.tag.toLowerCase().includes(q) ||
+        p.description.toLowerCase().includes(q) ||
+        (p.aliases && p.aliases.some((a) => a.toLowerCase().includes(q)))
+    );
+  }, [selectedCategory, catalogSearch]);
+
+  // Filtered preset list inside modal
+  const modalPresets = useMemo(() => {
+    if (!presetSearch.trim()) return PROVIDER_CATALOG.slice(0, 36);
+    const q = presetSearch.toLowerCase().trim();
+    return PROVIDER_CATALOG.filter(
+      (p) =>
+        p.id.toLowerCase().includes(q) ||
+        p.name.toLowerCase().includes(q) ||
+        p.tag.toLowerCase().includes(q) ||
+        (p.aliases && p.aliases.some((a) => a.toLowerCase().includes(q)))
+    );
+  }, [presetSearch]);
+
   // Reset form
   const resetForm = () => {
     setFormName('');
     setFormProvider('');
     setFormBaseUrl('');
     setFormApiKey('');
-    setShowApiKey(false);
+    setFormAuthType('bearer');
+    setFormCustomHeaderName('X-API-Key');
     setIsEditing(false);
     setModalError(null);
     setModalTestResult(null);
+    setPresetSearch('');
   };
 
   // Open modal for new connection
-  const openConnectModal = () => {
+  const openConnectModal = (initialTab: 'preset' | 'custom' = 'preset') => {
     resetForm();
+    setModalTab(initialTab);
     setIsConnectModalOpen(true);
   };
 
   // Open modal with specific preset
-  const openConnectModalWithPreset = (preset: ProviderPreset) => {
+  const openConnectModalWithPreset = (preset: ProviderDefinition) => {
     resetForm();
+    setModalTab('preset');
     setFormName(preset.name);
-    setFormProvider(preset.providerName);
+    setFormProvider(preset.id);
     setFormBaseUrl(preset.baseUrl);
     setFormApiKey('');
+    if (preset.id === 'azure' || preset.id === 'azure_ai') {
+      setFormAuthType('azure');
+    } else if (preset.category === 'local') {
+      setFormAuthType('none');
+    } else {
+      setFormAuthType('bearer');
+    }
     setIsConnectModalOpen(true);
   };
 
@@ -347,6 +240,7 @@ export default function ProvidersPage() {
   const openEditModal = (conn: ProviderConnection) => {
     resetForm();
     setIsEditing(true);
+    setModalTab(conn.isCustom ? 'custom' : 'preset');
     setFormName(conn.customName || getProviderMeta(conn.provider).label);
     setFormProvider(conn.provider);
     setFormBaseUrl(conn.apiBaseUrl || '');
@@ -354,20 +248,32 @@ export default function ProvidersPage() {
     setIsConnectModalOpen(true);
   };
 
+  // Build effective key format for backend
+  const computeKeyForSave = (): string => {
+    if (formAuthType === 'none') {
+      return formApiKey.trim() || 'local-key';
+    }
+    if (formAuthType === 'azure') {
+      return `api-key: ${formApiKey.trim()}`;
+    }
+    if (formAuthType === 'custom' && formCustomHeaderName.trim()) {
+      return `${formCustomHeaderName.trim()}: ${formApiKey.trim()}`;
+    }
+    return formApiKey.trim();
+  };
+
   // Modal: Test connection
   const handleModalTest = async () => {
     if (!formProvider.trim()) {
-      setModalError('Provider name is required to run test');
+      setModalError('Provider identifier is required');
       return;
     }
     if (!formBaseUrl.trim()) {
-      setModalError('Base URL is required to run test');
+      setModalError('Base URL is required to test endpoint');
       return;
     }
-    if (!formApiKey.trim()) {
-      setModalError('API Key is required to run test');
-      return;
-    }
+
+    const testKey = computeKeyForSave();
 
     setModalTesting(true);
     setModalTestResult(null);
@@ -380,7 +286,7 @@ export default function ProvidersPage() {
         body: JSON.stringify({
           projectId: currentProject?.id,
           provider: formProvider.toLowerCase().trim(),
-          apiKey: formApiKey.trim(),
+          apiKey: testKey,
           apiBaseUrl: formBaseUrl.trim(),
         }),
       });
@@ -428,27 +334,37 @@ export default function ProvidersPage() {
     if (!currentProject) return;
 
     if (!formName.trim()) {
-      setModalError('Name is required');
+      setModalError('Connection display name is required');
       return;
     }
     if (!formProvider.trim()) {
-      setModalError('Provider name is required');
+      setModalError('Provider identifier is required');
       return;
     }
     if (!formBaseUrl.trim()) {
       setModalError('Base URL is required');
       return;
     }
-    if (!formApiKey.trim()) {
-      setModalError('API Key is required');
+
+    const normProvider = formProvider.toLowerCase().trim();
+    const isLocal =
+      normProvider === 'ollama' ||
+      normProvider === 'vllm' ||
+      normProvider === 'lmstudio' ||
+      formAuthType === 'none' ||
+      formBaseUrl.includes('localhost') ||
+      formBaseUrl.includes('127.0.0.1');
+
+    if (!formApiKey.trim() && !isLocal) {
+      setModalError('API Key is required for cloud providers');
       return;
     }
 
     setModalSubmitting(true);
     setModalError(null);
 
-    const normProvider = formProvider.toLowerCase().trim();
-    const isCustom = !['openai', 'anthropic', 'claude', 'gemini'].includes(normProvider);
+    const isCustom = modalTab === 'custom' || !['openai', 'anthropic', 'claude', 'gemini'].includes(normProvider);
+    const keyToSave = computeKeyForSave();
 
     try {
       const res = await fetch('/api/providers', {
@@ -459,7 +375,7 @@ export default function ProvidersPage() {
           provider: normProvider,
           customName: formName.trim(),
           apiBaseUrl: formBaseUrl.trim(),
-          apiKey: formApiKey.trim(),
+          apiKey: keyToSave,
           isCustom,
           status: 'connected',
         }),
@@ -489,7 +405,11 @@ export default function ProvidersPage() {
 
   // Delete provider
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to disconnect ${name}? Applications routing to this provider will fall back to other configured providers.`)) {
+    if (
+      !confirm(
+        `Are you sure you want to disconnect ${name}? Applications routing to this provider will fall back to other configured providers.`
+      )
+    ) {
       return;
     }
 
@@ -529,7 +449,8 @@ export default function ProvidersPage() {
       try {
         data = await res.json();
       } catch {
-        data = { success: false, message: `HTTP ${res.status} response`, latencyMs: 0 };
+        const text = await res.text().catch(() => '');
+        data = { success: false, message: text || `HTTP ${res.status}`, latencyMs: 0 };
       }
 
       const isSuccess = Boolean(res.ok && data?.success);
@@ -538,14 +459,28 @@ export default function ProvidersPage() {
         isSuccess ? 'Connection verified successfully.' : 'Connection test failed.'
       );
 
-      const safeResult = {
-        success: isSuccess,
-        message: msg,
-        latencyMs: typeof data?.latencyMs === 'number' ? data.latencyMs : 0,
-      };
+      setTestResultMap((prev) => ({
+        ...prev,
+        [provider]: {
+          success: isSuccess,
+          message: msg,
+          latencyMs: typeof data?.latencyMs === 'number' ? data.latencyMs : 0,
+        },
+      }));
 
-      setTestResultMap((prev) => ({ ...prev, [provider]: safeResult }));
-      await fetchConnections();
+      // Update connected provider state in list
+      setConnections((prev) =>
+        prev.map((c) =>
+          c.provider === provider
+            ? {
+                ...c,
+                status: isSuccess ? 'connected' : 'error',
+                lastTestedAt: new Date().toISOString(),
+                lastError: isSuccess ? null : msg,
+              }
+            : c
+        )
+      );
     } catch (err: any) {
       setTestResultMap((prev) => ({
         ...prev,
@@ -560,6 +495,50 @@ export default function ProvidersPage() {
     }
   };
 
+  // 1-Click Add Recommended Model to Project
+  const handleAddRecommendedModel = async (model: {
+    id: string;
+    name: string;
+    contextWindow?: number;
+    inputPricePerMillion?: number;
+    outputPricePerMillion?: number;
+    supportsStreaming?: boolean;
+  }) => {
+    if (!currentProject || !selectedConnection) return;
+    setAddingModelMap((prev) => ({ ...prev, [model.id]: true }));
+    setAddedModelSuccess(null);
+
+    try {
+      const res = await fetch('/api/models', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: currentProject.id,
+          modelId: model.id,
+          name: model.name,
+          provider: selectedConnection.provider,
+          inputPricePerMillion: model.inputPricePerMillion || 0,
+          outputPricePerMillion: model.outputPricePerMillion || 0,
+          contextWindow: model.contextWindow || 128000,
+          supportsStreaming: model.supportsStreaming !== false,
+          isEnabled: true,
+        }),
+      });
+
+      if (res.ok) {
+        setAddedModelSuccess(`Model "${model.name}" registered to project!`);
+        setTimeout(() => setAddedModelSuccess(null), 3000);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err?.error || err?.message || 'Failed to add model to project');
+      }
+    } catch (e: any) {
+      alert(e.message || 'Network error adding model');
+    } finally {
+      setAddingModelMap((prev) => ({ ...prev, [model.id]: false }));
+    }
+  };
+
   const copyToClipboard = (text: string, type: 'snippet' | 'url') => {
     navigator.clipboard.writeText(text);
     if (type === 'snippet') {
@@ -571,32 +550,123 @@ export default function ProvidersPage() {
     }
   };
 
-  const gatewayUrl =
-    typeof window !== 'undefined'
-      ? `${window.location.origin}`
-      : 'https://tanvelo-backend-zgyc.onrender.com';
+  // Dynamic code example using current provider
+  const sampleModel =
+    selectedCatalogEntry?.recommendedModels?.[0]?.id || `${selectedConnection?.provider || 'provider'}/custom-model`;
+
+  const tsCodeSnippet = `import { Tanvelo } from "@tanvelo/sdk";
+
+const tanvelo = new Tanvelo({
+  apiKey: process.env.TANVELO_API_KEY, // "tv-live-..."
+});
+
+// Call ${selectedConnection?.customName || selectedConnection?.provider} with automated gateway routing
+const response = await tanvelo.chat.completions.create({
+  model: "${selectedConnection?.provider}/${sampleModel}",
+  messages: [
+    { role: "user", content: "Hello from Tanvelo unified gateway!" }
+  ],
+});
+
+console.log(response.choices[0].message.content);`;
+
+  const pyCodeSnippet = `from tanvelo import Tanvelo
+
+client = Tanvelo(api_key="tv-live-...")
+
+# Call ${selectedConnection?.customName || selectedConnection?.provider} seamlessly
+response = client.chat.completions.create(
+    model="${selectedConnection?.provider}/${sampleModel}",
+    messages=[{"role": "user", "content": "Hello Tanvelo!"}]
+)
+
+print(response.choices[0].message.content)`;
+
+  const curlCodeSnippet = `curl -X POST https://tanvelo-backend-zgyc.onrender.com/v1/chat/completions \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer tv-live-..." \\
+  -d '{
+    "model": "${selectedConnection?.provider}/${sampleModel}",
+    "messages": [
+      { "role": "user", "content": "Hello Tanvelo unified gateway!" }
+    ]
+  }'`;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-16">
+    <div className="space-y-8 max-w-7xl mx-auto pb-20">
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Provider Connections
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+              Provider Connections
+            </h1>
+            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+              140+ AI Providers
+            </span>
+          </div>
           <p className="text-xs text-slate-500 mt-1">
-            Configure upstream AI providers and API credentials for gateway routing.
+            Connect OpenAI, Anthropic, Gemini, Groq, Cerebras, Together, DeepSeek, vLLM, or ANY custom OpenAI-compatible API.
           </p>
         </div>
 
-        <Button
-          size="sm"
-          onClick={openConnectModal}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm"
-        >
-          <Plus className="w-4 h-4 mr-1.5" />
-          Connect Provider
-        </Button>
+        <div className="flex items-center gap-2.5">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => openConnectModal('custom')}
+            className="text-xs font-medium border-slate-300"
+          >
+            <Server className="w-3.5 h-3.5 mr-1.5 text-slate-600" />
+            Add Custom API
+          </Button>
+
+          <Button
+            size="sm"
+            onClick={() => openConnectModal('preset')}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm text-xs"
+          >
+            <Plus className="w-4 h-4 mr-1.5" />
+            Connect Provider
+          </Button>
+        </div>
+      </div>
+
+      {/* Overview Stat Badges */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="p-3.5 rounded-xl border border-slate-200 bg-white">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">Connected</span>
+          <div className="flex items-baseline gap-2 mt-1">
+            <span className="text-xl font-bold text-slate-900">{connectedProviders.length}</span>
+            <span className="text-[11px] text-emerald-600 font-medium">active in project</span>
+          </div>
+        </div>
+
+        <div className="p-3.5 rounded-xl border border-slate-200 bg-white">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">Supported Providers</span>
+          <div className="flex items-baseline gap-2 mt-1">
+            <span className="text-xl font-bold text-slate-900">{PROVIDER_CATALOG.length}+</span>
+            <span className="text-[11px] text-blue-600 font-medium">pre-integrated</span>
+          </div>
+        </div>
+
+        <div className="p-3.5 rounded-xl border border-slate-200 bg-white">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">Custom Endpoints</span>
+          <div className="flex items-baseline gap-2 mt-1">
+            <span className="text-xl font-bold text-slate-900">
+              {connections.filter((c) => c.isCustom).length}
+            </span>
+            <span className="text-[11px] text-purple-600 font-medium">vLLM / on-prem</span>
+          </div>
+        </div>
+
+        <div className="p-3.5 rounded-xl border border-slate-200 bg-white">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">Latency Verification</span>
+          <div className="flex items-baseline gap-2 mt-1">
+            <span className="text-xl font-bold text-emerald-600">Live</span>
+            <span className="text-[11px] text-slate-500 font-mono">active healthcheck</span>
+          </div>
+        </div>
       </div>
 
       {/* Main 2-Column Split Layout */}
@@ -612,18 +682,25 @@ export default function ProvidersPage() {
                 {connectedProviders.length}
               </span>
             </div>
+            <button
+              onClick={() => openConnectModal('preset')}
+              className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 cursor-pointer"
+            >
+              <Plus className="w-3 h-3" />
+              Add More
+            </button>
           </div>
 
-          {/* Search bar */}
+          {/* Search connected providers */}
           {connectedProviders.length > 2 && (
             <div className="relative">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 placeholder="Search connected providers..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-xs"
+                value={searchConnectedQuery}
+                onChange={(e) => setSearchConnectedQuery(e.target.value)}
+                className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-2xs"
               />
             </div>
           )}
@@ -636,20 +713,24 @@ export default function ProvidersPage() {
                 <span>Loading provider connections...</span>
               </div>
             ) : connectedProviders.length === 0 ? (
-              <div className="p-6 rounded-2xl border border-slate-200 bg-white text-center space-y-3 shadow-xs">
+              <div className="p-6 rounded-2xl border border-slate-200 bg-white text-center space-y-3 shadow-2xs">
                 <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center mx-auto text-slate-500">
                   <Cpu className="w-5 h-5 text-slate-600" />
                 </div>
                 <div className="space-y-1">
                   <h3 className="text-sm font-semibold text-slate-900">No Providers Connected</h3>
                   <p className="text-xs text-slate-500">
-                    Connect OpenAI, Anthropic, Google Gemini, Groq, or custom providers to start routing.
+                    Connect OpenAI, Anthropic, Gemini, Groq, Cerebras, Together, or your custom API endpoint.
                   </p>
                 </div>
-                <div className="pt-2">
-                  <Button size="sm" onClick={openConnectModal}>
+                <div className="pt-2 flex items-center justify-center gap-2">
+                  <Button size="sm" onClick={() => openConnectModal('preset')}>
                     <Plus className="w-3.5 h-3.5 mr-1" />
-                    Connect Provider
+                    Browse 140+ Providers
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => openConnectModal('custom')}>
+                    <Server className="w-3.5 h-3.5 mr-1" />
+                    Custom API
                   </Button>
                 </div>
               </div>
@@ -667,7 +748,7 @@ export default function ProvidersPage() {
                     onClick={() => setSelectedProviderId(conn.provider)}
                     className={`p-3 rounded-xl border transition-all cursor-pointer relative group ${
                       isSelected
-                        ? 'border-blue-500 bg-blue-50/50 shadow-xs'
+                        ? 'border-blue-500 bg-blue-50/50 shadow-2xs'
                         : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300'
                     }`}
                   >
@@ -690,7 +771,7 @@ export default function ProvidersPage() {
                               </span>
                             )}
                           </div>
-                          <p className="text-[11px] text-slate-500 font-mono truncate max-w-[180px]">
+                          <p className="text-[11px] text-slate-500 font-mono truncate max-w-[200px]">
                             {conn.apiBaseUrl ? conn.apiBaseUrl.replace(/^https?:\/\//, '') : conn.provider}
                           </p>
                         </div>
@@ -758,29 +839,6 @@ export default function ProvidersPage() {
               })
             )}
           </div>
-
-          {/* Quick Presets */}
-          <div className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-                Popular Presets
-              </span>
-              <span className="text-[10px] text-slate-500">Click to connect</span>
-            </div>
-            <div className="grid grid-cols-2 gap-1.5 text-xs">
-              {PRESETS.slice(0, 6).map((preset) => (
-                <button
-                  key={preset.id}
-                  onClick={() => openConnectModalWithPreset(preset)}
-                  className="px-2.5 py-1.5 rounded-lg text-left bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 transition flex items-center justify-between group cursor-pointer"
-                >
-                  <span className="truncate text-[11px] font-medium">{preset.name}</span>
-                  <Plus className="w-3 h-3 text-slate-400 group-hover:text-blue-600 flex-shrink-0 ml-1" />
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* Right Area: Selected Provider Details */}
@@ -812,9 +870,14 @@ export default function ProvidersPage() {
                               <Badge variant={meta.badgeColor as any} className="font-mono text-[10px]">
                                 {selectedConnection.provider}
                               </Badge>
+                              {selectedCatalogEntry && (
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-700">
+                                  {selectedCatalogEntry.tag}
+                                </span>
+                              )}
                             </div>
                             <p className="text-xs text-slate-500 mt-0.5 font-mono truncate max-w-sm">
-                              {selectedConnection.apiBaseUrl || 'Default Provider Endpoint'}
+                              {selectedConnection.apiBaseUrl || selectedCatalogEntry?.baseUrl || 'Standard API Endpoint'}
                             </p>
                           </div>
                         </div>
@@ -862,7 +925,7 @@ export default function ProvidersPage() {
 
                     {/* Operational Metrics */}
                     <CardContent className="pt-0">
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-3 border-t border-slate-100">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-3 border-t border-slate-100">
                         <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
                           <span className="text-[10px] text-slate-500 uppercase font-mono block">Status</span>
                           <span className="text-xs font-semibold text-emerald-700 mt-0.5 block">
@@ -881,6 +944,13 @@ export default function ProvidersPage() {
                           <span className="text-[10px] text-slate-500 uppercase font-mono block">Key Token</span>
                           <span className="text-xs font-mono font-semibold text-slate-800 mt-0.5 block">
                             {selectedConnection.apiKeyPreview || '••••••••'}
+                          </span>
+                        </div>
+
+                        <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+                          <span className="text-[10px] text-slate-500 uppercase font-mono block">Category</span>
+                          <span className="text-xs font-medium text-slate-800 capitalize mt-0.5 block">
+                            {meta.category || 'General AI'}
                           </span>
                         </div>
                       </div>
@@ -917,93 +987,118 @@ export default function ProvidersPage() {
                     </div>
                   )}
 
-                  {/* Endpoint Configuration */}
-                  <Card className="border-slate-200 bg-white">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                        Endpoint Details
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div>
-                        <span className="text-[11px] font-medium text-slate-500 block mb-1">
-                          Base URL:
-                        </span>
+                  {/* Recommended Models Section */}
+                  {selectedCatalogEntry?.recommendedModels && selectedCatalogEntry.recommendedModels.length > 0 && (
+                    <Card className="border-slate-200 bg-white">
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                            Popular Models for {selectedCatalogEntry.name}
+                          </CardTitle>
+                          {addedModelSuccess && (
+                            <span className="text-xs text-emerald-600 font-medium flex items-center gap-1">
+                              <Check className="w-3 h-3" />
+                              {addedModelSuccess}
+                            </span>
+                          )}
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          {selectedCatalogEntry.recommendedModels.map((m) => (
+                            <div
+                              key={m.id}
+                              className="p-2.5 rounded-lg border border-slate-100 bg-slate-50 hover:bg-slate-100 transition flex items-center justify-between gap-3"
+                            >
+                              <div>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-xs font-semibold text-slate-900">{m.name}</span>
+                                  <code className="text-[10px] font-mono text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200">
+                                    {m.id}
+                                  </code>
+                                </div>
+                                <div className="text-[10px] text-slate-500 font-mono mt-0.5">
+                                  Context: {m.contextWindow ? `${(m.contextWindow / 1000).toFixed(0)}k` : '128k'} | In: ${m.inputPricePerMillion ?? 0}/M | Out: ${m.outputPricePerMillion ?? 0}/M
+                                </div>
+                              </div>
+
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                loading={addingModelMap[m.id]}
+                                onClick={() => handleAddRecommendedModel(m)}
+                                className="text-[11px] h-7 px-2 border-slate-200 bg-white hover:bg-blue-50 hover:text-blue-700"
+                              >
+                                <Plus className="w-3 h-3 mr-1" />
+                                Add to Project
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Code Integration Card */}
+                  <Card className="border-slate-200 bg-white overflow-hidden">
+                    <CardHeader className="pb-2 bg-slate-50/50 border-b border-slate-100">
+                      <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <input
-                            type="text"
-                            readOnly
-                            value={selectedConnection.apiBaseUrl || 'Standard Provider Endpoint'}
-                            className="flex-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-900 select-all"
-                          />
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() =>
-                              copyToClipboard(selectedConnection.apiBaseUrl || '', 'url')
-                            }
-                            className="px-2.5 text-xs"
+                          <Code2 className="w-4 h-4 text-blue-600" />
+                          <CardTitle className="text-xs font-semibold uppercase tracking-wider text-slate-700">
+                            Gateway Routing Snippet
+                          </CardTitle>
+                        </div>
+
+                        {/* Language Tabs */}
+                        <div className="flex items-center gap-1 bg-slate-200/60 p-0.5 rounded-lg">
+                          <button
+                            onClick={() => setActiveCodeTab('ts')}
+                            className={`px-2 py-0.5 rounded text-[11px] font-medium transition ${
+                              activeCodeTab === 'ts' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                            }`}
                           >
-                            {copiedUrl ? (
-                              <Check className="w-3.5 h-3.5 text-emerald-600" />
-                            ) : (
-                              <Copy className="w-3.5 h-3.5 text-slate-500" />
-                            )}
-                          </Button>
+                            TypeScript
+                          </button>
+                          <button
+                            onClick={() => setActiveCodeTab('py')}
+                            className={`px-2 py-0.5 rounded text-[11px] font-medium transition ${
+                              activeCodeTab === 'py' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                          >
+                            Python
+                          </button>
+                          <button
+                            onClick={() => setActiveCodeTab('curl')}
+                            className={`px-2 py-0.5 rounded text-[11px] font-medium transition ${
+                              activeCodeTab === 'curl' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                          >
+                            cURL
+                          </button>
                         </div>
                       </div>
-
-                      <p className="text-[11px] text-slate-500 flex items-center gap-1.5 pt-1">
-                        <Lock className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
-                        <span>API keys are encrypted at rest and used only during gateway request routing.</span>
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  {/* Integration Example */}
-                  <Card className="border-slate-200 bg-white">
-                    <CardHeader className="pb-2 flex flex-row items-center justify-between">
-                      <CardTitle className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                        Request Example
-                      </CardTitle>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => {
-                          const code = `curl -X POST ${gatewayUrl}/v1/chat/completions \\
-  -H "Authorization: Bearer $TANVELO_API_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "model": "your-model",
-    "messages": [{"role": "user", "content": "Hello Tanvelo Gateway!"}]
-  }'`;
-                          copyToClipboard(code, 'snippet');
-                        }}
-                        className="text-xs"
-                      >
-                        {copiedSnippet ? (
-                          <span className="flex items-center gap-1 text-emerald-600">
-                            <Check className="w-3.5 h-3.5" /> Copied
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1 text-slate-600">
-                            <Copy className="w-3.5 h-3.5" /> Copy cURL
-                          </span>
-                        )}
-                      </Button>
                     </CardHeader>
-                    <CardContent>
-                      <pre className="p-3.5 rounded-lg bg-slate-900 text-[11px] font-mono text-slate-100 overflow-x-auto leading-relaxed">
-{`curl -X POST ${gatewayUrl}/v1/chat/completions \\
-  -H "Authorization: Bearer $TANVELO_API_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "model": "your-model",
-    "messages": [
-      { "role": "user", "content": "Hello Tanvelo!" }
-    ]
-  }'`}
+
+                    <CardContent className="p-0 relative">
+                      <pre className="p-4 bg-slate-950 text-slate-100 text-xs font-mono overflow-x-auto leading-relaxed">
+                        {activeCodeTab === 'ts' && tsCodeSnippet}
+                        {activeCodeTab === 'py' && pyCodeSnippet}
+                        {activeCodeTab === 'curl' && curlCodeSnippet}
                       </pre>
+                      <button
+                        onClick={() =>
+                          copyToClipboard(
+                            activeCodeTab === 'ts' ? tsCodeSnippet : activeCodeTab === 'py' ? pyCodeSnippet : curlCodeSnippet,
+                            'snippet'
+                          )
+                        }
+                        className="absolute right-3 top-3 p-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition cursor-pointer"
+                        title="Copy Code"
+                      >
+                        {copiedSnippet ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
                     </CardContent>
                   </Card>
                 </div>
@@ -1015,19 +1110,139 @@ export default function ProvidersPage() {
                 <Cpu className="w-6 h-6 text-slate-600" />
               </div>
               <h2 className="text-base font-bold text-slate-900">
-                Provider Configuration
+                Select a Connected Provider
               </h2>
               <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                Select a connected provider on the left to test latency and view endpoints, or connect a new provider.
+                Select a connected provider on the left to verify latency and view integration snippets, or connect a new provider below.
               </p>
-              <div className="mt-4">
-                <Button size="sm" onClick={openConnectModal}>
+              <div className="mt-4 flex items-center justify-center gap-2">
+                <Button size="sm" onClick={() => openConnectModal('preset')}>
                   <Plus className="w-4 h-4 mr-1.5" />
                   Connect Provider
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => openConnectModal('custom')}>
+                  <Server className="w-4 h-4 mr-1.5" />
+                  Add Custom API
                 </Button>
               </div>
             </Card>
           )}
+        </div>
+      </div>
+
+      {/* Explore 140+ Supported AI Providers Catalog */}
+      <div className="pt-8 border-t border-slate-200 space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-blue-600" />
+              <h2 className="text-lg font-bold text-slate-900">
+                Explore 140+ Pre-Configured Providers
+              </h2>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Click any provider to connect instantly with pre-filled endpoints and configurations.
+            </p>
+          </div>
+
+          <div className="relative w-full md:w-72">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search 140+ providers (Together, Cerebras, Bedrock...)"
+              value={catalogSearch}
+              onChange={(e) => setCatalogSearch(e.target.value)}
+              className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-2xs"
+            />
+          </div>
+        </div>
+
+        {/* Category Tabs */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+          {CATEGORY_TABS.map((tab) => {
+            const isSelected = selectedCategory === tab.id;
+            const count =
+              tab.id === 'all'
+                ? PROVIDER_CATALOG.length
+                : PROVIDER_CATALOG.filter((p) => p.category === tab.id).length;
+
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setSelectedCategory(tab.id)}
+                className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
+                  isSelected
+                    ? 'bg-blue-600 text-white shadow-2xs'
+                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                }`}
+              >
+                <span>{tab.label}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                    isSelected ? 'bg-blue-700 text-blue-100' : 'bg-slate-100 text-slate-500'
+                  }`}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Catalog Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          {filteredCatalog.map((provider) => {
+            const isConnected = connections.some(
+              (c) => c.provider.toLowerCase() === provider.id.toLowerCase() && c.status === 'connected'
+            );
+
+            return (
+              <div
+                key={provider.id}
+                className="p-3.5 rounded-xl border border-slate-200 bg-white hover:border-blue-300 hover:shadow-xs transition flex flex-col justify-between gap-3 group"
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition truncate">
+                      {provider.name}
+                    </h3>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded font-mono font-medium bg-slate-100 text-slate-600 flex-shrink-0">
+                      {provider.tag}
+                    </span>
+                  </div>
+
+                  <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                    {provider.description}
+                  </p>
+
+                  <div className="mt-2 text-[10px] font-mono text-slate-400 truncate">
+                    {provider.baseUrl.replace(/^https?:\/\//, '')}
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                  {isConnected ? (
+                    <span className="text-[10px] text-emerald-600 font-medium flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" /> Connected
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      {provider.id}
+                    </span>
+                  )}
+
+                  <Button
+                    size="sm"
+                    variant={isConnected ? 'secondary' : 'outline'}
+                    onClick={() => openConnectModalWithPreset(provider)}
+                    className="text-[11px] h-6 px-2.5"
+                  >
+                    {isConnected ? 'Manage' : 'Connect'}
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -1038,11 +1253,96 @@ export default function ProvidersPage() {
           setIsConnectModalOpen(false);
           resetForm();
         }}
-        title={isEditing ? `Edit ${formName || 'Provider'}` : 'Connect Provider'}
-        description="Configure your upstream AI provider credentials."
+        title={isEditing ? `Edit ${formName || 'Provider'}` : 'Connect AI Provider'}
+        description="Configure your upstream API provider credentials or custom endpoint."
         maxWidth="lg"
       >
         <form onSubmit={handleModalSave} className="space-y-4">
+          {/* Modal Header Tabs */}
+          {!isEditing && (
+            <div className="flex items-center gap-2 p-1 bg-slate-100 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setModalTab('preset')}
+                className={`flex-1 py-1.5 rounded-md text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                  modalTab === 'preset' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                Browse 140+ Providers
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setModalTab('custom');
+                  if (!formProvider) setFormProvider('custom-model');
+                  if (!formBaseUrl) setFormBaseUrl('https://api.yourdomain.com/v1');
+                }}
+                className={`flex-1 py-1.5 rounded-md text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                  modalTab === 'custom' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Server className="w-3.5 h-3.5 text-purple-600" />
+                Custom Endpoint / Any API
+              </button>
+            </div>
+          )}
+
+          {/* Preset Selector Grid (if on preset tab) */}
+          {modalTab === 'preset' && !isEditing && (
+            <div className="space-y-2 p-3 bg-slate-50 rounded-xl border border-slate-200">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-slate-700">Select Provider Preset:</span>
+                <span className="text-[10px] text-slate-400">147 available</span>
+              </div>
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Filter (Together, Cerebras, Fireworks, Groq, Bedrock...)"
+                  value={presetSearch}
+                  onChange={(e) => setPresetSearch(e.target.value)}
+                  className="w-full pl-8 pr-2.5 py-1 bg-white border border-slate-200 rounded-md text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-2xs"
+                />
+              </div>
+              <div className="flex flex-wrap gap-1 max-h-36 overflow-y-auto pt-1">
+                {modalPresets.map((p) => {
+                  const isSelected = formProvider.toLowerCase() === p.id.toLowerCase();
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => {
+                        setFormName(p.name);
+                        setFormProvider(p.id);
+                        setFormBaseUrl(p.baseUrl);
+                        if (p.id === 'azure' || p.id === 'azure_ai') {
+                          setFormAuthType('azure');
+                        } else if (p.category === 'local') {
+                          setFormAuthType('none');
+                        } else {
+                          setFormAuthType('bearer');
+                        }
+                        setModalError(null);
+                        setModalTestResult(null);
+                      }}
+                      className={`px-2 py-1 rounded text-[11px] font-medium border transition cursor-pointer flex items-center gap-1 ${
+                        isSelected
+                          ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
+                          : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
+                      }`}
+                    >
+                      <span>{p.name}</span>
+                      <span className={`text-[9px] ${isSelected ? 'text-blue-100' : 'text-slate-400'}`}>
+                        ({p.tag})
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Modal Error Alert */}
           {modalError && (
             <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2">
@@ -1083,145 +1383,130 @@ export default function ProvidersPage() {
             </div>
           )}
 
-          {/* Quick Presets inside modal */}
-          {!isEditing && (
+          {/* Form Fields */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] font-medium text-slate-500 mb-1.5">
-                Quick Presets:
+              <label className="block text-xs font-semibold text-slate-800 mb-1">
+                Display Name <span className="text-rose-500">*</span>
               </label>
-              <div className="flex flex-wrap gap-1.5">
-                {PRESETS.map((preset) => (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    onClick={() => {
-                      setFormName(preset.name);
-                      setFormProvider(preset.providerName);
-                      setFormBaseUrl(preset.baseUrl);
-                      setModalError(null);
-                      setModalTestResult(null);
-                    }}
-                    className={`px-2 py-1 rounded text-[11px] font-medium border transition cursor-pointer ${
-                      formProvider.toLowerCase() === preset.providerName.toLowerCase()
-                        ? 'bg-blue-50 text-blue-700 border-blue-300'
-                        : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
-                    }`}
-                  >
-                    {preset.name}
-                  </button>
-                ))}
+              <input
+                type="text"
+                required
+                placeholder="e.g. Together AI, Cerebras, On-Prem vLLM"
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-2xs"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-800 mb-1">
+                Provider Slug / Prefix <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. cerebras, together, my-custom-model"
+                value={formProvider}
+                onChange={(e) => setFormProvider(e.target.value)}
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-2xs"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-800 mb-1">
+              API Base URL <span className="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="https://api.together.xyz/v1 or http://localhost:8000/v1"
+              value={formBaseUrl}
+              onChange={(e) => setFormBaseUrl(e.target.value)}
+              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-2xs"
+            />
+            <span className="text-[10px] text-slate-400 mt-1 block font-mono">
+              The root API endpoint where /chat/completions resides.
+            </span>
+          </div>
+
+          {/* Auth Header Selector */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-800 mb-1">Authentication Format</label>
+              <select
+                value={formAuthType}
+                onChange={(e) => setFormAuthType(e.target.value as any)}
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-blue-500 shadow-2xs"
+              >
+                <option value="bearer">Bearer Token (Authorization: Bearer &lt;key&gt;)</option>
+                <option value="azure">Azure Header (api-key: &lt;key&gt;)</option>
+                <option value="custom">Custom Header (e.g. X-API-Key)</option>
+                <option value="none">No Auth / Local (Ollama, vLLM)</option>
+              </select>
+            </div>
+
+            {formAuthType === 'custom' && (
+              <div>
+                <label className="block text-xs font-semibold text-slate-800 mb-1">Custom Header Name</label>
+                <input
+                  type="text"
+                  value={formCustomHeaderName}
+                  onChange={(e) => setFormCustomHeaderName(e.target.value)}
+                  placeholder="e.g. X-API-Key or App-Token"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-2xs"
+                />
               </div>
+            )}
+          </div>
+
+          {formAuthType !== 'none' && (
+            <div>
+              <label className="block text-xs font-semibold text-slate-800 mb-1">
+                API Key / Secret Token <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="password"
+                placeholder="Paste upstream API key here..."
+                value={formApiKey}
+                onChange={(e) => setFormApiKey(e.target.value)}
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-2xs"
+              />
+              <span className="text-[10px] text-slate-400 mt-1 block">
+                Encrypted with server-side AES-256-GCM at rest. Never logged in plaintext.
+              </span>
             </div>
           )}
 
-          {/* Field 1: Custom Display Name */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-800 mb-1">
-              Connection Name <span className="text-rose-500">*</span>
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="e.g. OpenAI Production, Google Gemini, Ollama Local"
-              value={formName}
-              onChange={(e) => setFormName(e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-xs"
-            />
-          </div>
-
-          {/* Field 2: Provider identifier */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-800 mb-1">
-              Provider Identifier <span className="text-rose-500">*</span>
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="openai, anthropic, gemini, groq, deepseek, ollama..."
-              value={formProvider}
-              onChange={(e) => setFormProvider(e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-xs"
-            />
-          </div>
-
-          {/* Field 3: Base URL */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-800 mb-1">
-              Base URL <span className="text-rose-500">*</span>
-            </label>
-            <input
-              type="url"
-              required
-              placeholder="https://api.openai.com/v1"
-              value={formBaseUrl}
-              onChange={(e) => setFormBaseUrl(e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-xs"
-            />
-          </div>
-
-          {/* Field 4: API Key */}
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-xs font-semibold text-slate-800">
-                API Key / Secret Token <span className="text-rose-500">*</span>
-              </label>
-              <button
-                type="button"
-                onClick={() => setShowApiKey(!showApiKey)}
-                className="text-[10px] text-slate-500 hover:text-slate-800 transition"
-              >
-                {showApiKey ? 'Hide' : 'Show'}
-              </button>
-            </div>
-            <input
-              type={showApiKey ? 'text' : 'password'}
-              required
-              placeholder="Enter provider API key (or 'ollama' / 'local' for unauthenticated local endpoints)"
-              value={formApiKey}
-              onChange={(e) => setFormApiKey(e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-xs"
-            />
-            <p className="text-[10px] text-slate-500 mt-1 flex items-center gap-1">
-              <Lock className="w-3 h-3 text-emerald-600 flex-shrink-0" />
-              <span>Keys are encrypted at rest and never returned in plaintext.</span>
-            </p>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-slate-200">
+          {/* Modal Buttons */}
+          <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
             <Button
               type="button"
               variant="secondary"
-              size="sm"
               loading={modalTesting}
               onClick={handleModalTest}
               className="text-xs"
             >
-              <Play className="w-3.5 h-3.5 mr-1 text-emerald-600" />
+              <Play className="w-3 h-3 mr-1 text-emerald-600" />
               Test Connection
             </Button>
 
-            <div className="flex items-center gap-2 justify-end">
+            <div className="flex items-center gap-2">
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
-                onClick={() => {
-                  setIsConnectModalOpen(false);
-                  resetForm();
-                }}
+                onClick={() => setIsConnectModalOpen(false)}
                 className="text-xs"
               >
                 Cancel
               </Button>
-
               <Button
                 type="submit"
-                size="sm"
                 loading={modalSubmitting}
-                className="text-xs bg-blue-600 hover:bg-blue-700 font-semibold text-white"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs"
               >
-                {isEditing ? 'Save Changes' : 'Save Provider'}
+                Save Connection
               </Button>
             </div>
           </div>

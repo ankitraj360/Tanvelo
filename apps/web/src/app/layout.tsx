@@ -72,8 +72,8 @@ export const metadata: Metadata = {
     title: 'Tanvelo — Universal LLM Federation Gateway',
     description:
       'Production-grade LLM gateway with sub-180ms automated failovers, atomic Redis rate limits, and zero prompt retention.',
-    site: '@tanvelo_in',
-    creator: '@tanvelo_in',
+    site: '@tanvelo_xyz',
+    creator: '@tanvelo_xyz',
     images: ['/opengraph-image'],
   },
   robots: {
@@ -107,8 +107,8 @@ const structuredData = {
       url: 'https://tanvelo.in',
       logo: 'https://tanvelo.in/assets/logo.svg',
       sameAs: [
-        'https://x.com/tanvelo_in',
-        'https://instagram.com/tanvelo_in',
+        'https://x.com/tanvelo_xyz',
+        'https://instagram.com/tanvelo_xyz',
       ],
       description: 'Universal LLM Federation Gateway for enterprise AI systems.',
     },

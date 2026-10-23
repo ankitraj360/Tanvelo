@@ -200,6 +200,47 @@ describe('Deterministic Routing Engine', () => {
     expect(route.fallbackChain[2]).toEqual({ provider: 'groq', model: 'llama-3-70b' });
   });
 
+  it('routes to OpenRouter for nemotron or openrouter-prefixed models without falling back to OpenAI', () => {
+    const connections = new Map<string, any>([
+      ['openai', { provider: 'openai', status: 'unconfigured', apiKey: '' }],
+      ['openrouter', { provider: 'openrouter', status: 'connected', apiKey: 'sk-or-v1-test' }],
+    ]);
+
+    // Even if a wildcard rule exists pointing to unconfigured openai
+    const rules = [
+      {
+        id: 'wildcard-rule',
+        modelPattern: '*',
+        primaryProvider: 'openai',
+        primaryModel: 'gpt-4o',
+        priority: 0,
+        fallbackOnTimeout: true,
+        fallbackOnRateLimit: true,
+        fallbackOnError: true,
+      },
+    ];
+
+    // 1. Calling nemotron directly
+    const routeNemotron = router.resolveRoute(
+      'nemotron-3.5-super-vl:free',
+      rules,
+      null,
+      connections
+    );
+    expect(routeNemotron.primaryProvider).toBe('openrouter');
+    expect(routeNemotron.primaryModel).toBe('nemotron-3.5-super-vl:free');
+
+    // 2. Calling with explicit openrouter prefix
+    const routePrefixed = router.resolveRoute(
+      'openrouter/meta-llama/llama-3.3-70b-instruct',
+      rules,
+      null,
+      connections
+    );
+    expect(routePrefixed.primaryProvider).toBe('openrouter');
+    expect(routePrefixed.primaryModel).toBe('meta-llama/llama-3.3-70b-instruct');
+  });
+
   it('executes ordered multi-entry fallback chain until success (P1 #5)', async () => {
     let callCount = 0;
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {

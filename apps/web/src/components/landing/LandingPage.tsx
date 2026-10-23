@@ -76,9 +76,6 @@ export function LandingPage() {
   const [installTab, setInstallTab] = useState<'npm' | 'pnpm' | 'pip'>('npm');
   const [copiedInstall, setCopiedInstall] = useState(false);
 
-  // Pricing Annual Toggle
-  const [isAnnual, setIsAnnual] = useState(false);
-
   // Circuit Breaker Simulation
   const [simulating, setSimulating] = useState(false);
   const [simStep, setSimStep] = useState<0 | 1 | 2>(0);
@@ -207,7 +204,6 @@ for chunk in stream:
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               <span>Zero Retention</span>
             </a>
-            <a href="#pricing" className="hover:text-slate-900 transition-colors">Pricing</a>
             <a href="#contact" className="hover:text-slate-900 transition-colors">Contact</a>
             <Link href="/docs" className="hover:text-sky-600 transition-colors font-semibold text-slate-900">
               Documentation
@@ -267,9 +263,6 @@ for chunk in stream:
               </a>
               <a href="#zero-retention" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg hover:bg-emerald-50 text-emerald-700 font-medium">
                 Zero Retention &amp; Privacy
-              </a>
-              <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg hover:bg-slate-50">
-                Pricing
               </a>
               <a href="#contact" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg hover:bg-slate-50">
                 Contact
@@ -768,249 +761,6 @@ for chunk in stream:
         </div>
       </section>
 
-      {/* NEW SECTION: PRICING PLANS */}
-      <section id="pricing" className="py-20 md:py-24 border-b border-slate-100 bg-white">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center max-w-2xl mx-auto mb-10">
-            <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-sky-600 font-semibold block mb-2">
-              Predictable Pricing
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-[-0.03em] text-slate-900 mb-3">
-              Simple, transparent gateway plans.
-            </h2>
-            <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
-              No markup on your LLM tokens. Bring your own keys and pay purely for high-speed routing capacity.
-            </p>
-
-            {/* Monthly / Annual Toggle */}
-            <div className="mt-6 inline-flex items-center gap-3 p-1 rounded-full bg-slate-100 border border-slate-200 text-xs">
-              <button
-                onClick={() => setIsAnnual(false)}
-                className={`px-3 py-1 rounded-full font-medium transition ${
-                  !isAnnual ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500 hover:text-slate-900'
-                }`}
-              >
-                Monthly Billing
-              </button>
-              <button
-                onClick={() => setIsAnnual(true)}
-                className={`px-3 py-1 rounded-full font-medium transition flex items-center gap-1.5 ${
-                  isAnnual ? 'bg-slate-900 text-white shadow-2xs' : 'text-slate-500 hover:text-slate-900'
-                }`}
-              >
-                <span>Annual Billing</span>
-                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-500 text-white font-bold">Save 20%</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Developer Tier */}
-            <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-2xs flex flex-col justify-between hover:border-slate-300 transition">
-              <div>
-                <div className="font-mono text-xs uppercase tracking-wider text-slate-500 font-semibold mb-1">Developer</div>
-                <div className="flex items-baseline gap-1 my-3">
-                  <span className="text-3xl font-extrabold text-slate-900">$0</span>
-                  <span className="text-xs text-slate-500 font-mono">/month</span>
-                </div>
-                <p className="text-xs text-slate-600 leading-relaxed mb-5">
-                  Ideal for indie developers, hackathons, and staging environments.
-                </p>
-
-                <div className="space-y-2.5 text-xs text-slate-700 border-t border-slate-100 pt-4">
-                  <div className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span><strong>25,000</strong> requests / month</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Zero Payload Retention</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>2 Projects &amp; 2 Environments</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>10 Gateway API Keys</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Automated Failover Routing</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>7-day metadata retention</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-6 mt-6 border-t border-slate-100">
-                <Link
-                  href="/sign-up"
-                  className="block text-center w-full py-2 px-3 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-800 text-xs font-semibold transition"
-                >
-                  Start Free
-                </Link>
-              </div>
-            </div>
-
-            {/* Pro Tier (Featured) */}
-            <div className="p-6 rounded-2xl border-2 border-sky-500 bg-white shadow-md flex flex-col justify-between relative ring-4 ring-sky-50">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-sky-600 text-white font-mono text-[10px] tracking-wider uppercase px-2.5 py-0.5 rounded-full font-bold">
-                Most Popular
-              </div>
-
-              <div>
-                <div className="font-mono text-xs uppercase tracking-wider text-sky-600 font-semibold mb-1">Pro</div>
-                <div className="flex items-baseline gap-1 my-3">
-                  <span className="text-3xl font-extrabold text-slate-900">{isAnnual ? '$31' : '$39'}</span>
-                  <span className="text-xs text-slate-500 font-mono">/month</span>
-                </div>
-                <p className="text-xs text-slate-600 leading-relaxed mb-5">
-                  For production applications, solo founders, and scaling SaaS products.
-                </p>
-
-                <div className="space-y-2.5 text-xs text-slate-700 border-t border-slate-100 pt-4">
-                  <div className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span><strong>250,000</strong> requests / month</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>$6 / 100k overage rate</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span><strong>Hard Budgets &amp; Auto Cutoffs</strong></span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Unlimited Projects &amp; Keys</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>HMAC-SHA256 Webhooks</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>30-day metadata retention</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-6 mt-6 border-t border-slate-100">
-                <Link
-                  href="/sign-up"
-                  className="block text-center w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-semibold transition shadow-xs"
-                >
-                  Get Started with Pro
-                </Link>
-              </div>
-            </div>
-
-            {/* Team Tier */}
-            <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-2xs flex flex-col justify-between hover:border-slate-300 transition">
-              <div>
-                <div className="font-mono text-xs uppercase tracking-wider text-slate-500 font-semibold mb-1">Team</div>
-                <div className="flex items-baseline gap-1 my-3">
-                  <span className="text-3xl font-extrabold text-slate-900">{isAnnual ? '$119' : '$149'}</span>
-                  <span className="text-xs text-slate-500 font-mono">/month</span>
-                </div>
-                <p className="text-xs text-slate-600 leading-relaxed mb-5">
-                  For growing engineering teams with multiple apps and shared infrastructure.
-                </p>
-
-                <div className="space-y-2.5 text-xs text-slate-700 border-t border-slate-100 pt-4">
-                  <div className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span><strong>1,500,000</strong> requests / month</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>$5 / 100k overage rate</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Team Workspaces &amp; RBAC</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Multi-Region Rate Limiters</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>99.9% Uptime SLA</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Priority Slack/Discord Support</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-6 mt-6 border-t border-slate-100">
-                <Link
-                  href="/sign-up"
-                  className="block text-center w-full py-2 px-3 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-800 text-xs font-semibold transition"
-                >
-                  Start Team Plan
-                </Link>
-              </div>
-            </div>
-
-            {/* Enterprise Tier */}
-            <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-2xs flex flex-col justify-between hover:border-slate-300 transition">
-              <div>
-                <div className="font-mono text-xs uppercase tracking-wider text-slate-500 font-semibold mb-1">Enterprise</div>
-                <div className="flex items-baseline gap-1 my-3">
-                  <span className="text-3xl font-extrabold text-slate-900">Custom</span>
-                </div>
-                <p className="text-xs text-slate-600 leading-relaxed mb-5">
-                  For high-throughput enterprises, regulated fintech, and healthcare apps.
-                </p>
-
-                <div className="space-y-2.5 text-xs text-slate-700 border-t border-slate-100 pt-4">
-                  <div className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span><strong>10,000,000+</strong> requests / month</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Self-Hosted &amp; VPC Deployments</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Single Sign-On (SAML / SCIM)</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Dedicated DB &amp; Redis Nodes</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>99.99% Uptime Guarantee</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>24/7 Dedicated Solutions Engineer</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-6 mt-6 border-t border-slate-100">
-                <a
-                  href="mailto:tanvelo@zohomail.in?subject=Tanvelo%20Enterprise%20Inquiry"
-                  className="block text-center w-full py-2 px-3 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-800 text-xs font-semibold transition"
-                >
-                  Contact Sales
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Security Controls */}
       <section id="trust" className="py-20 md:py-24 border-b border-slate-100 bg-slate-50/40">
         <div className="max-w-6xl mx-auto px-6">
@@ -1143,15 +893,15 @@ for chunk in stream:
               </div>
               <div>
                 <div className="text-[11px] font-mono uppercase text-slate-400">Instagram</div>
-                <div className="text-xs font-semibold text-slate-900 font-mono mt-0.5">@tanvelo_in</div>
+                <div className="text-xs font-semibold text-slate-900 font-mono mt-0.5">@tanvelo_xyz</div>
               </div>
               <a
-                href="https://instagram.com/tanvelo_in"
+                href="https://instagram.com/tanvelo_xyz"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block text-center py-1.5 px-3 rounded-lg border border-slate-200 hover:border-pink-300 hover:bg-pink-50/50 text-slate-800 text-xs font-medium transition"
               >
-                Follow @tanvelo_in
+                Follow @tanvelo_xyz
               </a>
             </div>
 
@@ -1162,15 +912,15 @@ for chunk in stream:
               </div>
               <div>
                 <div className="text-[11px] font-mono uppercase text-slate-400">X (Twitter)</div>
-                <div className="text-xs font-semibold text-slate-900 font-mono mt-0.5">@tanvelo_in</div>
+                <div className="text-xs font-semibold text-slate-900 font-mono mt-0.5">@tanvelo_xyz</div>
               </div>
               <a
-                href="https://x.com/tanvelo_in"
+                href="https://x.com/tanvelo_xyz"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block text-center py-1.5 px-3 rounded-lg border border-slate-200 hover:border-slate-400 hover:bg-slate-100 text-slate-800 text-xs font-medium transition"
               >
-                Follow @tanvelo_in
+                Follow @tanvelo_xyz
               </a>
             </div>
           </div>
@@ -1228,7 +978,6 @@ for chunk in stream:
                 <li><a href="#architecture" className="hover:text-white transition">Architecture</a></li>
                 <li><a href="#capabilities" className="hover:text-white transition">Capabilities</a></li>
                 <li><a href="#zero-retention" className="hover:text-white transition">Zero Retention</a></li>
-                <li><a href="#pricing" className="hover:text-white transition">Pricing</a></li>
                 <li><Link href="/docs" className="hover:text-white transition text-sky-400">Documentation</Link></li>
               </ul>
             </div>
@@ -1255,15 +1004,15 @@ for chunk in stream:
               </div>
               <ul className="space-y-2.5 text-xs text-slate-400">
                 <li>
-                  <a href="https://x.com/tanvelo_in" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white transition text-slate-300">
+                  <a href="https://x.com/tanvelo_xyz" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white transition text-slate-300">
                     <XSocialIcon className="w-3.5 h-3.5" />
-                    <span>X: @tanvelo_in</span>
+                    <span>X: @tanvelo_xyz</span>
                   </a>
                 </li>
                 <li>
-                  <a href="https://instagram.com/tanvelo_in" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white transition text-slate-300">
+                  <a href="https://instagram.com/tanvelo_xyz" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white transition text-slate-300">
                     <InstagramIcon className="w-3.5 h-3.5 text-pink-400" />
-                    <span>Instagram: @tanvelo_in</span>
+                    <span>Instagram: @tanvelo_xyz</span>
                   </a>
                 </li>
                 <li className="pt-2 flex items-center gap-3 text-[11px] text-slate-400">
