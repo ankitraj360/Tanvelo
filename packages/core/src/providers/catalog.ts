@@ -1621,6 +1621,7 @@ export const PROVIDER_ALIASES: Record<string, string> = {
   grok: 'xai',
   x_ai: 'xai',
   azure_openai: 'azure',
+  'azure-openai': 'azure',
   azure_text: 'azure',
   hosted_vllm: 'vllm',
   lm_studio: 'lmstudio',

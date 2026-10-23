@@ -14,6 +14,15 @@ import {
   OpenAIAdapter,
   AnthropicAdapter,
   GeminiAdapter,
+  OpenAICompatibleAdapter,
+  getProviderCatalog,
+  findProvider,
+  searchProviders,
+  isKnownProvider,
+  buildAuthHeaders,
+  getProviderAdapter,
+  isKnownGatewayProvider,
+  resolveCanonicalProvider,
 } from '../src/index.js';
 
 describe('Cryptography & Security Controls', () => {
@@ -581,6 +590,205 @@ describe('Encryption Configuration Validation', () => {
     expect(() => validateEncryptionConfig('not-hex-chars-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', true)).toThrow(
       /FATAL SECURITY CONFIGURATION/
     );
+  });
+});
+
+describe('Universal 140+ Provider Catalog', () => {
+  it('contains at least 140 verified providers', () => {
+    const catalog = getProviderCatalog();
+    expect(catalog.length).toBeGreaterThanOrEqual(140);
+  });
+
+  it('correctly resolves provider aliases', () => {
+    expect(resolveCanonicalProvider('together_ai')).toBe('together');
+    expect(resolveCanonicalProvider('fireworks_ai')).toBe('fireworks');
+    expect(resolveCanonicalProvider('google')).toBe('gemini');
+    expect(resolveCanonicalProvider('azure-openai')).toBe('azure');
+    expect(resolveCanonicalProvider('qwen')).toBe('dashscope');
+    expect(resolveCanonicalProvider('cerebras')).toBe('cerebras');
+  });
+
+  it('searches providers by text query, category, and tags', () => {
+    const groqMatches = searchProviders('groq');
+    expect(groqMatches.length).toBeGreaterThan(0);
+    expect(groqMatches[0].id).toBe('groq');
+
+    const siliconProviders = searchProviders('', 'fast');
+    expect(siliconProviders.some((p) => p.id === 'cerebras')).toBe(true);
+    expect(siliconProviders.some((p) => p.id === 'groq')).toBe(true);
+
+    const localProviders = searchProviders('ollama');
+    expect(localProviders.some((p) => p.id === 'ollama')).toBe(true);
+  });
+
+  it('verifies provider existence via isKnownProvider and isKnownGatewayProvider', () => {
+    expect(isKnownProvider('cerebras')).toBe(true);
+    expect(isKnownProvider('together_ai')).toBe(true);
+    expect(isKnownProvider('vllm')).toBe(true);
+    expect(isKnownGatewayProvider('cerebras')).toBe(true);
+    expect(isKnownGatewayProvider('unknown-xyz-nonexistent')).toBe(false);
+
+    // Custom connected provider dynamically recognized
+    const customConns = new Map([
+      ['my-custom-proxy', { provider: 'my-custom-proxy', apiKey: 'key', status: 'connected' }],
+    ]);
+    expect(isKnownGatewayProvider('my-custom-proxy', customConns as any)).toBe(true);
+  });
+
+  it('finds provider details with canonical base URL and placeholder keys', () => {
+    const cerebras = findProvider('cerebras');
+    expect(cerebras).toBeDefined();
+    expect(cerebras?.baseUrl).toBe('https://api.cerebras.ai/v1');
+    expect(cerebras?.category).toBe('fast');
+
+    const deepseek = findProvider('deepseek');
+    expect(deepseek).toBeDefined();
+    expect(deepseek?.baseUrl).toBe('https://api.deepseek.com');
+  });
+});
+
+describe('Universal Authentication & Header Handling (buildAuthHeaders)', () => {
+  it('creates standard Bearer Authorization header for bearer keys', () => {
+    const headers = buildAuthHeaders('sk-test-12345');
+    expect(headers['Authorization']).toBe('Bearer sk-test-12345');
+    expect(headers['Content-Type']).toBe('application/json');
+  });
+
+  it('handles Azure api-key syntax with colon prefix', () => {
+    const headers = buildAuthHeaders('api-key: azure-secret-token-xyz');
+    expect(headers['api-key']).toBe('azure-secret-token-xyz');
+    expect(headers['Authorization']).toBeUndefined();
+  });
+
+  it('handles custom header name and token syntax', () => {
+    const headers = buildAuthHeaders('X-Custom-Auth-Token: custom_token_val_999');
+    expect(headers['X-Custom-Auth-Token']).toBe('custom_token_val_999');
+    expect(headers['Authorization']).toBeUndefined();
+  });
+
+  it('supports unauthenticated local runners with empty or none keys', () => {
+    const emptyHeaders = buildAuthHeaders('');
+    expect(emptyHeaders['Authorization']).toBeUndefined();
+
+    const noneHeaders = buildAuthHeaders('none');
+    expect(noneHeaders['Authorization']).toBeUndefined();
+  });
+});
+
+describe('Universal Routing for 140+ Providers & Custom Endpoints', () => {
+  const router = new RoutingEngine();
+
+  it('routes slash-notation catalog models directly to the provider', () => {
+    const rules = [
+      {
+        id: 'wildcard',
+        modelPattern: '*',
+        primaryProvider: 'openai',
+        primaryModel: 'gpt-4o',
+        fallbackOnTimeout: true,
+        fallbackOnRateLimit: true,
+        fallbackOnError: true,
+        timeoutMs: 30000,
+        maxRetries: 1,
+        priority: 0,
+      },
+    ];
+
+    // cerebras/llama3.3-70b should route to cerebras even if wildcard rule is openai
+    const route = router.resolveRoute('cerebras/llama3.3-70b', rules);
+    expect(route.primaryProvider).toBe('cerebras');
+    expect(route.primaryModel).toBe('llama3.3-70b');
+
+    // together/meta-llama/Llama-3.3-70B-Turbo
+    const togetherRoute = router.resolveRoute('together/meta-llama/Llama-3.3-70B-Turbo', rules);
+    expect(togetherRoute.primaryProvider).toBe('together');
+    expect(togetherRoute.primaryModel).toBe('meta-llama/Llama-3.3-70B-Turbo');
+
+    // colon notation: groq:llama-3.3-70b-versatile
+    const colonRoute = router.resolveRoute('groq:llama-3.3-70b-versatile', rules);
+    expect(colonRoute.primaryProvider).toBe('groq');
+    expect(colonRoute.primaryModel).toBe('llama-3.3-70b-versatile');
+  });
+
+  it('routes to custom user-registered providers when prefix matches connection', () => {
+    const rules: any[] = [];
+    const connections = new Map<string, any>([
+      [
+        'internal-proxy',
+        {
+          provider: 'internal-proxy',
+          apiKey: 'internal-key',
+          apiBaseUrl: 'https://internal.corp/v1',
+          status: 'connected',
+        },
+      ],
+    ]);
+
+    const route = router.resolveRoute('internal-proxy/finetuned-llama', rules, undefined, connections);
+    expect(route.primaryProvider).toBe('internal-proxy');
+    expect(route.primaryModel).toBe('finetuned-llama');
+  });
+
+  it('parses multi-entry fallbacks with catalog and custom providers', () => {
+    const rules = [
+      {
+        id: 'rule-1',
+        modelPattern: 'gpt-4o',
+        primaryProvider: 'openai',
+        primaryModel: 'gpt-4o',
+        fallbackOnTimeout: true,
+        fallbackOnRateLimit: true,
+        fallbackOnError: true,
+        timeoutMs: 15000,
+        maxRetries: 1,
+        priority: 10,
+      },
+    ];
+
+    const route = router.resolveRoute(
+      'gpt-4o',
+      rules,
+      'cerebras/llama3.3-70b, deepseek/deepseek-r1, mistral/mistral-large-latest'
+    );
+
+    expect(route.fallbackChain).toHaveLength(3);
+    expect(route.fallbackChain[0]).toEqual({ provider: 'cerebras', model: 'llama3.3-70b' });
+    expect(route.fallbackChain[1]).toEqual({ provider: 'deepseek', model: 'deepseek-r1' });
+    expect(route.fallbackChain[2]).toEqual({ provider: 'mistral', model: 'mistral-large-latest' });
+  });
+});
+
+describe('Dynamic Adapter Factory (getProviderAdapter)', () => {
+  it('returns AnthropicAdapter for anthropic and claude', () => {
+    expect(getProviderAdapter('anthropic')).toBeInstanceOf(AnthropicAdapter);
+    expect(getProviderAdapter('claude')).toBeInstanceOf(AnthropicAdapter);
+  });
+
+  it('returns GeminiAdapter for gemini and google', () => {
+    expect(getProviderAdapter('gemini')).toBeInstanceOf(GeminiAdapter);
+    expect(getProviderAdapter('google')).toBeInstanceOf(GeminiAdapter);
+  });
+
+  it('returns OpenAIAdapter for openai default cloud', () => {
+    expect(getProviderAdapter('openai')).toBeInstanceOf(OpenAIAdapter);
+  });
+
+  it('returns OpenAICompatibleAdapter with canonical baseUrl for catalog providers', () => {
+    const cerebrasAdapter = getProviderAdapter('cerebras') as OpenAICompatibleAdapter;
+    expect(cerebrasAdapter).toBeInstanceOf(OpenAICompatibleAdapter);
+    expect(cerebrasAdapter.providerName).toBe('cerebras');
+    expect(cerebrasAdapter.baseUrl).toBe('https://api.cerebras.ai/v1');
+
+    const groqAdapter = getProviderAdapter('groq') as OpenAICompatibleAdapter;
+    expect(groqAdapter).toBeInstanceOf(OpenAICompatibleAdapter);
+    expect(groqAdapter.baseUrl).toBe('https://api.groq.com/openai/v1');
+  });
+
+  it('returns OpenAICompatibleAdapter for custom provider and custom base URL', () => {
+    const customAdapter = getProviderAdapter('my-onprem-vllm', 'https://vllm.internal.net:8000/v1') as OpenAICompatibleAdapter;
+    expect(customAdapter).toBeInstanceOf(OpenAICompatibleAdapter);
+    expect(customAdapter.providerName).toBe('my-onprem-vllm');
+    expect(customAdapter.baseUrl).toBe('https://vllm.internal.net:8000/v1');
   });
 });
 

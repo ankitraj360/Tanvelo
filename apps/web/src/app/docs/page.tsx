@@ -178,10 +178,11 @@ def verify_tanvelo_webhook(payload_raw: bytes, signature_header: str, secret: st
     { id: 'ts-sdk', title: '3. TypeScript SDK' },
     { id: 'py-sdk', title: '4. Python SDK' },
     { id: 'rest-api', title: '5. Direct REST API' },
-    { id: 'fallbacks', title: '6. Fallbacks & Circuit Breakers' },
-    { id: 'rate-limits', title: '7. Rate Limits & Spend Caps' },
-    { id: 'webhooks', title: '8. Webhook Signatures' },
-    { id: 'errors', title: '9. Status Codes & Errors' },
+    { id: 'providers-catalog', title: '6. 140+ Providers & Custom APIs' },
+    { id: 'fallbacks', title: '7. Fallbacks & Circuit Breakers' },
+    { id: 'rate-limits', title: '8. Rate Limits & Spend Caps' },
+    { id: 'webhooks', title: '9. Webhook Signatures' },
+    { id: 'errors', title: '10. Status Codes & Errors' },
   ];
 
   return (
@@ -496,10 +497,57 @@ def verify_tanvelo_webhook(payload_raw: bytes, signature_header: str, secret: st
               </div>
             </section>
 
-            {/* 6. Fallbacks & Circuit Breakers */}
-            <section id="fallbacks" className="scroll-mt-20 space-y-3">
+            {/* 6. 140+ Providers & Custom Endpoints */}
+            <section id="providers-catalog" className="scroll-mt-20 space-y-3">
               <div className="flex items-center gap-2">
                 <span className="font-mono text-xs font-semibold text-sky-600">06</span>
+                <h2 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900">
+                  140+ AI Providers &amp; Universal Custom Endpoints
+                </h2>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                Like LiteLLM, Tanvelo provides out-of-the-box routing and parameter translation across 140+ foundational providers and inference engines. You can invoke any provider using explicit prefix notation (<code className="text-slate-800 font-mono bg-slate-100 px-1 py-0.5 rounded">&lt;provider&gt;/&lt;model&gt;</code>) or configure automated routing rules.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-1.5">
+                  <div className="font-semibold text-slate-900 text-xs">Prefix Routing Examples</div>
+                  <pre className="p-2.5 rounded-lg bg-slate-950 font-mono text-[11px] text-slate-200 overflow-x-auto">
+{`// Wafer-Scale Cerebras
+model: "cerebras/llama3.3-70b"
+
+// Together AI Open-Weights
+model: "together/meta-llama/Llama-3.3-70B-Turbo"
+
+// DeepSeek Reasoning
+model: "deepseek/deepseek-r1"
+
+// xAI Grok
+model: "xai/grok-2"
+
+// Self-Hosted vLLM / Ollama
+model: "vllm/meta-llama/Llama-3.1-8B"`}
+                  </pre>
+                </div>
+
+                <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-1.5">
+                  <div className="font-semibold text-slate-900 text-xs">Any Custom API / On-Prem Ingress</div>
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                    Connect ANY private cluster, corporate proxy, or third-party service:
+                  </p>
+                  <ul className="text-[11px] text-slate-600 space-y-1 list-disc list-inside">
+                    <li>Supports any Base URL (e.g. <code className="font-mono text-[10px]">https://llm.corp.net/v1</code>)</li>
+                    <li>Flexible auth: Bearer, Azure <code className="font-mono text-[10px]">api-key</code>, custom headers, or unauthenticated local runners</li>
+                    <li>Automatic fallback to other providers upon timeouts or outages</li>
+                  </ul>
+                </div>
+              </div>
+            </section>
+
+            {/* 7. Fallbacks & Circuit Breakers */}
+            <section id="fallbacks" className="scroll-mt-20 space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-xs font-semibold text-sky-600">07</span>
                 <h2 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900">
                   Deterministic Fallbacks &amp; Circuit Breakers
                 </h2>
@@ -509,10 +557,10 @@ def verify_tanvelo_webhook(payload_raw: bytes, signature_header: str, secret: st
               </p>
             </section>
 
-            {/* 7. Rate Limits & Spend Caps */}
+            {/* 8. Rate Limits & Spend Caps */}
             <section id="rate-limits" className="scroll-mt-20 space-y-3">
               <div className="flex items-center gap-2">
-                <span className="font-mono text-xs font-semibold text-sky-600">07</span>
+                <span className="font-mono text-xs font-semibold text-sky-600">08</span>
                 <h2 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900">
                   Distributed Rate Limits &amp; Spend Caps
                 </h2>
@@ -522,10 +570,10 @@ def verify_tanvelo_webhook(payload_raw: bytes, signature_header: str, secret: st
               </p>
             </section>
 
-            {/* 8. Webhook Signatures */}
+            {/* 9. Webhook Signatures */}
             <section id="webhooks" className="scroll-mt-20 space-y-3">
               <div className="flex items-center gap-2">
-                <span className="font-mono text-xs font-semibold text-sky-600">08</span>
+                <span className="font-mono text-xs font-semibold text-sky-600">09</span>
                 <h2 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900">
                   Webhook Signature Verification (HMAC-SHA256)
                 </h2>
@@ -567,10 +615,10 @@ def verify_tanvelo_webhook(payload_raw: bytes, signature_header: str, secret: st
               </div>
             </section>
 
-            {/* 9. Errors */}
+            {/* 10. Errors */}
             <section id="errors" className="scroll-mt-20 space-y-3">
               <div className="flex items-center gap-2">
-                <span className="font-mono text-xs font-semibold text-sky-600">09</span>
+                <span className="font-mono text-xs font-semibold text-sky-600">10</span>
                 <h2 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900">
                   HTTP Status Codes &amp; Error Payloads
                 </h2>

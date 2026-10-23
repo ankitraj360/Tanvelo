@@ -59,6 +59,10 @@ export class OpenAICompatibleAdapter implements ProviderAdapter {
   private defaultBaseUrl: string;
   private innerAdapter: OpenAIAdapter;
 
+  get baseUrl(): string {
+    return this.defaultBaseUrl;
+  }
+
   constructor(providerName: string, defaultBaseUrl?: string) {
     this.providerName = providerName.toLowerCase().trim();
     const resolvedCanonical = PROVIDER_ALIASES[this.providerName] || this.providerName;
