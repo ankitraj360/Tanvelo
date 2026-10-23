@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useProject } from '@/context/ProjectContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { GitFork, Plus, Trash2 } from 'lucide-react';
 import { parseApiResponse } from '@/lib/utils';
+import { PROVIDER_CATALOG } from '@/lib/providers';
 
 interface RoutingRule {
   id: string;
@@ -26,6 +27,13 @@ interface RoutingRule {
   priority: number;
 }
 
+interface ProviderConn {
+  id: string;
+  provider: string;
+  customName?: string | null;
+  status: string;
+}
+
 export default function RoutingPage() {
   const { currentProject, currentEnvironment } = useProject();
   const [rules, setRules] = useState<RoutingRule[]>([]);
@@ -35,12 +43,15 @@ export default function RoutingPage() {
   const [isOpen, setIsOpen] = useState(false);
   const [pattern, setPattern] = useState('*');
   const [primaryProvider, setPrimaryProvider] = useState('openai');
+  const [customPrimary, setCustomPrimary] = useState('');
   const [primaryModel, setPrimaryModel] = useState('your-model');
   const [secondaryProvider, setSecondaryProvider] = useState('anthropic');
+  const [customSecondary, setCustomSecondary] = useState('');
   const [secondaryModel, setSecondaryModel] = useState('your-fallback-model');
   const [timeoutMs, setTimeoutMs] = useState('20000');
   const [maxRetries, setMaxRetries] = useState('2');
   const [submitting, setSubmitting] = useState(false);
+  const [connections, setConnections] = useState<ProviderConn[]>([]);
 
   const fetchRules = async () => {
     if (!currentProject || !currentEnvironment) return;
@@ -56,14 +67,58 @@ export default function RoutingPage() {
     }
   };
 
+  const fetchConnections = async () => {
+    if (!currentProject?.id) return;
+    try {
+      const res = await fetch(`/api/providers?projectId=${currentProject.id}`);
+      if (res.ok) {
+        setConnections(await res.json());
+      }
+    } catch (_) {}
+  };
+
   useEffect(() => {
     fetchRules();
+    fetchConnections();
   }, [currentProject, currentEnvironment]);
+
+  const providerOptions = useMemo(() => {
+    const list: { value: string; label: string }[] = [];
+    const connectedSet = new Set(connections.map((c) => c.provider.toLowerCase()));
+
+    // Connected first
+    connections.forEach((c) => {
+      list.push({
+        value: c.provider,
+        label: `${c.customName || c.provider} (Connected)`,
+      });
+    });
+
+    // 147+ providers
+    PROVIDER_CATALOG.forEach((p) => {
+      if (!connectedSet.has(p.id.toLowerCase())) {
+        list.push({
+          value: p.id,
+          label: `${p.name} (${p.tag})`,
+        });
+      }
+    });
+
+    list.push({ value: 'custom', label: '+ Custom Provider / Any API' });
+    return list;
+  }, [connections]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentProject || !currentEnvironment) return;
     setSubmitting(true);
+
+    const effPrimary =
+      primaryProvider === 'custom' ? (customPrimary.trim().toLowerCase() || 'custom') : primaryProvider;
+    const effSecondary =
+      secondaryProvider === 'custom'
+        ? (customSecondary.trim().toLowerCase() || null)
+        : secondaryProvider || null;
 
     try {
       const res = await fetch('/api/routing', {
@@ -73,9 +128,9 @@ export default function RoutingPage() {
           projectId: currentProject.id,
           environmentId: currentEnvironment.id,
           modelPattern: pattern.trim(),
-          primaryProvider,
+          primaryProvider: effPrimary,
           primaryModel: primaryModel.trim(),
-          secondaryProvider: secondaryProvider ? secondaryProvider : null,
+          secondaryProvider: effSecondary,
           secondaryModel: secondaryModel.trim() ? secondaryModel.trim() : null,
           timeoutMs: parseInt(timeoutMs) || 20000,
           maxRetries: parseInt(maxRetries) || 2,
@@ -235,16 +290,21 @@ export default function RoutingPage() {
                 onChange={(e) => setPrimaryProvider(e.target.value)}
                 className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-sky-500 shadow-2xs"
               >
-                <option value="openai">OpenAI</option>
-                <option value="anthropic">Anthropic</option>
-                <option value="gemini">Google Gemini</option>
-                <option value="deepseek">DeepSeek</option>
-                <option value="groq">Groq</option>
-                <option value="mistral">Mistral AI</option>
-                <option value="ollama">Ollama</option>
-                <option value="openrouter">OpenRouter</option>
-                <option value="cohere">Cohere</option>
+                {providerOptions.map((p) => (
+                  <option key={p.value} value={p.value}>
+                    {p.label}
+                  </option>
+                ))}
               </select>
+              {primaryProvider === 'custom' && (
+                <input
+                  type="text"
+                  placeholder="Custom provider slug"
+                  value={customPrimary}
+                  onChange={(e) => setCustomPrimary(e.target.value)}
+                  className="mt-1.5 w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-mono text-slate-900 focus:outline-none focus:border-sky-500"
+                />
+              )}
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-700 mb-1">Primary Model</label>
@@ -268,16 +328,22 @@ export default function RoutingPage() {
                 onChange={(e) => setSecondaryProvider(e.target.value)}
                 className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-sky-500 shadow-2xs"
               >
-                <option value="anthropic">Anthropic</option>
-                <option value="openai">OpenAI</option>
-                <option value="gemini">Google Gemini</option>
-                <option value="deepseek">DeepSeek</option>
-                <option value="groq">Groq</option>
-                <option value="mistral">Mistral AI</option>
-                <option value="ollama">Ollama</option>
-                <option value="openrouter">OpenRouter</option>
-                <option value="cohere">Cohere</option>
+                <option value="">None (No Fallback)</option>
+                {providerOptions.map((p) => (
+                  <option key={p.value} value={p.value}>
+                    {p.label}
+                  </option>
+                ))}
               </select>
+              {secondaryProvider === 'custom' && (
+                <input
+                  type="text"
+                  placeholder="Custom fallback provider slug"
+                  value={customSecondary}
+                  onChange={(e) => setCustomSecondary(e.target.value)}
+                  className="mt-1.5 w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-mono text-slate-900 focus:outline-none focus:border-sky-500"
+                />
+              )}
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-700 mb-1">Secondary Model</label>
