@@ -21,6 +21,16 @@ import {
   Coins,
   RefreshCw,
   GitFork,
+  ShieldCheck,
+  EyeOff,
+  Database,
+  Server,
+  Layers,
+  CheckCircle2,
+  XCircle,
+  HelpCircle,
+  Sliders,
+  CreditCard,
 } from 'lucide-react';
 import { LandingThreeGate } from './LandingThreeGate';
 import { Show, UserButton } from '@clerk/nextjs';
@@ -66,6 +76,9 @@ export function LandingPage() {
   const [installTab, setInstallTab] = useState<'npm' | 'pnpm' | 'pip'>('npm');
   const [copiedInstall, setCopiedInstall] = useState(false);
 
+  // Pricing Annual Toggle
+  const [isAnnual, setIsAnnual] = useState(false);
+
   // Circuit Breaker Simulation
   const [simulating, setSimulating] = useState(false);
   const [simStep, setSimStep] = useState<0 | 1 | 2>(0);
@@ -105,10 +118,10 @@ const tanvelo = new Tanvelo({
   apiKey: process.env.TANVELO_API_KEY, // "tv_live_..."
 });
 
-// Automatic multi-provider fallback failover
+// Automatic multi-provider fallback failover with ZERO payload retention
 const stream = await tanvelo.chat.completions.create({
-  model: "your-model",
-  fallbacks: ["your-fallback-model"],
+  model: "claude-3-7-sonnet",
+  fallbacks: ["gpt-4o", "gemini-2.5-pro"],
   messages: [{ role: "user", content: "Ship to production with zero downtime." }],
   stream: true,
 });
@@ -124,20 +137,20 @@ client = Tanvelo(
 
 # Automated sub-180ms multi-provider fallback
 stream = client.chat.completions.create(
-    model="your-model",
-    fallbacks=["your-fallback-model"],
+    model="claude-3-7-sonnet",
+    fallbacks=["gpt-4o", "gemini-2.5-pro"],
     messages=[{"role": "user", "content": "Ship to production with zero downtime."}],
     stream=True,
 )
 
 for chunk in stream:
     print(chunk.delta, end="", flush=True)`,
-    curl: `curl -X POST https://tanvelo-backend-zgyc.onrender.com/v1/chat/completions \\
+    curl: `curl -X POST https://api.tanvelo.in/v1/chat/completions \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $TANVELO_API_KEY" \\
   -d '{
-    "model": "your-model",
-    "fallbacks": ["your-fallback-model"],
+    "model": "claude-3-7-sonnet",
+    "fallbacks": ["gpt-4o", "gemini-2.5-pro"],
     "messages": [{"role": "user", "content": "Ship to production with zero downtime."}],
     "stream": true
   }'`,
@@ -155,39 +168,46 @@ for chunk in stream:
 
   const faqs = [
     {
-      q: 'What is the Tanvelo Official SDK?',
-      a: 'The official Tanvelo SDK (tanvelo on npm and PyPI) is a lightweight, zero-dependency client with native multi-provider fallbacks, Server-Sent Events (SSE) streaming, and real-time latency and cost telemetry.',
+      q: 'Does Tanvelo save my users\' questions or AI answers?',
+      a: 'No. Unlike traditional gateways like Portkey and Helicone which log and store prompt bodies and AI completions in their cloud databases by default, Tanvelo strictly enforces Zero Payload Retention by default (LOG_PAYLOADS=false). All token streams pass through transient RAM via Server-Sent Events (SSE) and are immediately discarded. Only operational telemetry (token counts, latency, status code, exact cost) is recorded.',
     },
     {
-      q: 'How does the sub-180ms circuit breaker work?',
+      q: 'How does the sub-180ms fallback circuit breaker work?',
       a: 'When an upstream provider returns a 429 rate limit or 5xx outage, Tanvelo immediately re-routes the in-flight request to secondary fallback models without terminating the client connection or dropping active SSE chunks.',
     },
     {
-      q: 'Can I enforce rate limits and hard spend caps?',
-      a: 'Yes. Tanvelo provides atomic Redis token-bucket rate limiting (RPM/TPM) and project-level monthly budget ceilings that cut off requests before runaway agent loops accumulate cost.',
+      q: 'How does Tanvelo compare to Portkey, Helicone, and OpenRouter?',
+      a: 'Portkey and Helicone log and retain full request/response bodies by default, posing data compliance hurdles for healthcare, fintech, and legal apps. OpenRouter marks up token prices with a 5.5%–8% deposit fee. Tanvelo offers Zero Retention by default, true Bring-Your-Own-Key (BYOK) with AES-256-GCM encryption, and flat request-based pricing with zero markup on your LLM tokens.',
     },
     {
-      q: 'Does Tanvelo store prompt contents or completions?',
-      a: 'No. Tanvelo strictly enforces Zero Body Retention. Payloads are processed in-flight and never persisted to disk. Only operational metrics (latency, token usage, cost, status codes) are logged in the ledger.',
+      q: 'Can I enforce rate limits and hard spend caps?',
+      a: 'Yes. Tanvelo provides atomic Redis token-bucket rate limiting (RPM/TPM) and project-level monthly budget ceilings that cut off requests before runaway agent loops accumulate unexpected costs.',
+    },
+    {
+      q: 'What is the Tanvelo Official SDK?',
+      a: 'The official Tanvelo SDK (tanvelo on npm and PyPI) is a lightweight, zero-dependency client with native multi-provider fallbacks, Server-Sent Events (SSE) streaming, and real-time latency and cost telemetry.',
     },
   ];
 
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans antialiased selection:bg-slate-900 selection:text-white">
-      {/* Minimal Header */}
+      {/* Premium Minimal Header */}
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100 transition-all">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 text-slate-900 font-semibold tracking-tight text-base">
-            <img src="/assets/logo.svg" alt="Tanvelo" className="w-5 h-5" />
+          <Link href="/" className="flex items-center gap-2.5 text-slate-900 font-semibold tracking-tight text-base group">
+            <img src="/assets/logo.svg" alt="Tanvelo" className="w-5 h-5 transition-transform group-hover:scale-105" />
             <span>tanvelo</span>
           </Link>
 
+          {/* Cleaned Navigation Bar: Removed Circuit Breaker, Comparison, and Quickstart */}
           <nav className="hidden md:flex items-center gap-7 text-xs font-medium text-slate-600">
             <a href="#architecture" className="hover:text-slate-900 transition-colors">Architecture</a>
             <a href="#capabilities" className="hover:text-slate-900 transition-colors">Capabilities</a>
-            <a href="#failover" className="hover:text-slate-900 transition-colors">Circuit Breaker</a>
-            <a href="#benchmarks" className="hover:text-slate-900 transition-colors">Comparison</a>
-            <a href="#quickstart" className="hover:text-slate-900 transition-colors">Quickstart</a>
+            <a href="#zero-retention" className="hover:text-sky-600 transition-colors flex items-center gap-1.5 font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span>Zero Retention</span>
+            </a>
+            <a href="#pricing" className="hover:text-slate-900 transition-colors">Pricing</a>
             <a href="#contact" className="hover:text-slate-900 transition-colors">Contact</a>
             <Link href="/docs" className="hover:text-sky-600 transition-colors font-semibold text-slate-900">
               Documentation
@@ -245,14 +265,11 @@ for chunk in stream:
               <a href="#capabilities" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg hover:bg-slate-50">
                 Capabilities
               </a>
-              <a href="#failover" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg hover:bg-slate-50">
-                Circuit Breaker
+              <a href="#zero-retention" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg hover:bg-emerald-50 text-emerald-700 font-medium">
+                Zero Retention &amp; Privacy
               </a>
-              <a href="#benchmarks" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg hover:bg-slate-50">
-                Comparison
-              </a>
-              <a href="#quickstart" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg hover:bg-slate-50">
-                Quickstart
+              <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg hover:bg-slate-50">
+                Pricing
               </a>
               <a href="#contact" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg hover:bg-slate-50">
                 Contact
@@ -263,32 +280,32 @@ for chunk in stream:
             </div>
 
             <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-              <Link href="/privacy" onClick={() => setMobileMenuOpen(false)} className="hover:text-slate-900">Privacy</Link>
+              <Link href="/privacy" onClick={() => setMobileMenuOpen(false)} className="hover:text-slate-900">Privacy Policy</Link>
               <span>·</span>
-              <Link href="/terms" onClick={() => setMobileMenuOpen(false)} className="hover:text-slate-900">Terms</Link>
+              <Link href="/terms" onClick={() => setMobileMenuOpen(false)} className="hover:text-slate-900">Terms of Service</Link>
             </div>
           </div>
         )}
       </header>
 
       {/* Hero Section */}
-      <section className="pt-12 pb-16 sm:pt-20 sm:pb-24 border-b border-slate-100 overflow-hidden">
+      <section className="pt-12 pb-16 sm:pt-20 sm:pb-24 border-b border-slate-100 overflow-hidden relative">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
           <div className="max-w-xl mx-auto lg:mx-0 text-center lg:text-left">
             {/* Pill Badge */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-slate-700 text-xs font-mono mb-6">
-              <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
-              <span>Official Tanvelo SDK for TypeScript &amp; Python</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-slate-700 text-xs font-mono mb-6 shadow-2xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Zero-Payload Retention • Multi-Provider Gateway</span>
             </div>
 
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-[-0.035em] text-slate-900 leading-[1.08] mb-5">
               Every model.<br />
-              One official SDK.<br />
+              Zero prompt retention.<br />
               Zero downtime.
             </h1>
 
             <p className="text-slate-600 text-base sm:text-lg leading-relaxed mb-7 max-w-lg mx-auto lg:mx-0">
-              Route any model across OpenAI, Anthropic, Google Gemini, DeepSeek, Groq, and custom providers through a single typed client. Automated sub-180ms failover, atomic Redis rate limits, and real-time cost telemetry.
+              The high-availability LLM API gateway that protects your data. Unified routing across OpenAI, Anthropic, Gemini, DeepSeek, and Groq with sub-180ms failover, atomic spend controls, and zero storage of prompts or AI responses.
             </p>
 
             {/* Quick Install Pill */}
@@ -339,18 +356,18 @@ for chunk in stream:
 
             {/* Muted Highlights */}
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 text-xs font-mono text-slate-400">
-              <span>TypeScript &amp; Python</span>
+              <span className="text-emerald-700 font-medium bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Zero Retention by Default</span>
               <span>·</span>
               <span>Sub-180ms Failover</span>
               <span>·</span>
               <span>Native SSE</span>
               <span>·</span>
-              <span>Zero Dependencies</span>
+              <span>BYOK Encrypted</span>
             </div>
           </div>
 
           {/* 3D Visual */}
-          <div className="relative w-full h-[320px] sm:h-[400px] md:h-[460px] flex items-center justify-center overflow-hidden rounded-2xl bg-slate-50/50 border border-slate-100">
+          <div className="relative w-full h-[320px] sm:h-[400px] md:h-[460px] flex items-center justify-center overflow-hidden rounded-2xl bg-slate-50/50 border border-slate-100 shadow-2xs">
             <LandingThreeGate />
 
             <div className="absolute bottom-4 left-4 bg-white/95 border border-slate-200 rounded-xl px-3 py-2 shadow-xs backdrop-blur-sm pointer-events-none font-mono text-xs">
@@ -378,6 +395,127 @@ for chunk in stream:
                   <span>{p}</span>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Key Stats Strip */}
+      <section className="py-10 border-b border-slate-100 bg-white">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/50">
+              <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">0 Bytes</div>
+              <div className="text-xs text-slate-500 font-medium mt-1">Prompt &amp; Completion Storage</div>
+            </div>
+            <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/50">
+              <div className="text-2xl sm:text-3xl font-extrabold text-sky-600 tracking-tight">&lt; 180ms</div>
+              <div className="text-xs text-slate-500 font-medium mt-1">Automated Failover Latency</div>
+            </div>
+            <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/50">
+              <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">9+ Providers</div>
+              <div className="text-xs text-slate-500 font-medium mt-1">Unified OpenAI-Compatible API</div>
+            </div>
+            <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/50">
+              <div className="text-2xl sm:text-3xl font-extrabold text-emerald-600 tracking-tight">100% BYOK</div>
+              <div className="text-xs text-slate-500 font-medium mt-1">AES-256-GCM Encrypted Keys</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ZERO RETENTION & PRIVACY ADVANTAGE SPOTLIGHT (THE BIG DIFFERENTIATOR) */}
+      <section id="zero-retention" className="py-20 md:py-24 border-b border-slate-100 bg-gradient-to-b from-white via-slate-50/60 to-white">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center max-w-2xl mx-auto mb-14">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-mono font-medium mb-3">
+              <EyeOff className="w-3.5 h-3.5" />
+              <span>THE PRIVACY ADVANTAGE</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-[-0.03em] text-slate-900 mb-3">
+              Zero Payload Retention by Default.
+            </h2>
+            <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
+              Unlike traditional gateways that save and store your users&apos; prompts and generated answers in their cloud database, Tanvelo processes every inference stream strictly in transient RAM.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+            {/* The Competitor Model */}
+            <div className="p-7 sm:p-8 rounded-2xl border border-rose-200 bg-white/90 shadow-2xs space-y-6 relative overflow-hidden">
+              <div className="absolute top-0 right-0 transform translate-x-4 -translate-y-4 w-28 h-28 bg-rose-50 rounded-full blur-2xl pointer-events-none" />
+              
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs font-bold text-rose-600 tracking-wider flex items-center gap-2">
+                  <XCircle className="w-4 h-4 text-rose-500" />
+                  TRADITIONAL GATEWAYS (PORTKEY / HELICONE)
+                </span>
+                <span className="text-[10px] font-mono uppercase bg-rose-100 text-rose-800 px-2 py-0.5 rounded font-semibold">
+                  Logs Payloads
+                </span>
+              </div>
+
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Most AI gateways are built as observability collectors: every prompt message, system instruction, and model response is written to third-party databases by default.
+              </p>
+
+              <div className="space-y-3.5 text-xs text-slate-700">
+                <div className="flex items-start gap-2.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5 shrink-0" />
+                  <span><strong className="text-slate-900">Saves Questions &amp; Answers:</strong> End-user confidential prompts and generated outputs are persisted in third-party logs.</span>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5 shrink-0" />
+                  <span><strong className="text-slate-900">Compliance &amp; Legal Exposure:</strong> Creates immediate regulatory complications for HIPAA, GDPR, SOC 2, and confidential client NDAs.</span>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5 shrink-0" />
+                  <span><strong className="text-slate-900">Forced Opt-Out Workarounds:</strong> Developers are forced to configure custom bypass headers or pay steep enterprise premiums to omit payload storage.</span>
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-rose-50/60 border border-rose-100 text-[11px] text-rose-700 font-mono">
+                ⚠ Risk: Prompts and AI answers stored on third-party cloud disk
+              </div>
+            </div>
+
+            {/* The Tanvelo Model */}
+            <div className="p-7 sm:p-8 rounded-2xl border-2 border-emerald-500 bg-white shadow-xs space-y-6 relative overflow-hidden ring-4 ring-emerald-50">
+              <div className="absolute top-0 right-0 transform translate-x-4 -translate-y-4 w-28 h-28 bg-emerald-50 rounded-full blur-2xl pointer-events-none" />
+
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs font-bold text-emerald-700 tracking-wider flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  TANVELO UNIVERSAL GATEWAY
+                </span>
+                <span className="text-[10px] font-mono uppercase bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-semibold">
+                  Zero Retention
+                </span>
+              </div>
+
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Tanvelo is architected from the kernel level with strict Zero Body Retention (<code className="font-mono text-emerald-800 bg-emerald-50 px-1 py-0.5 rounded">LOG_PAYLOADS=false</code>). Your users&apos; prompts and model outputs never touch our disk.
+              </p>
+
+              <div className="space-y-3.5 text-xs text-slate-700">
+                <div className="flex items-start gap-2.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                  <span><strong className="text-slate-900">In-Flight Transient Streaming:</strong> Token chunks are piped directly through memory via Server-Sent Events (SSE) and immediately discarded.</span>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                  <span><strong className="text-slate-900">Enterprise Privacy Safe:</strong> Safe for healthcare, fintech, legal tech, and private B2B applications where prompt leakage is unacceptable.</span>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                  <span><strong className="text-slate-900">Telemetry-Only Ledger:</strong> Only mathematical token usage, latency (ms), HTTP status codes, and exact dollar costs are audited.</span>
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-emerald-50/80 border border-emerald-200 text-[11px] text-emerald-800 font-mono flex items-center justify-between">
+                <span>✓ 0% prompt body retention • AES-256-GCM encrypted BYOK</span>
+                <Link href="/privacy" className="underline hover:text-emerald-900 font-semibold">Privacy Spec &rarr;</Link>
+              </div>
             </div>
           </div>
         </div>
@@ -444,19 +582,19 @@ for chunk in stream:
         </div>
       </section>
 
-      {/* Interactive Circuit Breaker Visualizer */}
-      <section id="failover" className="py-20 md:py-24 border-b border-slate-100 bg-slate-50/40">
+      {/* Interactive Circuit Breaker Visualizer (Failover Proof) */}
+      <section className="py-20 md:py-24 border-b border-slate-100 bg-slate-50/40">
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
             <div>
               <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-sky-600 font-semibold block mb-2">
-                Circuit Breaker
+                Real-Time Reliability Engine
               </span>
               <h2 className="text-3xl font-bold tracking-[-0.03em] text-slate-900 mb-2">
-                Sub-180ms automated fallback in real time.
+                Sub-180ms automated failover in action.
               </h2>
               <p className="text-slate-600 text-sm max-w-xl">
-                When upstream providers return rate limits or outages, Tanvelo executes deterministic circuit breakers to sustain production traffic.
+                When upstream providers return rate limits (429) or outages (5xx), Tanvelo executes deterministic fallback chains to sustain production uptime.
               </p>
             </div>
 
@@ -478,7 +616,7 @@ for chunk in stream:
               </div>
               <h3 className="font-semibold text-slate-900 text-xs">Client Request Initiated</h3>
               <p className="text-xs text-slate-500 font-mono">
-                model: &quot;your-model&quot;, fallbacks: [&quot;your-fallback-model&quot;]
+                model: &quot;claude-3-7-sonnet&quot;, fallbacks: [&quot;gpt-4o&quot;]
               </p>
               <div className="text-[11px] text-slate-400 font-mono pt-1">
                 Active SSE connection maintained
@@ -543,7 +681,7 @@ for chunk in stream:
               Engineered for production control.
             </h2>
             <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
-              Three architectural pillars designed for teams shipping mission-critical LLM features.
+              Three architectural pillars designed for engineering teams shipping mission-critical LLM workflows.
             </p>
           </div>
 
@@ -581,77 +719,15 @@ for chunk in stream:
         </div>
       </section>
 
-      {/* Comparison Matrix */}
-      <section id="benchmarks" className="py-20 md:py-24 border-b border-slate-100 bg-slate-50/40">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-sky-600 font-semibold block mb-2">
-              Comparison
-            </span>
-            <h2 className="text-3xl font-bold tracking-[-0.03em] text-slate-900 mb-3">
-              Direct APIs vs Tanvelo.
-            </h2>
-            <p className="text-slate-600 text-sm leading-relaxed">
-              Why engineering teams migrate from scattered provider SDKs to Tanvelo&apos;s unified control plane.
-            </p>
-          </div>
-
-          <div className="border border-slate-200 rounded-xl overflow-x-auto bg-white shadow-2xs">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-700 font-mono">
-                  <th className="p-4">Capability</th>
-                  <th className="p-4 text-slate-500">Direct Provider APIs</th>
-                  <th className="p-4 bg-sky-50/50 text-sky-900 font-semibold">Tanvelo Gateway &amp; Official SDK</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
-                <tr>
-                  <td className="p-4 font-medium">Automatic Fallback on 429 Outage</td>
-                  <td className="p-4 text-slate-500">Crashes client request</td>
-                  <td className="p-4 bg-sky-50/30 text-emerald-700 font-semibold flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Sub-180ms seamless failover</span>
-                  </td>
-                </tr>
-                <tr>
-                  <td className="p-4 font-medium">SDK Client Footprint</td>
-                  <td className="p-4 text-slate-500">Multiple heavy dependencies</td>
-                  <td className="p-4 bg-sky-50/30 font-semibold text-slate-900">Single zero-dependency client (<code className="font-mono text-sky-700">tanvelo</code>)</td>
-                </tr>
-                <tr>
-                  <td className="p-4 font-medium">Distributed Rate Limiting</td>
-                  <td className="p-4 text-slate-500">Uncontrolled upstream rejections</td>
-                  <td className="p-4 bg-sky-50/30 font-semibold text-slate-900">Atomic Redis token buckets (RPM/TPM)</td>
-                </tr>
-                <tr>
-                  <td className="p-4 font-medium">Hard Monthly Spend Safeguards</td>
-                  <td className="p-4 text-slate-500">None (unbudgeted spend risk)</td>
-                  <td className="p-4 bg-sky-50/30 text-emerald-700 font-semibold flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Hard limits &amp; warning alerts</span>
-                  </td>
-                </tr>
-                <tr>
-                  <td className="p-4 font-medium">Telemetry &amp; Cost Metering</td>
-                  <td className="p-4 text-slate-500">Scattered across vendor portals</td>
-                  <td className="p-4 bg-sky-50/30 font-semibold text-slate-900">Unified audit ledger with dollar-accurate costs</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      {/* Developer Quickstart */}
-      <section id="quickstart" className="py-20 md:py-24 border-b border-slate-100">
+      {/* Code Quickstart Showcase */}
+      <section className="py-20 md:py-24 border-b border-slate-100 bg-slate-50/40">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-10">
             <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-sky-600 font-semibold block mb-2">
-              Developer Quickstart
+              Implementation
             </span>
             <h2 className="text-3xl font-bold tracking-[-0.03em] text-slate-900 mb-3">
-              First request in 60 seconds.
+              One typed client for every model.
             </h2>
             <p className="text-slate-600 text-sm leading-relaxed">
               Official SDKs for TypeScript and Python. Complete typed interfaces, streaming SSE, and zero configuration.
@@ -692,18 +768,261 @@ for chunk in stream:
         </div>
       </section>
 
+      {/* NEW SECTION: PRICING PLANS */}
+      <section id="pricing" className="py-20 md:py-24 border-b border-slate-100 bg-white">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center max-w-2xl mx-auto mb-10">
+            <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-sky-600 font-semibold block mb-2">
+              Predictable Pricing
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-[-0.03em] text-slate-900 mb-3">
+              Simple, transparent gateway plans.
+            </h2>
+            <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
+              No markup on your LLM tokens. Bring your own keys and pay purely for high-speed routing capacity.
+            </p>
+
+            {/* Monthly / Annual Toggle */}
+            <div className="mt-6 inline-flex items-center gap-3 p-1 rounded-full bg-slate-100 border border-slate-200 text-xs">
+              <button
+                onClick={() => setIsAnnual(false)}
+                className={`px-3 py-1 rounded-full font-medium transition ${
+                  !isAnnual ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                Monthly Billing
+              </button>
+              <button
+                onClick={() => setIsAnnual(true)}
+                className={`px-3 py-1 rounded-full font-medium transition flex items-center gap-1.5 ${
+                  isAnnual ? 'bg-slate-900 text-white shadow-2xs' : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                <span>Annual Billing</span>
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-500 text-white font-bold">Save 20%</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Developer Tier */}
+            <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-2xs flex flex-col justify-between hover:border-slate-300 transition">
+              <div>
+                <div className="font-mono text-xs uppercase tracking-wider text-slate-500 font-semibold mb-1">Developer</div>
+                <div className="flex items-baseline gap-1 my-3">
+                  <span className="text-3xl font-extrabold text-slate-900">$0</span>
+                  <span className="text-xs text-slate-500 font-mono">/month</span>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed mb-5">
+                  Ideal for indie developers, hackathons, and staging environments.
+                </p>
+
+                <div className="space-y-2.5 text-xs text-slate-700 border-t border-slate-100 pt-4">
+                  <div className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span><strong>25,000</strong> requests / month</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>Zero Payload Retention</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>2 Projects &amp; 2 Environments</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>10 Gateway API Keys</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>Automated Failover Routing</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>7-day metadata retention</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-6 mt-6 border-t border-slate-100">
+                <Link
+                  href="/sign-up"
+                  className="block text-center w-full py-2 px-3 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-800 text-xs font-semibold transition"
+                >
+                  Start Free
+                </Link>
+              </div>
+            </div>
+
+            {/* Pro Tier (Featured) */}
+            <div className="p-6 rounded-2xl border-2 border-sky-500 bg-white shadow-md flex flex-col justify-between relative ring-4 ring-sky-50">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-sky-600 text-white font-mono text-[10px] tracking-wider uppercase px-2.5 py-0.5 rounded-full font-bold">
+                Most Popular
+              </div>
+
+              <div>
+                <div className="font-mono text-xs uppercase tracking-wider text-sky-600 font-semibold mb-1">Pro</div>
+                <div className="flex items-baseline gap-1 my-3">
+                  <span className="text-3xl font-extrabold text-slate-900">{isAnnual ? '$31' : '$39'}</span>
+                  <span className="text-xs text-slate-500 font-mono">/month</span>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed mb-5">
+                  For production applications, solo founders, and scaling SaaS products.
+                </p>
+
+                <div className="space-y-2.5 text-xs text-slate-700 border-t border-slate-100 pt-4">
+                  <div className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span><strong>250,000</strong> requests / month</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>$6 / 100k overage rate</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span><strong>Hard Budgets &amp; Auto Cutoffs</strong></span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>Unlimited Projects &amp; Keys</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>HMAC-SHA256 Webhooks</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>30-day metadata retention</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-6 mt-6 border-t border-slate-100">
+                <Link
+                  href="/sign-up"
+                  className="block text-center w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-semibold transition shadow-xs"
+                >
+                  Get Started with Pro
+                </Link>
+              </div>
+            </div>
+
+            {/* Team Tier */}
+            <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-2xs flex flex-col justify-between hover:border-slate-300 transition">
+              <div>
+                <div className="font-mono text-xs uppercase tracking-wider text-slate-500 font-semibold mb-1">Team</div>
+                <div className="flex items-baseline gap-1 my-3">
+                  <span className="text-3xl font-extrabold text-slate-900">{isAnnual ? '$119' : '$149'}</span>
+                  <span className="text-xs text-slate-500 font-mono">/month</span>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed mb-5">
+                  For growing engineering teams with multiple apps and shared infrastructure.
+                </p>
+
+                <div className="space-y-2.5 text-xs text-slate-700 border-t border-slate-100 pt-4">
+                  <div className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span><strong>1,500,000</strong> requests / month</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>$5 / 100k overage rate</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>Team Workspaces &amp; RBAC</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>Multi-Region Rate Limiters</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>99.9% Uptime SLA</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>Priority Slack/Discord Support</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-6 mt-6 border-t border-slate-100">
+                <Link
+                  href="/sign-up"
+                  className="block text-center w-full py-2 px-3 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-800 text-xs font-semibold transition"
+                >
+                  Start Team Plan
+                </Link>
+              </div>
+            </div>
+
+            {/* Enterprise Tier */}
+            <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-2xs flex flex-col justify-between hover:border-slate-300 transition">
+              <div>
+                <div className="font-mono text-xs uppercase tracking-wider text-slate-500 font-semibold mb-1">Enterprise</div>
+                <div className="flex items-baseline gap-1 my-3">
+                  <span className="text-3xl font-extrabold text-slate-900">Custom</span>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed mb-5">
+                  For high-throughput enterprises, regulated fintech, and healthcare apps.
+                </p>
+
+                <div className="space-y-2.5 text-xs text-slate-700 border-t border-slate-100 pt-4">
+                  <div className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span><strong>10,000,000+</strong> requests / month</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>Self-Hosted &amp; VPC Deployments</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>Single Sign-On (SAML / SCIM)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>Dedicated DB &amp; Redis Nodes</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>99.99% Uptime Guarantee</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>24/7 Dedicated Solutions Engineer</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-6 mt-6 border-t border-slate-100">
+                <a
+                  href="mailto:tanvelo@zohomail.in?subject=Tanvelo%20Enterprise%20Inquiry"
+                  className="block text-center w-full py-2 px-3 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-800 text-xs font-semibold transition"
+                >
+                  Contact Sales
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Security Controls */}
       <section id="trust" className="py-20 md:py-24 border-b border-slate-100 bg-slate-50/40">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-12">
             <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-sky-600 font-semibold block mb-2">
-              Security
+              Security &amp; Compliance
             </span>
             <h2 className="text-3xl font-bold tracking-[-0.03em] text-slate-900 mb-3">
               Verifiable architectural guardrails.
             </h2>
             <p className="text-slate-600 text-sm leading-relaxed">
-              Engineered with strict access boundaries and zero data retention by default.
+              Engineered with zero payload retention, cryptographic hashing, and hardened network isolation.
             </p>
           </div>
 
@@ -727,7 +1046,7 @@ for chunk in stream:
             </div>
 
             <div className="p-5 rounded-xl border border-slate-200 bg-white shadow-2xs space-y-1.5">
-              <Shield className="w-4 h-4 text-sky-600 mb-2" />
+              <ShieldCheck className="w-4 h-4 text-emerald-600 mb-2" />
               <div className="font-semibold text-slate-900 text-xs">Zero Body Retention</div>
               <p className="text-slate-600 text-xs leading-normal">Prompts and completions stream in-flight and are never stored on disk.</p>
             </div>
@@ -862,10 +1181,10 @@ for chunk in stream:
       <section className="py-20 text-center">
         <div className="max-w-xl mx-auto px-6">
           <h2 className="text-3xl sm:text-4xl font-bold tracking-[-0.03em] text-slate-900 mb-3">
-            Build on resilient AI infrastructure.
+            Build on resilient, private AI infrastructure.
           </h2>
           <p className="text-slate-600 text-sm mb-7">
-            Deploy every model behind one controlled endpoint in under five minutes.
+            Deploy every model behind one controlled endpoint in under five minutes with Zero Payload Retention.
           </p>
           <div className="flex items-center justify-center gap-3">
             <Link
@@ -896,7 +1215,7 @@ for chunk in stream:
                 <span>tanvelo</span>
               </div>
               <p className="text-[11px] text-slate-400 leading-relaxed">
-                The unified LLM gateway for Anthropic, OpenAI, Google Gemini, DeepSeek, Groq, and custom providers with deterministic fallbacks and atomic telemetry.
+                The high-availability LLM API gateway with Zero Payload Retention, automated failovers, and atomic cost controls.
               </p>
             </div>
 
@@ -908,9 +1227,8 @@ for chunk in stream:
               <ul className="space-y-2 text-xs text-slate-400">
                 <li><a href="#architecture" className="hover:text-white transition">Architecture</a></li>
                 <li><a href="#capabilities" className="hover:text-white transition">Capabilities</a></li>
-                <li><a href="#failover" className="hover:text-white transition">Circuit Breaker</a></li>
-                <li><a href="#benchmarks" className="hover:text-white transition">Comparison</a></li>
-                <li><a href="#quickstart" className="hover:text-white transition">Quickstart</a></li>
+                <li><a href="#zero-retention" className="hover:text-white transition">Zero Retention</a></li>
+                <li><a href="#pricing" className="hover:text-white transition">Pricing</a></li>
                 <li><Link href="/docs" className="hover:text-white transition text-sky-400">Documentation</Link></li>
               </ul>
             </div>
@@ -961,7 +1279,7 @@ for chunk in stream:
             <div>&copy; 2026 Tanvelo. All rights reserved.</div>
             <div className="flex items-center gap-2 font-mono text-[11px] text-slate-400">
               <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span>Gateway Engine Operational</span>
+              <span>Gateway Engine Operational • Zero Retention Active</span>
             </div>
           </div>
         </div>
