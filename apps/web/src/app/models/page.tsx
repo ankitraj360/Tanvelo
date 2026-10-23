@@ -44,7 +44,9 @@ export default function ModelsPage() {
 
   // Add Model Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newProvider, setNewProvider] = useState('openrouter');
+  const [newProvider, setNewProvider] = useState('openai');
+  const [customProviderInput, setCustomProviderInput] = useState('');
+  const [connections, setConnections] = useState<ProviderConn[]>([]);
   const [newModelId, setNewModelId] = useState('');
   const [newName, setNewName] = useState('');
   const [newInputPrice, setNewInputPrice] = useState('0.00');
@@ -72,9 +74,54 @@ export default function ModelsPage() {
     }
   };
 
+  const fetchConnections = async () => {
+    if (!currentProject?.id) return;
+    try {
+      const res = await fetch(`/api/providers?projectId=${currentProject.id}`);
+      if (res.ok) {
+        setConnections(await res.json());
+      }
+    } catch (_) {}
+  };
+
   useEffect(() => {
     fetchModels();
+    fetchConnections();
   }, [currentProject?.id]);
+
+  const providerOptions = useMemo(() => {
+    const list: { value: string; label: string; isConnected?: boolean }[] = [];
+    const connectedSet = new Set(connections.map((c) => c.provider.toLowerCase()));
+
+    // 1. Connected providers first
+    connections.forEach((c) => {
+      list.push({
+        value: c.provider,
+        label: `${c.customName || c.provider} (Connected)`,
+        isConnected: true,
+      });
+    });
+
+    // 2. All 147+ catalog providers
+    PROVIDER_CATALOG.forEach((p) => {
+      if (!connectedSet.has(p.id.toLowerCase())) {
+        list.push({
+          value: p.id,
+          label: `${p.name} (${p.tag})`,
+          isConnected: false,
+        });
+      }
+    });
+
+    // 3. Custom provider option
+    list.push({ value: 'custom', label: '+ Custom Provider / Any API' });
+    return list;
+  }, [connections]);
+
+  const currentSelectedPreset = useMemo(() => {
+    const norm = newProvider.toLowerCase();
+    return PROVIDER_CATALOG.find((p) => p.id === norm || (p.aliases && p.aliases.includes(norm))) || null;
+  }, [newProvider]);
 
   const toggleModel = async (model: Model) => {
     try {
@@ -122,6 +169,9 @@ export default function ModelsPage() {
     setAddingModel(true);
     setAddError(null);
 
+    const effectiveProvider =
+      newProvider === 'custom' ? (customProviderInput.trim().toLowerCase() || 'custom') : newProvider;
+
     try {
       const res = await fetch('/api/models', {
         method: 'POST',
@@ -130,7 +180,7 @@ export default function ModelsPage() {
           projectId: currentProject.id,
           modelId: newModelId.trim(),
           name: newName.trim() || newModelId.trim(),
-          provider: newProvider,
+          provider: effectiveProvider,
           inputPricePerMillion: parseFloat(newInputPrice) || 0,
           outputPricePerMillion: parseFloat(newOutputPrice) || 0,
           contextWindow: parseInt(newContextWindow, 10) || 128000,
@@ -361,16 +411,74 @@ export default function ModelsPage() {
             </label>
             <select
               value={newProvider}
-              onChange={(e) => setNewProvider(e.target.value)}
+              onChange={(e) => {
+                setNewProvider(e.target.value);
+                const selected = PROVIDER_CATALOG.find((p) => p.id === e.target.value);
+                if (selected?.recommendedModels?.[0]) {
+                  const first = selected.recommendedModels[0];
+                  setNewModelId(first.id);
+                  setNewName(first.name);
+                  setNewInputPrice(String(first.inputPricePerMillion ?? 0));
+                  setNewOutputPrice(String(first.outputPricePerMillion ?? 0));
+                  setNewContextWindow(String(first.contextWindow ?? 128000));
+                }
+              }}
               className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 shadow-2xs"
             >
-              {PROVIDER_OPTIONS.map((p) => (
+              {providerOptions.map((p) => (
                 <option key={p.value} value={p.value}>
                   {p.label}
                 </option>
               ))}
             </select>
           </div>
+
+          {newProvider === 'custom' && (
+            <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                Custom Provider Identifier *
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. custom-vllm, fine-tuned-llama, internal-corp"
+                value={customProviderInput}
+                onChange={(e) => setCustomProviderInput(e.target.value)}
+                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-mono text-slate-900 focus:outline-none focus:border-sky-500 shadow-2xs"
+              />
+            </div>
+          )}
+
+          {currentSelectedPreset?.recommendedModels && currentSelectedPreset.recommendedModels.length > 0 && (
+            <div className="p-2.5 rounded-lg bg-sky-50/70 border border-sky-200">
+              <span className="text-[11px] font-semibold text-sky-800 flex items-center gap-1 mb-1.5">
+                <Sparkles className="w-3 h-3 text-sky-600" />
+                Popular {currentSelectedPreset.name} Models (1-Click Fill):
+              </span>
+              <div className="flex flex-wrap gap-1">
+                {currentSelectedPreset.recommendedModels.map((rm) => (
+                  <button
+                    key={rm.id}
+                    type="button"
+                    onClick={() => {
+                      setNewModelId(rm.id);
+                      setNewName(rm.name);
+                      setNewInputPrice(String(rm.inputPricePerMillion ?? 0));
+                      setNewOutputPrice(String(rm.outputPricePerMillion ?? 0));
+                      setNewContextWindow(String(rm.contextWindow ?? 128000));
+                    }}
+                    className={`px-2 py-0.5 rounded text-[10px] font-mono border transition cursor-pointer ${
+                      newModelId === rm.id
+                        ? 'bg-sky-600 text-white border-sky-600'
+                        : 'bg-white text-slate-700 border-sky-200 hover:bg-sky-100'
+                    }`}
+                  >
+                    {rm.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-medium text-slate-700 mb-1">
