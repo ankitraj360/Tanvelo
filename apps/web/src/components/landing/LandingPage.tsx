@@ -17,18 +17,20 @@ import {
   Menu,
   X,
   Mail,
+  Sparkles,
+  Terminal,
+  Activity,
+  Layers,
+  Gauge,
+  Coins,
+  RefreshCw,
+  ExternalLink,
+  Sliders,
+  CheckCircle2,
+  AlertTriangle,
 } from 'lucide-react';
 import { LandingThreeGate } from './LandingThreeGate';
 import { Show, UserButton } from '@clerk/nextjs';
-
-function WhatsAppIcon({ className = "w-5 h-5" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M17.472 14.382c-.301-.15-1.78-.879-2.056-.979-.276-.1-.476-.15-.676.15-.2.3-.776.98-.952 1.18-.175.2-.351.225-.652.075-.3-.15-1.267-.467-2.414-1.49-1.026-.914-1.72-2.043-1.921-2.388-.201-.345-.021-.532.129-.681.136-.134.301-.351.451-.527.151-.175.201-.3.301-.5.1-.2.05-.375-.025-.525-.075-.15-.676-1.63-.927-2.235-.245-.589-.493-.509-.676-.519-.175-.01-.376-.01-.577-.01-.2 0-.527.075-.803.375-.276.3-1.053 1.03-1.053 2.511 0 1.482 1.078 2.912 1.229 3.113.15.2 2.121 3.24 5.138 4.542.718.31 1.278.496 1.716.635.72.229 1.376.197 1.895.12.578-.087 1.78-.727 2.03-1.43.251-.703.251-1.306.175-1.43-.075-.125-.276-.2-.577-.35z" />
-      <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.98-1.39A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.167c-1.584 0-3.08-.456-4.354-1.246l-.312-.193-2.955.825.836-2.88-.21-.334A8.136 8.136 0 013.833 12c0-4.503 3.664-8.167 8.167-8.167 4.503 0 8.167 3.664 8.167 8.167 0 4.503-3.664 8.167-8.167 8.167z" />
-    </svg>
-  );
-}
 
 function InstagramIcon({ className = "w-5 h-5" }: { className?: string }) {
   return (
@@ -49,11 +51,11 @@ function XSocialIcon({ className = "w-4 h-4" }: { className?: string }) {
 }
 
 const PROVIDERS = [
-  'OpenAI',
   'Anthropic Claude',
   'Google Gemini',
-  'DeepSeek',
-  'Groq',
+  'DeepSeek R1 / V3',
+  'OpenAI',
+  'Groq LPU',
   'Mistral AI',
   'Ollama / Local',
   'OpenRouter',
@@ -67,6 +69,42 @@ export function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Hero Quick-Install Pill State
+  const [installTab, setInstallTab] = useState<'npm' | 'pnpm' | 'pip'>('npm');
+  const [copiedInstall, setCopiedInstall] = useState(false);
+
+  // Interactive Live Circuit Breaker Simulation State
+  const [simulating, setSimulating] = useState(false);
+  const [simStep, setSimStep] = useState<0 | 1 | 2>(0);
+
+  const installCommands = {
+    npm: 'npm install tanvelo',
+    pnpm: 'pnpm add tanvelo',
+    pip: 'pip install tanvelo',
+  };
+
+  const handleCopyInstall = async () => {
+    try {
+      await navigator.clipboard.writeText(installCommands[installTab]);
+      setCopiedInstall(true);
+      setTimeout(() => setCopiedInstall(false), 2000);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const runFailoverSimulation = () => {
+    if (simulating) return;
+    setSimulating(true);
+    setSimStep(1); // Simulating primary 429
+    setTimeout(() => {
+      setSimStep(2); // Failed over to Gemini in 142ms
+      setTimeout(() => {
+        setSimulating(false);
+      }, 1500);
+    }, 600);
+  };
+
   const codeSnippets = {
     typescript: `// npm install tanvelo
 import { Tanvelo } from "tanvelo";
@@ -77,39 +115,39 @@ const tanvelo = new Tanvelo({
 
 // Call any model with automated multi-provider fallback failover
 const stream = await tanvelo.chat.completions.create({
-  model: "gpt-4o",
-  fallbacks: ["claude-3-5-sonnet", "gemini-1.5-pro", "deepseek-r1"],
-  messages: [{ role: "user", content: "Ship to production." }],
+  model: "claude-3-5-sonnet",
+  fallbacks: ["gemini-1.5-pro", "deepseek-chat", "gpt-4o"],
+  messages: [{ role: "user", content: "Ship to production with zero downtime." }],
   stream: true,
 });
 
 for await (const chunk of stream) {
   process.stdout.write(chunk.choices[0]?.delta?.content || "");
 }`,
-    python: `# pip install tanvelo (or pip install git+https://github.com/ankitraj360/Tanvelo.git#subdirectory=packages/sdk/python)
+    python: `# pip install tanvelo
 from tanvelo import Tanvelo
 
-tanvelo = Tanvelo(
+client = Tanvelo(
     api_key="tv_live_948f2b...", # or TANVELO_API_KEY env var
 )
 
 # Route requests with sub-180ms intelligent provider fallbacks
-stream = tanvelo.chat.completions.create(
-    model="gpt-4o",
-    fallbacks=["claude-3-5-sonnet", "gemini-1.5-pro", "deepseek-r1"],
-    messages=[{"role": "user", "content": "Ship to production."}],
+stream = client.chat.completions.create(
+    model="claude-3-5-sonnet",
+    fallbacks=["gemini-1.5-pro", "deepseek-chat", "gpt-4o"],
+    messages=[{"role": "user", "content": "Ship to production with zero downtime."}],
     stream=True,
 )
 
 for chunk in stream:
     print(chunk.delta, end="", flush=True)`,
-    curl: `curl https://tanvelo-backend-zgyc.onrender.com/v1/chat/completions \\
+    curl: `curl -X POST https://tanvelo-backend-zgyc.onrender.com/v1/chat/completions \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $TANVELO_API_KEY" \\
   -d '{
-    "model": "gpt-4o",
-    "fallbacks": ["claude-3-5-sonnet", "gemini-1.5-pro"],
-    "messages": [{"role": "user", "content": "Ship to production."}],
+    "model": "claude-3-5-sonnet",
+    "fallbacks": ["gemini-1.5-pro", "deepseek-chat"],
+    "messages": [{"role": "user", "content": "Ship to production with zero downtime."}],
     "stream": true
   }'`,
   };
@@ -126,20 +164,20 @@ for chunk in stream:
 
   const faqs = [
     {
-      q: 'Is Tanvelo a proxy or a gateway?',
-      a: 'A complete API gateway and control plane. It provides unified routing rules, Redis-backed rate limiting, project spend caps, and an auditable request ledger.',
+      q: 'What is the Tanvelo Official SDK?',
+      a: 'The Tanvelo Official SDK (available as "tanvelo" for TypeScript/Node.js and Python) is a purpose-built, high-performance client library. It provides native support for multi-provider automatic fallbacks, Server-Sent Events (SSE) streaming, token metering, and latency tracking with zero external dependencies.',
     },
     {
-      q: 'Do I have to rewrite my application code?',
-      a: 'No. You can use our official SDKs (@tanvelo/sdk for TypeScript or tanvelo for Python) with native fallback support, or point any OpenAI-compatible client to Tanvelo by updating the base URL.',
+      q: 'How does the sub-180ms fallback circuit breaker work?',
+      a: 'When an upstream provider experiences a rate limit (HTTP 429), gateway timeout (504), or server outage (500/502/503), Tanvelo immediately redirects in-flight requests to your next configured fallback model (e.g. Claude to Gemini or DeepSeek) without breaking your client connection or terminating active streaming SSE chunks.',
     },
     {
-      q: 'What happens when OpenAI rate-limits (429)?',
-      a: 'Tanvelo immediately shifts the in-flight request to your configured fallback provider (Claude or Gemini) within ~180ms without dropping the client connection.',
+      q: 'Can I enforce hard monthly budget caps and rate limits?',
+      a: 'Yes. Tanvelo includes atomic Redis-backed token-bucket rate limiters (RPM/TPM) and project-level monthly budget ceilings. If autonomous agents enter runaway recursive loops, hard cutoffs prevent catastrophic billing surges by returning standard 429 responses.',
     },
     {
-      q: 'Can I enforce hard monthly budget caps?',
-      a: 'Yes. Hard cutoffs reject requests with standard 429 errors when monthly spend thresholds are reached, guarding against recursive agent loops.',
+      q: 'Does Tanvelo retain prompt contents or responses?',
+      a: 'No. Tanvelo operates under a strict Zero Body Retention policy. Payloads are processed and streamed in-flight and never stored on disk. Only auditable operational metadata (latency waterfall, token counts, dollar-accurate costs, status codes) is recorded in the ledger.',
     },
   ];
 
@@ -156,10 +194,13 @@ for chunk in stream:
           <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-slate-600">
             <a href="#difference" className="hover:text-slate-900 transition-colors">Architecture</a>
             <a href="#capabilities" className="hover:text-slate-900 transition-colors">Capabilities</a>
-            <a href="#quickstart" className="hover:text-slate-900 transition-colors">Quickstart</a>
+            <a href="#failover-demo" className="hover:text-slate-900 transition-colors">Live Failover</a>
+            <a href="#quickstart" className="hover:text-slate-900 transition-colors">SDK Quickstart</a>
             <a href="#trust" className="hover:text-slate-900 transition-colors">Security</a>
             <a href="#contact" className="hover:text-slate-900 transition-colors">Contact</a>
-            <Link href="/docs" className="hover:text-slate-900 transition-colors">Docs</Link>
+            <Link href="/docs" className="hover:text-slate-900 transition-colors font-semibold text-sky-600">
+              Docs &amp; SDK
+            </Link>
           </nav>
 
           <div className="flex items-center gap-2 sm:gap-3">
@@ -222,18 +263,25 @@ for chunk in stream:
                 Capabilities
               </a>
               <a
+                href="#failover-demo"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50 px-3 py-2 rounded-lg transition"
+              >
+                Live Failover Demo
+              </a>
+              <a
                 href="#quickstart"
                 onClick={() => setMobileMenuOpen(false)}
                 className="block text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50 px-3 py-2 rounded-lg transition"
               >
-                Quickstart
+                Official SDK Quickstart
               </a>
               <a
                 href="#trust"
                 onClick={() => setMobileMenuOpen(false)}
                 className="block text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50 px-3 py-2 rounded-lg transition"
               >
-                Security & Trust
+                Security &amp; Trust
               </a>
               <a
                 href="#contact"
@@ -245,9 +293,9 @@ for chunk in stream:
               <Link
                 href="/docs"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50 px-3 py-2 rounded-lg transition"
+                className="block text-sm font-semibold text-sky-600 hover:text-sky-800 hover:bg-sky-50 px-3 py-2 rounded-lg transition"
               >
-                API Documentation & SDK
+                Official SDK &amp; API Docs &rarr;
               </Link>
             </div>
 
@@ -293,27 +341,67 @@ for chunk in stream:
       </header>
 
       {/* Hero Section */}
-      <section className="pt-12 pb-12 sm:pt-16 sm:pb-16 md:pt-24 md:pb-20 overflow-hidden border-b border-slate-100">
+      <section className="pt-10 pb-12 sm:pt-16 sm:pb-16 md:pt-20 md:pb-20 overflow-hidden border-b border-slate-100">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           <div className="max-w-xl mx-auto lg:mx-0 text-center lg:text-left">
+            {/* Official SDK Announcement Badge */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-sky-50 border border-sky-200 text-sky-800 text-xs font-mono font-medium mb-5 shadow-2xs">
+              <Sparkles className="w-3.5 h-3.5 text-sky-600" />
+              <span>Official Tanvelo SDK for TypeScript &amp; Python</span>
+            </div>
+
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-[-0.04em] text-slate-900 leading-[1.05] mb-4 sm:mb-5">
-              Every model<span className="text-sky-500">.</span><br />
-              One gateway<span className="text-sky-500">.</span><br />
-              Total control<span className="text-sky-500">.</span>
+              The Unified LLM Gateway<span className="text-sky-500">.</span><br />
+              One Official SDK<span className="text-sky-500">.</span><br />
+              Zero Downtime<span className="text-sky-500">.</span>
             </h1>
 
-            <p className="text-slate-600 text-base sm:text-lg leading-relaxed mb-6 sm:mb-8 max-w-lg mx-auto lg:mx-0">
-              Tanvelo routes OpenAI, Anthropic, Gemini, DeepSeek, Groq, Mistral, Ollama, and custom models through one OpenAI-compatible API — with deterministic fallbacks, atomic rate limits, and auditable telemetry.
+            <p className="text-slate-600 text-base sm:text-lg leading-relaxed mb-6 sm:mb-7 max-w-lg mx-auto lg:mx-0">
+              Build resilient AI systems with the official Tanvelo SDK (<code className="text-sky-700 font-mono text-xs sm:text-sm bg-sky-50 px-1.5 py-0.5 rounded border border-sky-100">tanvelo</code>). Route seamlessly across Anthropic Claude, Google Gemini, DeepSeek, Groq, Mistral, Ollama, and OpenAI with sub-180ms deterministic fallbacks, atomic rate limits, and live telemetry.
             </p>
 
+            {/* Interactive 1-Click Install Selector */}
+            <div className="mb-6 p-2 bg-slate-900 border border-slate-800 rounded-xl max-w-md mx-auto lg:mx-0 flex items-center justify-between text-xs font-mono text-slate-100 shadow-sm">
+              <div className="flex items-center gap-1.5">
+                {(['npm', 'pnpm', 'pip'] as const).map((pkg) => (
+                  <button
+                    key={pkg}
+                    onClick={() => setInstallTab(pkg)}
+                    className={`px-2 py-1 rounded transition ${
+                      installTab === pkg
+                        ? 'bg-slate-800 text-white font-semibold border border-slate-700'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    {pkg}
+                  </button>
+                ))}
+                <span className="text-slate-500 pl-1">$</span>
+                <span className="text-sky-300 font-medium select-all">{installCommands[installTab]}</span>
+              </div>
+
+              <button
+                onClick={handleCopyInstall}
+                className="p-1.5 text-slate-400 hover:text-white rounded hover:bg-slate-800 transition"
+                title="Copy install command"
+              >
+                {copiedInstall ? (
+                  <Check className="w-4 h-4 text-emerald-400" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+
+            {/* CTA Buttons */}
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 mb-6">
-              <a
-                href="#quickstart"
+              <Link
+                href="/docs"
                 className="inline-flex items-center gap-2 h-11 px-5 rounded-full bg-slate-900 hover:bg-black text-white text-sm font-medium transition-all shadow-sm hover:shadow"
               >
-                <span>Read the quickstart</span>
+                <span>Explore Official SDK &amp; Docs</span>
                 <ArrowRight className="w-4 h-4" />
-              </a>
+              </Link>
               <Link
                 href="/overview"
                 className="inline-flex items-center justify-center h-11 px-5 rounded-full bg-white hover:bg-slate-50 text-slate-900 text-sm font-medium border border-slate-200 transition-all shadow-2xs"
@@ -322,24 +410,27 @@ for chunk in stream:
               </Link>
             </div>
 
+            {/* Trust Badges Focused on Tanvelo SDK */}
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 text-xs font-mono text-slate-400">
-              <span>OpenAI SDK Compatible</span>
+              <span className="text-slate-600 font-medium">Official TypeScript &amp; Python SDKs</span>
               <span>·</span>
-              <span>Streaming SSE</span>
+              <span>Sub-180ms Failover</span>
               <span>·</span>
-              <span>Zero SDK Rewrite</span>
+              <span>Streaming SSE Native</span>
+              <span>·</span>
+              <span>Zero External Dependencies</span>
             </div>
           </div>
 
-          {/* 3D Canvas Visual (Responsive on all screen heights/widths) */}
-          <div className="relative w-full h-[300px] sm:h-[400px] md:h-[480px] flex items-center justify-center overflow-hidden rounded-2xl bg-slate-50/50 border border-slate-100">
+          {/* 3D Canvas Visual with Official SDK Overlay */}
+          <div className="relative w-full h-[320px] sm:h-[400px] md:h-[480px] flex items-center justify-center overflow-hidden rounded-2xl bg-slate-50/50 border border-slate-100">
             <LandingThreeGate />
 
             {/* Subtle Overlay Chip */}
-            <div className="absolute bottom-3 left-3 right-3 sm:right-auto sm:left-4 sm:bottom-4 bg-white/95 border border-slate-200/90 rounded-xl p-2.5 sm:p-3 shadow-md backdrop-blur-sm pointer-events-none font-mono text-[10px] sm:text-xs">
+            <div className="absolute bottom-3 left-3 right-3 sm:right-auto sm:left-4 sm:bottom-4 bg-white/95 border border-slate-200/90 rounded-xl p-3 shadow-md backdrop-blur-sm pointer-events-none font-mono text-[10px] sm:text-xs">
               <div className="text-slate-800 flex items-center gap-2 font-medium">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                <span>Multi-provider in one API</span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Official Tanvelo SDK • Multi-provider in one runtime</span>
               </div>
             </div>
           </div>
@@ -351,7 +442,7 @@ for chunk in stream:
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center gap-4">
           <div className="shrink-0 flex items-center gap-2">
             <span className="font-mono text-[11px] uppercase tracking-wider text-slate-400 font-medium whitespace-nowrap">
-              ONE API · 10+ PROVIDERS & LOCAL MODELS
+              ONE API · 10+ PROVIDERS &amp; LOCAL MODELS
             </span>
           </div>
 
@@ -368,9 +459,109 @@ for chunk in stream:
             </div>
           </div>
 
-          <div className="shrink-0 hidden lg:flex items-center gap-1.5 px-3 py-1 bg-white border border-slate-200 rounded-full font-mono text-xs text-slate-600">
-            <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2.5]" />
-            <span>OpenAI SDK Compatible</span>
+          <div className="shrink-0 hidden lg:flex items-center gap-1.5 px-3 py-1 bg-white border border-slate-200 rounded-full font-mono text-xs text-slate-700">
+            <Sparkles className="w-3.5 h-3.5 text-sky-600" />
+            <span>Official Tanvelo SDK (TS &amp; Python)</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Interactive Circuit Breaker & Failover Simulation Section (NEW ATTRACTIVE FEATURE) */}
+      <section id="failover-demo" className="py-20 md:py-24 border-b border-slate-100 bg-slate-50/50">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="font-mono text-xs uppercase tracking-wider text-sky-600 font-semibold mb-3">
+            Interactive Circuit Breaker Visualizer
+          </div>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-semibold tracking-[-0.03em] text-slate-900 mb-3">
+                Watch sub-180ms automated fallback in real time.
+              </h2>
+              <p className="text-slate-600 text-base md:text-lg max-w-2xl">
+                When upstream providers experience rate limits (HTTP 429) or cloud downtime, Tanvelo executes deterministic circuit breakers to sustain production traffic.
+              </p>
+            </div>
+
+            <button
+              onClick={runFailoverSimulation}
+              disabled={simulating}
+              className="inline-flex items-center gap-2 h-10 px-5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-xs font-mono font-medium transition shadow-xs self-start md:self-auto disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${simulating ? 'animate-spin' : ''}`} />
+              <span>{simulating ? 'Executing Failover...' : 'Simulate Upstream 429 Outage'}</span>
+            </button>
+          </div>
+
+          {/* Interactive Simulation Display */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* Step 1: Ingress */}
+            <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs text-slate-400 font-medium">01 / INGRESS</span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              </div>
+              <h3 className="font-semibold text-slate-900 text-sm">Client Request</h3>
+              <p className="text-xs text-slate-500 leading-relaxed font-mono">
+                tanvelo.chat.completions.create(model=&quot;gpt-4o&quot;, fallbacks=[&quot;claude-3-5-sonnet&quot;, &quot;gemini-1.5-pro&quot;])
+              </p>
+              <div className="pt-2 text-[11px] text-slate-400 font-mono">
+                Incoming streaming connection open
+              </div>
+            </div>
+
+            {/* Step 2: Upstream Primary Outage */}
+            <div className={`p-6 rounded-2xl transition-all duration-300 border shadow-2xs space-y-3 ${
+              simStep === 1
+                ? 'bg-rose-50/70 border-rose-300 ring-2 ring-rose-200'
+                : 'bg-white border-slate-200'
+            }`}>
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs font-medium text-rose-600">02 / CIRCUIT BREAKER</span>
+                {simStep === 1 ? (
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-rose-200 text-rose-800 font-bold animate-pulse">
+                    429 RATE LIMIT
+                  </span>
+                ) : (
+                  <span className="w-2 h-2 rounded-full bg-slate-300"></span>
+                )}
+              </div>
+              <h3 className="font-semibold text-slate-900 text-sm">Primary Attempt (gpt-4o)</h3>
+              <p className="text-xs text-slate-500 leading-relaxed font-mono">
+                {simStep === 1
+                  ? 'Upstream returned 429 Too Many Requests. Instant circuit breaker triggered.'
+                  : 'Monitors upstream latency and HTTP response status codes.'}
+              </p>
+              <div className="pt-2 text-[11px] text-rose-600 font-mono">
+                {simStep >= 1 ? 'Failover triggered in 14ms' : 'Normal state'}
+              </div>
+            </div>
+
+            {/* Step 3: Automated Failover Success */}
+            <div className={`p-6 rounded-2xl transition-all duration-300 border shadow-2xs space-y-3 ${
+              simStep === 2
+                ? 'bg-emerald-50/70 border-emerald-300 ring-2 ring-emerald-200'
+                : 'bg-white border-slate-200'
+            }`}>
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs font-medium text-emerald-600">03 / FAILOVER ROUTED</span>
+                {simStep === 2 ? (
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-200 text-emerald-800 font-bold">
+                    200 OK (142ms)
+                  </span>
+                ) : (
+                  <span className="w-2 h-2 rounded-full bg-slate-300"></span>
+                )}
+              </div>
+              <h3 className="font-semibold text-slate-900 text-sm">Fulfilled by Claude 3.5 Sonnet</h3>
+              <p className="text-xs text-slate-500 leading-relaxed font-mono">
+                {simStep === 2
+                  ? 'Response delivered with zero dropped tokens or client disconnection.'
+                  : 'Ordered secondary models take over transparently.'}
+              </p>
+              <div className="pt-2 text-[11px] text-emerald-600 font-mono">
+                {simStep === 2 ? 'Total failover latency: 142ms' : 'Ready'}
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -385,7 +576,7 @@ for chunk in stream:
             Provider sprawl is a reliability problem.
           </h2>
           <p className="text-slate-600 text-base md:text-lg max-w-2xl mb-12">
-            Multiple provider SDKs mean fragmented keys, silent 429 cascades, and unexpected invoices. Tanvelo consolidates everything into one controlled path.
+            Multiple provider SDKs mean fragmented keys, silent 429 cascades, and unexpected invoices. Tanvelo consolidates everything into one controlled path with its official SDK.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -402,11 +593,11 @@ for chunk in stream:
                   </li>
                   <li className="flex items-start gap-2.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-2 shrink-0" />
-                    <span><strong className="text-slate-900">Three Divergent SDKs:</strong> Inconsistent error models, authentication keys, and wrapper glue code.</span>
+                    <span><strong className="text-slate-900">Fragmented SDKs &amp; Keys:</strong> Juggling separate libraries, tokenizers, error formats, and API keys.</span>
                   </li>
                   <li className="flex items-start gap-2.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-2 shrink-0" />
-                    <span><strong className="text-slate-900">Uncapped Spend:</strong> Budget runaway discovered weeks later on provider billing dashboards.</span>
+                    <span><strong className="text-slate-900">Uncapped Spend:</strong> Autonomous agent runaway loops discovered days later on provider billing dashboards.</span>
                   </li>
                 </ul>
               </div>
@@ -416,7 +607,7 @@ for chunk in stream:
             <div className="p-7 rounded-2xl border border-slate-300 bg-slate-50 shadow-sm flex flex-col justify-between">
               <div>
                 <div className="font-mono text-xs font-semibold text-sky-600 tracking-wider mb-5">
-                  WITH TANVELO
+                  WITH TANVELO &amp; OFFICIAL SDK
                 </div>
                 <ul className="space-y-4 text-sm text-slate-600">
                   <li className="flex items-start gap-2.5">
@@ -425,11 +616,11 @@ for chunk in stream:
                   </li>
                   <li className="flex items-start gap-2.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-sky-500 mt-2 shrink-0" />
-                    <span><strong className="text-slate-900">One Unified Endpoint:</strong> Standard OpenAI SDK drop-in. Change only <code>base_url</code> and key.</span>
+                    <span><strong className="text-slate-900">Official Tanvelo SDK:</strong> Zero-dependency typed clients (<code className="text-sky-700 font-mono">tanvelo</code>) for TypeScript and Python.</span>
                   </li>
                   <li className="flex items-start gap-2.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-sky-500 mt-2 shrink-0" />
-                    <span><strong className="text-slate-900">Atomic Limits & Budgets:</strong> Enforce strict spend caps with standard <code>X-RateLimit</code> headers.</span>
+                    <span><strong className="text-slate-900">Atomic Limits &amp; Budgets:</strong> Enforce strict spend caps with standard <code>X-RateLimit</code> headers.</span>
                   </li>
                 </ul>
               </div>
@@ -448,7 +639,7 @@ for chunk in stream:
             Production controls, not an opaque proxy.
           </h2>
           <p className="text-slate-600 text-base md:text-lg max-w-2xl mb-12">
-            Three fundamental capabilities engineered for teams shipping LLMs to real users.
+            Fundamental architectural capabilities engineered for teams shipping mission-critical LLMs.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -472,9 +663,69 @@ for chunk in stream:
               <span className="font-mono text-xs text-sky-600 font-medium block mb-4">03</span>
               <h3 className="text-lg font-semibold text-slate-900 mb-2">Request Audit Ledger</h3>
               <p className="text-slate-600 text-sm leading-relaxed">
-                Every request records an auditable trail: latency waterfall, upstream attempt status, token metrics, and estimated costs.
+                Every request records an auditable trail: latency waterfall, upstream attempt status, token metrics, and dollar-accurate estimated costs.
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Feature Comparison Matrix (NEW ATTRACTIVE FEATURE) */}
+      <section className="py-20 md:py-24 border-b border-slate-100 bg-white">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="font-mono text-xs uppercase tracking-wider text-slate-400 font-medium mb-3">
+            Comparison Matrix
+          </div>
+          <h2 className="text-3xl md:text-4xl font-semibold tracking-[-0.03em] text-slate-900 mb-4">
+            Why teams choose Tanvelo.
+          </h2>
+          <p className="text-slate-600 text-base md:text-lg max-w-2xl mb-10">
+            Compare building directly against multiple raw provider APIs versus using Tanvelo&apos;s unified control plane.
+          </p>
+
+          <div className="border border-slate-200 rounded-2xl overflow-x-auto shadow-2xs">
+            <table className="w-full text-left text-xs sm:text-sm">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-slate-700 font-mono text-xs">
+                  <th className="p-4 sm:p-5">Feature</th>
+                  <th className="p-4 sm:p-5 text-rose-700">Raw Provider APIs</th>
+                  <th className="p-4 sm:p-5 bg-sky-50 text-sky-900 font-bold">Tanvelo Gateway &amp; Official SDK</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-700">
+                <tr>
+                  <td className="p-4 sm:p-5 font-medium">Automatic Fallback on 429 / Outage</td>
+                  <td className="p-4 sm:p-5 text-rose-600">Crashes client request</td>
+                  <td className="p-4 sm:p-5 bg-sky-50/50 font-semibold text-emerald-700 flex items-center gap-1.5">
+                    <Check className="w-4 h-4 text-emerald-600" />
+                    <span>Sub-180ms failover without dropped stream</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td className="p-4 sm:p-5 font-medium">SDK Packaging Overhead</td>
+                  <td className="p-4 sm:p-5 text-slate-500">3-5 heavy SDK dependencies</td>
+                  <td className="p-4 sm:p-5 bg-sky-50/50 font-semibold text-slate-900">Single zero-dependency client (<code className="font-mono text-sky-700">tanvelo</code>)</td>
+                </tr>
+                <tr>
+                  <td className="p-4 sm:p-5 font-medium">Rate Limiting</td>
+                  <td className="p-4 sm:p-5 text-slate-500">Uncontrolled upstream rejections</td>
+                  <td className="p-4 sm:p-5 bg-sky-50/50 font-semibold text-slate-900">Distributed Redis token-buckets (RPM/TPM)</td>
+                </tr>
+                <tr>
+                  <td className="p-4 sm:p-5 font-medium">Monthly Hard Spend Protection</td>
+                  <td className="p-4 sm:p-5 text-rose-600">None (runaway agent risk)</td>
+                  <td className="p-4 sm:p-5 bg-sky-50/50 font-semibold text-emerald-700 flex items-center gap-1.5">
+                    <Check className="w-4 h-4 text-emerald-600" />
+                    <span>Automated hard spend caps &amp; webhook alerts</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td className="p-4 sm:p-5 font-medium">Request Audit &amp; Cost Metering</td>
+                  <td className="p-4 sm:p-5 text-slate-500">Scattered provider consoles</td>
+                  <td className="p-4 sm:p-5 bg-sky-50/50 font-semibold text-slate-900">Real-time ledger with dollar-accurate token costs</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </section>
@@ -506,7 +757,7 @@ for chunk in stream:
                     }`}
                   >
                     {lang === 'typescript'
-                      ? 'TypeScript (@tanvelo/sdk)'
+                      ? 'TypeScript (tanvelo)'
                       : lang === 'python'
                       ? 'Python (tanvelo)'
                       : 'cURL / REST'}
@@ -567,7 +818,7 @@ for chunk in stream:
 
             <div className="p-6 rounded-2xl border border-slate-200 bg-slate-50/50">
               <Radio className="w-5 h-5 text-sky-600 mb-3" />
-              <div className="font-semibold text-slate-900 text-sm mb-1">Webhooks & SSRF</div>
+              <div className="font-semibold text-slate-900 text-sm mb-1">Webhooks &amp; SSRF</div>
               <p className="text-slate-600 text-xs leading-relaxed">HMAC-SHA256 signatures with bounded retries and RFC1918 egress protections.</p>
             </div>
 
@@ -619,7 +870,7 @@ for chunk in stream:
         </div>
       </section>
 
-      {/* 06 / Contact Us */}
+      {/* 06 / Contact Us (Email, Instagram, and X) */}
       <section id="contact" className="py-20 md:py-28 border-b border-slate-100 bg-slate-50/60">
         <div className="max-w-6xl mx-auto px-6">
           <div className="font-mono text-xs uppercase tracking-wider text-slate-400 font-medium mb-3">
@@ -640,7 +891,7 @@ for chunk in stream:
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {/* Email Card */}
             <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
               <div>
@@ -677,35 +928,6 @@ for chunk in stream:
                 >
                   {copiedEmail ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
-              </div>
-            </div>
-
-            {/* WhatsApp Card */}
-            <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
-              <div>
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
-                  <WhatsAppIcon className="w-5 h-5" />
-                </div>
-                <div className="text-xs font-mono uppercase tracking-wider text-slate-400 font-medium mb-1">
-                  WhatsApp Support
-                </div>
-                <div className="font-semibold text-slate-900 text-sm mb-1 font-mono">
-                  +91 9771370409
-                </div>
-                <p className="text-slate-500 text-xs leading-relaxed mb-6">
-                  Direct instant chat for quick developer troubleshooting and setup assistance.
-                </p>
-              </div>
-              <div className="pt-4 border-t border-slate-100">
-                <a
-                  href="https://wa.me/919771370409?text=Hi%20Tanvelo%20team%2C%20I%20would%20like%20to%20learn%20more%20about%20Tanvelo%20LLM%20Gateway."
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full inline-flex items-center justify-center gap-1.5 h-8 px-3 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition shadow-xs"
-                >
-                  <WhatsAppIcon className="w-3.5 h-3.5" />
-                  <span>Chat on WhatsApp</span>
-                </a>
               </div>
             </div>
 
@@ -777,16 +999,16 @@ for chunk in stream:
             Make reliability your default.
           </h2>
           <p className="text-slate-600 text-base mb-8">
-            Put every model behind one controlled endpoint in under five minutes.
+            Put every model behind one controlled endpoint in under five minutes with the official Tanvelo SDK.
           </p>
           <div className="flex items-center justify-center gap-3">
-            <a
-              href="#quickstart"
+            <Link
+              href="/docs"
               className="inline-flex items-center gap-2 h-11 px-5 rounded-full bg-slate-900 hover:bg-black text-white text-sm font-medium transition-all shadow-sm hover:shadow"
             >
-              <span>Read the quickstart</span>
+              <span>Explore Official SDK</span>
               <ArrowRight className="w-4 h-4" />
-            </a>
+            </Link>
             <Link
               href="/overview"
               className="inline-flex items-center justify-center h-11 px-5 rounded-full bg-white hover:bg-slate-50 text-slate-900 text-sm font-medium border border-slate-200 transition-all"
@@ -797,7 +1019,7 @@ for chunk in stream:
         </div>
       </section>
 
-      {/* Comprehensive Footer */}
+      {/* Comprehensive Footer (Instagram and X) */}
       <footer className="pt-16 pb-12 border-t border-slate-200 bg-slate-950 text-slate-300">
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-slate-800">
@@ -808,14 +1030,14 @@ for chunk in stream:
                 <span>tanvelo</span>
               </div>
               <p className="text-xs text-slate-400 leading-relaxed">
-                One controlled endpoint for OpenAI, Anthropic, and Google Gemini with deterministic routing, atomic rate limits, and real-time telemetry.
+                One controlled endpoint for Anthropic, Google Gemini, DeepSeek, and OpenAI with deterministic routing, atomic rate limits, and real-time telemetry.
               </p>
               <div className="pt-1 text-[11px] font-mono text-slate-500">
                 Built for mission-critical LLM infrastructure.
               </div>
             </div>
 
-            {/* Col 2: Architecture & Product */}
+            {/* Col 2: Platform Links */}
             <div>
               <div className="font-mono text-xs uppercase tracking-wider text-slate-200 font-semibold mb-4">
                 Platform
@@ -823,10 +1045,11 @@ for chunk in stream:
               <ul className="space-y-2.5 text-xs text-slate-400">
                 <li><a href="#difference" className="hover:text-white transition">Architecture</a></li>
                 <li><a href="#capabilities" className="hover:text-white transition">Capabilities</a></li>
-                <li><a href="#quickstart" className="hover:text-white transition">Quickstart & SDK</a></li>
+                <li><a href="#failover-demo" className="hover:text-white transition">Live Failover</a></li>
+                <li><a href="#quickstart" className="hover:text-white transition">Official SDK Quickstart</a></li>
                 <li><a href="#trust" className="hover:text-white transition">Security Controls</a></li>
                 <li><a href="#faq" className="hover:text-white transition">FAQ</a></li>
-                <li><Link href="/docs" className="hover:text-white transition">Documentation</Link></li>
+                <li><Link href="/docs" className="hover:text-white transition font-medium text-sky-400">Documentation &amp; SDK</Link></li>
                 <li><Link href="/overview" className="hover:text-white transition">Web Dashboard</Link></li>
               </ul>
             </div>
@@ -844,25 +1067,13 @@ for chunk in stream:
                     <span>tanvelo@zohomail.in</span>
                   </a>
                 </li>
-                <li>
-                  <span className="block text-[11px] font-mono uppercase text-slate-500">WhatsApp</span>
-                  <a
-                    href="https://wa.me/919771370409"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-white transition text-slate-200 font-mono text-xs flex items-center gap-1.5 mt-1"
-                  >
-                    <WhatsAppIcon className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>+91 9771370409</span>
-                  </a>
-                </li>
               </ul>
             </div>
 
-            {/* Col 4: Socials & Legal */}
+            {/* Col 4: ONLY Instagram & X (formerly Twitter) + Legal */}
             <div>
               <div className="font-mono text-xs uppercase tracking-wider text-slate-200 font-semibold mb-4">
-                Social & Community
+                Social &amp; Community
               </div>
               <ul className="space-y-3 text-xs text-slate-400">
                 <li>

@@ -141,3 +141,10 @@ response = client.chat.completions.create(
 | **OpenRouter** | `openrouter/anthropic/claude-3.5-sonnet` |
 | **Ollama / Local** | `ollama/llama3.1`, `ollama/mistral`, `ollama/qwen2.5-coder` |
 | **Custom / vLLM** | Any OpenAI-compatible self-hosted inference server |
+
+---
+
+## 📚 Full Documentation
+
+For full API endpoint specifications, webhook signature verifications, and deterministic fallback mechanics, see [Official Tanvelo Documentation](../../docs/TANVELO_OFFICIAL_DOCS.md) or visit [https://www.tanvelo.in/docs](https://www.tanvelo.in/docs).
+

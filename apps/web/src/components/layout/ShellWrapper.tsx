@@ -36,7 +36,9 @@ export function ShellWrapper({ children }: { children: React.ReactNode }) {
     pathname?.startsWith('/sign-in') ||
     pathname?.startsWith('/sign-up') ||
     pathname === '/privacy' ||
-    pathname === '/terms';
+    pathname === '/terms' ||
+    pathname === '/docs' ||
+    pathname?.startsWith('/docs');
 
   if (isStandalonePage) {
     return <>{children}</>;

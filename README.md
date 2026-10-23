@@ -160,14 +160,14 @@ from tanvelo import Tanvelo
 
 client = Tanvelo(api_key="YOUR_TANVELO_API_KEY")
 res = client.chat.completions.create(
-    model="gpt-4o",
-    fallbacks=["claude-3-5-sonnet", "gemini-1.5-pro"],
+    model="claude-3-5-sonnet",
+    fallbacks=["gemini-1.5-pro", "gpt-4o"],
     messages=[{"role": "user", "content": "Explain federated gateways."}]
 )
 print(res.content)
 ```
-  }'
-```
+
+For complete SDK, REST API, and gateway documentation, see [Official Documentation](docs/TANVELO_OFFICIAL_DOCS.md) or visit [/docs](https://www.tanvelo.in/docs).
 
 ### Response Headers
 Every gateway response returns rich operational telemetry:
