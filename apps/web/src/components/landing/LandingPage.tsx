@@ -31,6 +31,9 @@ import {
   HelpCircle,
   Sliders,
   CreditCard,
+  Cpu,
+  Globe,
+  Boxes,
 } from 'lucide-react';
 import { LandingThreeGate } from './LandingThreeGate';
 import { Show, UserButton } from '@clerk/nextjs';
@@ -54,15 +57,26 @@ function XSocialIcon({ className = 'w-3.5 h-3.5' }: { className?: string }) {
 }
 
 const PROVIDERS = [
-  'Anthropic',
+  'OpenAI',
+  'Anthropic Claude',
   'Google Gemini',
   'DeepSeek',
-  'OpenAI',
-  'Groq',
+  'Cerebras (1,800+ tok/s)',
+  'Groq (LPU)',
+  'Together AI',
+  'Fireworks AI',
+  'xAI Grok',
   'Mistral AI',
+  'AWS Bedrock',
+  'Azure OpenAI',
+  'Alibaba Qwen',
+  'vLLM / On-Prem',
   'Ollama / Local',
+  'Moonshot AI (Kimi)',
   'OpenRouter',
-  'Cohere',
+  'SambaNova',
+  'Perplexity',
+  'Any Custom OpenAI API',
 ];
 
 export function LandingPage() {
@@ -115,10 +129,10 @@ const tanvelo = new Tanvelo({
   apiKey: process.env.TANVELO_API_KEY, // "tv_live_..."
 });
 
-// Automatic multi-provider fallback failover with ZERO payload retention
+// Unified routing across 147+ providers with sub-180ms failover
 const stream = await tanvelo.chat.completions.create({
-  model: "claude-3-7-sonnet",
-  fallbacks: ["gpt-4o", "gemini-2.5-pro"],
+  model: "cerebras/llama3.3-70b", // Wafer-scale silicon inference
+  fallbacks: ["deepseek/deepseek-r1", "openai/gpt-4o"], // Multi-provider backup chain
   messages: [{ role: "user", content: "Ship to production with zero downtime." }],
   stream: true,
 });
@@ -132,22 +146,22 @@ client = Tanvelo(
     api_key="tv_live_...", # or TANVELO_API_KEY env var
 )
 
-# Automated sub-180ms multi-provider fallback
+# Automated sub-180ms failover across 147+ providers
 stream = client.chat.completions.create(
-    model="claude-3-7-sonnet",
-    fallbacks=["gpt-4o", "gemini-2.5-pro"],
+    model="cerebras/llama3.3-70b",
+    fallbacks=["deepseek/deepseek-r1", "openai/gpt-4o"],
     messages=[{"role": "user", "content": "Ship to production with zero downtime."}],
     stream=True,
 )
 
 for chunk in stream:
     print(chunk.delta, end="", flush=True)`,
-    curl: `curl -X POST https://api.tanvelo.in/v1/chat/completions \\
+    curl: `curl -X POST https://tanvelo-backend-zgyc.onrender.com/v1/chat/completions \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $TANVELO_API_KEY" \\
   -d '{
-    "model": "claude-3-7-sonnet",
-    "fallbacks": ["gpt-4o", "gemini-2.5-pro"],
+    "model": "cerebras/llama3.3-70b",
+    "fallbacks": ["deepseek/deepseek-r1", "openai/gpt-4o"],
     "messages": [{"role": "user", "content": "Ship to production with zero downtime."}],
     "stream": true
   }'`,
@@ -164,6 +178,10 @@ for chunk in stream:
   };
 
   const faqs = [
+    {
+      q: 'How many AI providers and models can I use with Tanvelo?',
+      a: 'Tanvelo supports 147+ AI providers out of the box — spanning frontier clouds (OpenAI, Anthropic Claude, Google Gemini, xAI), wafer-scale fast silicon (Cerebras, Groq, Together AI, Fireworks), enterprise clouds (Azure OpenAI, AWS Bedrock), regional Asian labs (Alibaba Qwen/DashScope, Moonshot Kimi, Zhipu GLM, 01.AI), and self-hosted runners (vLLM, Ollama, LM Studio). Additionally, you can connect ANY custom OpenAI-compatible endpoint with your own base URL and authentication headers.',
+    },
     {
       q: 'Does Tanvelo save my users\' questions or AI answers?',
       a: 'No. Unlike traditional gateways like Portkey and Helicone which log and store prompt bodies and AI completions in their cloud databases by default, Tanvelo strictly enforces Zero Payload Retention by default (LOG_PAYLOADS=false). All token streams pass through transient RAM via Server-Sent Events (SSE) and are immediately discarded. Only operational telemetry (token counts, latency, status code, exact cost) is recorded.',
@@ -196,8 +214,9 @@ for chunk in stream:
             <span>tanvelo</span>
           </Link>
 
-          {/* Cleaned Navigation Bar: Removed Circuit Breaker, Comparison, and Quickstart */}
+          {/* Cleaned Navigation Bar */}
           <nav className="hidden md:flex items-center gap-7 text-xs font-medium text-slate-600">
+            <a href="#providers" className="hover:text-slate-900 transition-colors font-medium">147+ Providers</a>
             <a href="#architecture" className="hover:text-slate-900 transition-colors">Architecture</a>
             <a href="#capabilities" className="hover:text-slate-900 transition-colors">Capabilities</a>
             <a href="#zero-retention" className="hover:text-sky-600 transition-colors flex items-center gap-1.5 font-medium">
@@ -255,6 +274,9 @@ for chunk in stream:
         {mobileMenuOpen && (
           <div className="md:hidden border-b border-slate-200 bg-white px-5 py-4 space-y-3 shadow-lg">
             <div className="space-y-1 text-sm font-medium text-slate-700">
+              <a href="#providers" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg hover:bg-slate-50 font-semibold text-slate-900">
+                147+ AI Providers &amp; Any API
+              </a>
               <a href="#architecture" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg hover:bg-slate-50">
                 Architecture
               </a>
@@ -288,7 +310,7 @@ for chunk in stream:
             {/* Pill Badge */}
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-slate-700 text-xs font-mono mb-6 shadow-2xs">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Zero-Payload Retention • Multi-Provider Gateway</span>
+              <span>Zero-Payload Retention • 147+ AI Providers &amp; Any API</span>
             </div>
 
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-[-0.035em] text-slate-900 leading-[1.08] mb-5">
@@ -298,7 +320,7 @@ for chunk in stream:
             </h1>
 
             <p className="text-slate-600 text-base sm:text-lg leading-relaxed mb-7 max-w-lg mx-auto lg:mx-0">
-              The high-availability LLM API gateway that protects your data. Unified routing across OpenAI, Anthropic, Gemini, DeepSeek, and Groq with sub-180ms failover, atomic spend controls, and zero storage of prompts or AI responses.
+              The high-availability LLM API gateway that protects your data. Unified routing across 147+ AI providers — OpenAI, Anthropic Claude, Google Gemini, Cerebras, Groq, Together AI, DeepSeek, xAI, and custom private endpoints — with sub-180ms failover, atomic spend controls, and zero storage of prompts or AI responses.
             </p>
 
             {/* Quick Install Pill */}
@@ -351,6 +373,8 @@ for chunk in stream:
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 text-xs font-mono text-slate-400">
               <span className="text-emerald-700 font-medium bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Zero Retention by Default</span>
               <span>·</span>
+              <span className="text-sky-700 font-medium bg-sky-50 px-1.5 py-0.5 rounded border border-sky-200">147+ AI Providers</span>
+              <span>·</span>
               <span>Sub-180ms Failover</span>
               <span>·</span>
               <span>Native SSE</span>
@@ -377,7 +401,7 @@ for chunk in stream:
       <section className="py-3.5 bg-slate-50/70 border-b border-slate-100 overflow-hidden" aria-label="Supported Providers">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center gap-6">
           <span className="font-mono text-[11px] uppercase tracking-wider text-slate-400 font-medium shrink-0">
-            Supported Models
+            147+ Supported Models
           </span>
 
           <div className="flex-1 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
@@ -406,8 +430,8 @@ for chunk in stream:
               <div className="text-xs text-slate-500 font-medium mt-1">Automated Failover Latency</div>
             </div>
             <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/50">
-              <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">9+ Providers</div>
-              <div className="text-xs text-slate-500 font-medium mt-1">Unified OpenAI-Compatible API</div>
+              <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">147+ Providers</div>
+              <div className="text-xs text-slate-500 font-medium mt-1">Unified Gateway &amp; Custom Endpoints</div>
             </div>
             <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/50">
               <div className="text-2xl sm:text-3xl font-extrabold text-emerald-600 tracking-tight">100% BYOK</div>
@@ -509,6 +533,190 @@ for chunk in stream:
                 <span>✓ 0% prompt body retention • AES-256-GCM encrypted BYOK</span>
                 <Link href="/privacy" className="underline hover:text-emerald-900 font-semibold">Privacy Spec &rarr;</Link>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 147+ AI PROVIDERS & UNIVERSAL INGRESS */}
+      <section id="providers" className="py-20 md:py-24 border-b border-slate-100 bg-white">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center max-w-2xl mx-auto mb-14">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-50 border border-sky-200 text-sky-700 text-xs font-mono font-medium mb-3">
+              <Boxes className="w-3.5 h-3.5" />
+              <span>UNIVERSAL LLM FEDERATION</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-[-0.03em] text-slate-900 mb-3">
+              147+ AI Providers &amp; Any Custom API
+            </h2>
+            <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
+              Connect to any frontier model, ultra-fast silicon accelerator, regional lab, or private on-prem cluster with zero code changes. Like LiteLLM, Tanvelo standardizes routing across all providers with universal prefix syntax.
+            </p>
+          </div>
+
+          {/* 6 Category Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
+            {/* 1. Fast Silicon */}
+            <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:shadow-xs transition space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-100">
+                  <Cpu className="w-4 h-4" />
+                </div>
+                <span className="font-mono text-[10px] uppercase font-bold text-amber-700 bg-amber-100/70 px-2 py-0.5 rounded">
+                  Up to 2,000 tok/s
+                </span>
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm">Ultra-Fast &amp; Wafer Silicon</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Sub-second reasoning and token generation</p>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Cerebras, Groq (LPUs), SambaNova, Together AI, Fireworks AI, DeepInfra, Lepton AI, Novita.
+              </p>
+              <div className="font-mono text-[11px] text-slate-500 bg-white border border-slate-200 rounded-md p-1.5">
+                model: &quot;cerebras/llama3.3-70b&quot;
+              </div>
+            </div>
+
+            {/* 2. Frontier Cloud */}
+            <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:shadow-xs transition space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center border border-sky-100">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <span className="font-mono text-[10px] uppercase font-bold text-sky-700 bg-sky-100/70 px-2 py-0.5 rounded">
+                  Frontier SOTA
+                </span>
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm">Frontier Reasoning Labs</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Top-tier intelligence and multimodal models</p>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                OpenAI (o1/o3/GPT-4o), Anthropic Claude 3.7, Google Gemini 2.5, xAI Grok, Mistral Large, Cohere.
+              </p>
+              <div className="font-mono text-[11px] text-slate-500 bg-white border border-slate-200 rounded-md p-1.5">
+                model: &quot;anthropic/claude-3-7-sonnet&quot;
+              </div>
+            </div>
+
+            {/* 3. Enterprise Cloud */}
+            <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:shadow-xs transition space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <span className="font-mono text-[10px] uppercase font-bold text-blue-700 bg-blue-100/70 px-2 py-0.5 rounded">
+                  Enterprise SLA
+                </span>
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm">Hyperscale Enterprise Cloud</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Compliant managed deployments</p>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Azure OpenAI, AWS Bedrock Proxy, Cloudflare Workers AI, Perplexity, Voyage AI, Databricks.
+              </p>
+              <div className="font-mono text-[11px] text-slate-500 bg-white border border-slate-200 rounded-md p-1.5">
+                model: &quot;azure/gpt-4o&quot;
+              </div>
+            </div>
+
+            {/* 4. Regional & Asian Labs */}
+            <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:shadow-xs transition space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center border border-purple-100">
+                  <Globe className="w-4 h-4" />
+                </div>
+                <span className="font-mono text-[10px] uppercase font-bold text-purple-700 bg-purple-100/70 px-2 py-0.5 rounded">
+                  Global Reach
+                </span>
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm">Regional &amp; Asian Frontier Labs</h3>
+                <p className="text-xs text-slate-500 mt-0.5">World-class open-weights and multilingual AI</p>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                DeepSeek (R1/V3), Alibaba Qwen (DashScope), Moonshot Kimi, Zhipu GLM, 01.AI (Yi), Upstage Solar.
+              </p>
+              <div className="font-mono text-[11px] text-slate-500 bg-white border border-slate-200 rounded-md p-1.5">
+                model: &quot;deepseek/deepseek-r1&quot;
+              </div>
+            </div>
+
+            {/* 5. Self-Hosted & Local */}
+            <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:shadow-xs transition space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
+                  <Server className="w-4 h-4" />
+                </div>
+                <span className="font-mono text-[10px] uppercase font-bold text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded">
+                  Air-Gapped &amp; Local
+                </span>
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm">Self-Hosted &amp; Local Inference</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Zero cloud egress costs &amp; internal hosting</p>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                vLLM, Ollama, LM Studio, Text Generation Inference (TGI), LocalAI, llama.cpp, Aphrodite.
+              </p>
+              <div className="font-mono text-[11px] text-slate-500 bg-white border border-slate-200 rounded-md p-1.5">
+                model: &quot;vllm/meta-llama/Llama-3.1-8B&quot;
+              </div>
+            </div>
+
+            {/* 6. Any Custom API */}
+            <div className="p-5 rounded-2xl border border-slate-900 bg-slate-950 text-white shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-8 h-8 rounded-lg bg-sky-950 text-sky-400 flex items-center justify-center border border-sky-800">
+                  <Zap className="w-4 h-4" />
+                </div>
+                <span className="font-mono text-[10px] uppercase font-bold text-sky-400 bg-sky-900/60 px-2 py-0.5 rounded border border-sky-700/50">
+                  Universal BYOK
+                </span>
+              </div>
+              <div>
+                <h3 className="font-bold text-white text-sm">Universal &quot;Any API&quot; Ingress</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Connect ANY OpenAI-compatible endpoint</p>
+              </div>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Private corporate clusters, custom fine-tuned weights, or internal gateways. Supports Bearer, Azure api-key, custom headers, or unauthenticated runners.
+              </p>
+              <div className="font-mono text-[11px] text-sky-300 bg-slate-900 border border-slate-800 rounded-md p-1.5">
+                model: &quot;my-cluster/internal-llama&quot;
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Banner with Prefix Routing & Links */}
+          <div className="p-6 rounded-2xl border border-slate-200 bg-slate-50/80 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="space-y-1 text-center md:text-left">
+              <div className="text-xs font-mono uppercase text-sky-600 font-bold tracking-wider">
+                Universal Prefix Syntax
+              </div>
+              <div className="text-sm font-semibold text-slate-900">
+                Call any model using <code className="font-mono bg-white px-1.5 py-0.5 rounded border border-slate-200 text-slate-800">&lt;provider&gt;/&lt;model&gt;</code> notation
+              </div>
+              <p className="text-xs text-slate-500 max-w-xl">
+                Automatic key injection, URL resolution, and sub-180ms failover across providers without modifying your application client.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 shrink-0">
+              <Link
+                href="/docs#providers-catalog"
+                className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-white border border-slate-200 text-xs font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition shadow-2xs"
+              >
+                Docs &amp; Prefix Syntax
+              </Link>
+              <Link
+                href="/overview"
+                className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-slate-900 hover:bg-black text-xs font-medium text-white transition shadow-xs"
+              >
+                <span>Connect Providers in Dashboard</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
           </div>
         </div>
@@ -975,6 +1183,7 @@ for chunk in stream:
                 Platform
               </div>
               <ul className="space-y-2 text-xs text-slate-400">
+                <li><a href="#providers" className="hover:text-white transition font-medium text-slate-300">147+ AI Providers</a></li>
                 <li><a href="#architecture" className="hover:text-white transition">Architecture</a></li>
                 <li><a href="#capabilities" className="hover:text-white transition">Capabilities</a></li>
                 <li><a href="#zero-retention" className="hover:text-white transition">Zero Retention</a></li>

@@ -237,7 +237,7 @@ def verify_tanvelo_webhook(payload_raw: bytes, signature_header: str, secret: st
 
           <div className="flex flex-wrap items-center gap-3 pt-1 text-xs font-mono">
             <div className="bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-md text-slate-700">
-              <span className="text-sky-600 font-semibold">TS:</span> npm i tanvelo
+              <span className="text-sky-600 font-semibold">TS:</span> npm install tanvelo
             </div>
             <div className="bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-md text-slate-700">
               <span className="text-emerald-600 font-semibold">Python:</span> pip install tanvelo

@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import { LandingPage } from '@/components/landing/LandingPage';
 
 export const metadata: Metadata = {
-  title: 'Tanvelo — Universal LLM Federation Gateway & High-Availability AI Proxy',
+  title: 'Tanvelo — Universal LLM Gateway for 147+ AI Providers & Custom APIs',
   description:
-    'Production-grade LLM gateway with sub-180ms automated failover, atomic Redis rate limits, zero prompt retention, and official TypeScript & Python SDKs.',
+    'Production-grade LLM gateway supporting 147+ AI providers and custom OpenAI-compatible endpoints with sub-180ms automated failover, atomic Redis rate limits, zero prompt retention, and official TypeScript & Python SDKs.',
   alternates: {
     canonical: 'https://tanvelo.in',
   },
@@ -14,6 +14,14 @@ const faqSchema = {
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
   mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'How many AI providers does Tanvelo support?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Tanvelo supports 147+ AI providers out of the box — including OpenAI, Anthropic Claude, Google Gemini, Cerebras, Groq, Together AI, DeepSeek, xAI (Grok), Mistral, AWS Bedrock, Azure OpenAI, Ollama, vLLM, and Alibaba Qwen — plus ANY custom or on-premise OpenAI-compatible API endpoint with custom base URLs and authentication headers.',
+      },
+    },
     {
       '@type': 'Question',
       name: 'Does Tanvelo save my users\' questions or AI answers?',
