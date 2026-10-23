@@ -53,8 +53,8 @@ const tanvelo = new Tanvelo({
 
 async function main() {
   const response = await tanvelo.chat.completions.create({
-    model: "claude-3-5-sonnet",
-    fallbacks: ["gemini-1.5-pro", "deepseek-chat"],
+    model: "your-model",
+    fallbacks: ["your-fallback-model"],
     messages: [
       { role: "system", content: "You are a concise production AI engineer." },
       { role: "user", content: "Explain deterministic circuit breakers." }
@@ -74,8 +74,8 @@ main();`;
 client = Tanvelo(api_key="tv_live_...")
 
 response = client.chat.completions.create(
-    model="claude-3-5-sonnet",
-    fallbacks=["gemini-1.5-pro", "deepseek-chat"],
+    model="your-model",
+    fallbacks=["your-fallback-model"],
     messages=[
         {"role": "system", "content": "You are a concise production AI engineer."},
         {"role": "user", "content": "Explain deterministic circuit breakers."}
@@ -90,8 +90,8 @@ print("Latency:", response.headers.get("x-tanvelo-latency-ms"), "ms")`;
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer tv_live_..." \\
   -d '{
-    "model": "claude-3-5-sonnet",
-    "fallbacks": ["gemini-1.5-pro", "deepseek-chat"],
+    "model": "your-model",
+    "fallbacks": ["your-fallback-model"],
     "messages": [
       {"role": "user", "content": "Explain deterministic circuit breakers."}
     ],
@@ -103,8 +103,8 @@ print("Latency:", response.headers.get("x-tanvelo-latency-ms"), "ms")`;
 const tanvelo = new Tanvelo({ apiKey: process.env.TANVELO_API_KEY });
 
 const stream = await tanvelo.chat.completions.create({
-  model: "claude-3-5-sonnet",
-  fallbacks: ["gemini-1.5-pro"],
+  model: "your-model",
+  fallbacks: ["your-fallback-model"],
   messages: [{ role: "user", content: "Stream a high-availability checklist." }],
   stream: true,
 });
@@ -118,8 +118,8 @@ for await (const chunk of stream) {
 client = Tanvelo()
 
 stream = client.chat.completions.create(
-    model="gemini-1.5-flash",
-    fallbacks=["claude-3-haiku", "gpt-4o-mini"],
+    model="your-model",
+    fallbacks=["your-fallback-model"],
     messages=[{"role": "user", "content": "Stream a high-availability checklist."}],
     stream=True
 )
@@ -304,7 +304,7 @@ def verify_tanvelo_webhook(payload_raw: bytes, signature_header: str, secret: st
                   <Shield className="w-4 h-4 text-purple-600 mb-1" />
                   <h3 className="font-semibold text-slate-900 text-xs">Zero Retention</h3>
                   <p className="text-[11px] text-slate-500 leading-normal">
-                    Prompts and model outputs stream in-flight and are never stored on disk. Only cryptographic telemetry is logged.
+                    Prompts and provider outputs stream in-flight and are never stored on disk. Only cryptographic telemetry is logged.
                   </p>
                 </div>
               </div>
@@ -451,7 +451,7 @@ def verify_tanvelo_webhook(payload_raw: bytes, signature_header: str, secret: st
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg font-mono text-[11px] text-slate-700 space-y-0.5">
                     <div>Content-Type: application/json</div>
                     <div>Authorization: Bearer tv_live_...</div>
-                    <div>X-Tanvelo-Fallbacks: claude-3-5-sonnet,gemini-1.5-pro</div>
+                    <div>X-Tanvelo-Fallbacks: your-fallback-model</div>
                   </div>
                 </div>
 
@@ -470,7 +470,7 @@ def verify_tanvelo_webhook(payload_raw: bytes, signature_header: str, secret: st
                         <td className="p-3 font-mono font-medium text-sky-700">model</td>
                         <td className="p-3 font-mono text-slate-500">string</td>
                         <td className="p-3 font-semibold text-rose-600">Yes</td>
-                        <td className="p-3">Primary model identifier (e.g. claude-3-5-sonnet, gemini-1.5-pro)</td>
+                        <td className="p-3">Primary model identifier (e.g. &quot;your-model&quot;)</td>
                       </tr>
                       <tr>
                         <td className="p-3 font-mono font-medium text-sky-700">messages</td>
@@ -482,7 +482,7 @@ def verify_tanvelo_webhook(payload_raw: bytes, signature_header: str, secret: st
                         <td className="p-3 font-mono font-medium text-sky-700">fallbacks</td>
                         <td className="p-3 font-mono text-slate-500">string[]</td>
                         <td className="p-3 text-slate-400">No</td>
-                        <td className="p-3">Ordered backup models to execute on failure</td>
+                        <td className="p-3">Ordered backup models to execute on failure (e.g. [&quot;your-fallback-model&quot;])</td>
                       </tr>
                       <tr>
                         <td className="p-3 font-mono font-medium text-sky-700">stream</td>

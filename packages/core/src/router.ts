@@ -76,18 +76,31 @@ function parseFallbackTarget(rawTarget: string): FallbackTarget {
   }
   let inferredProvider = 'openai';
   const lower = trimmed.toLowerCase();
-  if (lower.startsWith('claude')) {
+  let defaultModel = trimmed;
+  if (lower.startsWith('claude') || lower === 'anthropic') {
     inferredProvider = 'anthropic';
-  } else if (lower.startsWith('gemini')) {
+    if (lower === 'anthropic') defaultModel = 'claude-3-5-sonnet-20241022';
+  } else if (lower.startsWith('gemini') || lower === 'google') {
     inferredProvider = 'gemini';
+    if (lower === 'gemini' || lower === 'google') defaultModel = 'gemini-1.5-pro';
   } else if (lower.startsWith('groq') || lower.startsWith('llama')) {
     inferredProvider = 'groq';
+    if (lower === 'groq') defaultModel = 'llama-3.3-70b-versatile';
   } else if (lower.startsWith('deepseek')) {
     inferredProvider = 'deepseek';
+    if (lower === 'deepseek') defaultModel = 'deepseek-chat';
+  } else if (lower.startsWith('mistral')) {
+    inferredProvider = 'mistral';
+    if (lower === 'mistral') defaultModel = 'mistral-large-latest';
+  } else if (lower.startsWith('openai') || lower.startsWith('gpt')) {
+    inferredProvider = 'openai';
+    if (lower === 'openai') defaultModel = 'gpt-4o';
+  } else {
+    inferredProvider = lower;
   }
   return {
     provider: inferredProvider,
-    model: trimmed,
+    model: defaultModel,
   };
 }
 
@@ -131,15 +144,42 @@ export class RoutingEngine {
     }
 
     if (!matched) {
-      // Default provider inference by model name if no rule matches
+      // Default provider inference by provider or model name if no rule matches
+      const trimmed = requestedModel.trim();
       let inferredProvider = 'openai';
-      if (requestedModel.toLowerCase().startsWith('claude')) {
-        inferredProvider = 'anthropic';
-      } else if (requestedModel.toLowerCase().startsWith('gemini')) {
-        inferredProvider = 'gemini';
+      let resolvedModel = requestedModel;
+
+      if (trimmed.includes('/')) {
+        const slashIdx = trimmed.indexOf('/');
+        inferredProvider = trimmed.substring(0, slashIdx).toLowerCase();
+        resolvedModel = trimmed.substring(slashIdx + 1);
+      } else {
+        const lower = trimmed.toLowerCase();
+        if (lower.startsWith('claude') || lower === 'anthropic') {
+          inferredProvider = 'anthropic';
+          resolvedModel = lower === 'anthropic' ? 'claude-3-5-sonnet-20241022' : requestedModel;
+        } else if (lower.startsWith('gemini') || lower === 'google') {
+          inferredProvider = 'gemini';
+          resolvedModel = (lower === 'gemini' || lower === 'google') ? 'gemini-1.5-pro' : requestedModel;
+        } else if (lower.startsWith('openai') || lower.startsWith('gpt')) {
+          inferredProvider = 'openai';
+          resolvedModel = lower === 'openai' ? 'gpt-4o' : requestedModel;
+        } else if (lower.startsWith('deepseek')) {
+          inferredProvider = 'deepseek';
+          resolvedModel = lower === 'deepseek' ? 'deepseek-chat' : requestedModel;
+        } else if (lower.startsWith('groq') || lower.startsWith('llama')) {
+          inferredProvider = 'groq';
+          resolvedModel = lower === 'groq' ? 'llama-3.3-70b-versatile' : requestedModel;
+        } else if (lower.startsWith('mistral')) {
+          inferredProvider = 'mistral';
+          resolvedModel = lower === 'mistral' ? 'mistral-large-latest' : requestedModel;
+        } else {
+          inferredProvider = lower;
+          resolvedModel = requestedModel;
+        }
       }
       resolvedPrimaryProvider = inferredProvider;
-      resolvedPrimaryModel = requestedModel;
+      resolvedPrimaryModel = resolvedModel;
     }
 
     // Support X-Tanvelo-Fallbacks ordered fallback chain

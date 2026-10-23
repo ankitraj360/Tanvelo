@@ -97,8 +97,9 @@ class CompletionsResource:
 
     def create(
         self,
-        model: str,
         messages: List[Union[Dict[str, str], ChatMessage]],
+        provider: Optional[str] = None,
+        model: Optional[str] = None,
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
         stream: bool = False,
@@ -107,11 +108,13 @@ class CompletionsResource:
     ) -> Union[ChatCompletion, Iterator[ChatCompletionChunk]]:
         """
         Create a chat completion through Tanvelo Gateway.
-        Route to any supported model: 'gpt-4o', 'claude-3-5-sonnet', 'gemini-1.5-pro',
-        'deepseek/deepseek-chat', 'ollama/llama3.1', etc.
+        Route to any supported provider: 'anthropic', 'openai', 'google',
+        'deepseek', 'groq', 'mistral', 'ollama', etc.
         """
+        target = provider or model or "openai"
         payload: Dict[str, Any] = {
-            "model": model,
+            "provider": target,
+            "model": target,
             "messages": [
                 m.to_dict() if isinstance(m, ChatMessage) else m
                 for m in messages
@@ -232,7 +235,7 @@ class Tanvelo:
     Usage:
         client = Tanvelo(api_key="tv_live_...", base_url="https://tanvelo-backend-zgyc.onrender.com/v1")
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model="your-model",
             messages=[{"role": "user", "content": "Hello!"}]
         )
         print(response.content)

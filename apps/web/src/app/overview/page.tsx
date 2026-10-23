@@ -289,7 +289,7 @@ export default function OverviewPage() {
               </Badge>
             </div>
             <CardDescription>
-              Configured upstream model providers
+              Configured upstream providers
             </CardDescription>
           </div>
           <Link
@@ -309,7 +309,7 @@ export default function OverviewPage() {
                 href="/providers"
                 className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline"
               >
-                Connect OpenAI, Anthropic, Gemini, Groq, or local models &rarr;
+                Connect OpenAI, Anthropic, Google Gemini, Groq, or custom providers &rarr;
               </Link>
             </div>
           ) : (
@@ -399,7 +399,7 @@ export default function OverviewPage() {
                       </td>
                       <td className="py-2.5 px-3 text-slate-800">
                         <span className="font-semibold capitalize text-slate-900">{req.provider}</span>
-                        <span className="text-slate-500 ml-1.5 font-mono text-[11px]">({req.model})</span>
+                        {req.model && <span className="text-slate-500 ml-1.5 font-mono text-[11px]">({req.model})</span>}
                       </td>
                       <td className="py-2.5 px-3">
                         <Badge

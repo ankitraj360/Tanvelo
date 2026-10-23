@@ -56,7 +56,7 @@ const PRESETS: ProviderPreset[] = [
     providerName: 'openrouter',
     baseUrl: 'https://openrouter.ai/api/v1',
     placeholderKey: 'sk-or-v1-...',
-    desc: 'Access 200+ frontier models through unified API',
+    desc: 'Unified multi-provider aggregation network',
     category: 'unified',
     tag: 'Unified',
   },
@@ -66,7 +66,7 @@ const PRESETS: ProviderPreset[] = [
     providerName: 'gemini',
     baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
     placeholderKey: 'AIzaSy...',
-    desc: 'Gemini 2.5 Flash, 2.5 Pro native models',
+    desc: 'Google multimodal intelligence and frontier reasoning provider',
     category: 'cloud',
     tag: 'Cloud Frontier',
   },
@@ -76,7 +76,7 @@ const PRESETS: ProviderPreset[] = [
     providerName: 'openai',
     baseUrl: 'https://api.openai.com/v1',
     placeholderKey: 'sk-proj-...',
-    desc: 'GPT-4o, GPT-4o Mini, o1, o3-mini',
+    desc: 'Industry-standard frontier AI provider with high-concurrency endpoints',
     category: 'cloud',
     tag: 'Cloud Frontier',
   },
@@ -86,7 +86,7 @@ const PRESETS: ProviderPreset[] = [
     providerName: 'claude',
     baseUrl: 'https://api.anthropic.com/v1',
     placeholderKey: 'sk-ant-api03-...',
-    desc: 'Claude 3.5 Sonnet, Haiku reasoning models',
+    desc: 'Frontier AI reasoning and coding provider with safety-first inference',
     category: 'cloud',
     tag: 'Cloud Frontier',
   },
@@ -96,7 +96,7 @@ const PRESETS: ProviderPreset[] = [
     providerName: 'deepseek',
     baseUrl: 'https://api.deepseek.com',
     placeholderKey: 'sk-...',
-    desc: 'DeepSeek-V3, DeepSeek-R1',
+    desc: 'Advanced reasoning and high-efficiency intelligence provider',
     category: 'cloud',
     tag: 'Reasoning',
   },
@@ -106,7 +106,7 @@ const PRESETS: ProviderPreset[] = [
     providerName: 'groq',
     baseUrl: 'https://api.groq.com/openai/v1',
     placeholderKey: 'gsk_...',
-    desc: 'High-speed inference for Llama 3 & Mixtral',
+    desc: 'Ultra-low latency inference provider powered by LPU architecture',
     category: 'cloud',
     tag: 'Ultra-Fast',
   },
@@ -116,7 +116,7 @@ const PRESETS: ProviderPreset[] = [
     providerName: 'mistral',
     baseUrl: 'https://api.mistral.ai/v1',
     placeholderKey: '...',
-    desc: 'Mistral Large, Codestral, Pixtral',
+    desc: 'Frontier European multilingual intelligence provider',
     category: 'cloud',
     tag: 'Frontier',
   },
@@ -126,7 +126,7 @@ const PRESETS: ProviderPreset[] = [
     providerName: 'ollama',
     baseUrl: 'http://localhost:11434/v1',
     placeholderKey: 'ollama (or local token)',
-    desc: 'Run Llama 3, DeepSeek R1 locally',
+    desc: 'Self-hosted local inference provider on your private infrastructure',
     category: 'local',
     tag: 'Self-Hosted',
   },
@@ -136,7 +136,7 @@ const PRESETS: ProviderPreset[] = [
     providerName: 'vllm',
     baseUrl: 'http://localhost:8000/v1',
     placeholderKey: 'token or local-key',
-    desc: 'High-throughput local inference engine',
+    desc: 'High-throughput self-hosted inference engine provider',
     category: 'local',
     tag: 'Self-Hosted',
   },
@@ -643,7 +643,7 @@ export default function ProvidersPage() {
                 <div className="space-y-1">
                   <h3 className="text-sm font-semibold text-slate-900">No Providers Connected</h3>
                   <p className="text-xs text-slate-500">
-                    Connect OpenAI, Anthropic, Gemini, Groq, or local inference models to start routing.
+                    Connect OpenAI, Anthropic, Google Gemini, Groq, or custom providers to start routing.
                   </p>
                 </div>
                 <div className="pt-2">
@@ -974,7 +974,7 @@ export default function ProvidersPage() {
   -H "Authorization: Bearer $TANVELO_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
-    "model": "${selectedConnection.provider}/model-name",
+    "model": "your-model",
     "messages": [{"role": "user", "content": "Hello Tanvelo Gateway!"}]
   }'`;
                           copyToClipboard(code, 'snippet');
@@ -998,7 +998,7 @@ export default function ProvidersPage() {
   -H "Authorization: Bearer $TANVELO_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
-    "model": "${selectedConnection.provider}/model-name",
+    "model": "your-model",
     "messages": [
       { "role": "user", "content": "Hello Tanvelo!" }
     ]
@@ -1039,7 +1039,7 @@ export default function ProvidersPage() {
           resetForm();
         }}
         title={isEditing ? `Edit ${formName || 'Provider'}` : 'Connect Provider'}
-        description="Configure your upstream AI model provider credentials."
+        description="Configure your upstream AI provider credentials."
         maxWidth="lg"
       >
         <form onSubmit={handleModalSave} className="space-y-4">
@@ -1176,7 +1176,7 @@ export default function ProvidersPage() {
             <input
               type={showApiKey ? 'text' : 'password'}
               required
-              placeholder="Enter provider API key (or 'ollama' / 'local' for unauthenticated models)"
+              placeholder="Enter provider API key (or 'ollama' / 'local' for unauthenticated local endpoints)"
               value={formApiKey}
               onChange={(e) => setFormApiKey(e.target.value)}
               className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-xs"

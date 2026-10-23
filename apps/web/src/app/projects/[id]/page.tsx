@@ -122,12 +122,12 @@ export default function ProjectDetailsPage() {
               <span>{new Date(project.createdAt).toLocaleDateString()}</span>
             </div>
             <div className="flex justify-between py-1 border-b border-slate-200 text-slate-700">
-              <span className="text-slate-500">Configured Models</span>
-              <span>{project.modelConfigs?.length || 0} models</span>
-            </div>
-            <div className="flex justify-between py-1 text-slate-700">
               <span className="text-slate-500">Providers Assigned</span>
               <span>{project.providerConnections?.length || 0} providers</span>
+            </div>
+            <div className="flex justify-between py-1 text-slate-700">
+              <span className="text-slate-500">Configured Endpoints</span>
+              <span>{project.modelConfigs?.length || 0} active</span>
             </div>
           </CardContent>
         </Card>

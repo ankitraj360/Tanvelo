@@ -121,7 +121,7 @@ export default function ErrorsPage() {
                       </td>
                       <td className="py-3 text-slate-800 capitalize">
                         {err.provider}{' '}
-                        <span className="text-slate-500 font-mono text-[11px]">({err.model})</span>
+                        {err.model && <span className="text-slate-500 font-mono text-[11px]">({err.model})</span>}
                       </td>
                       <td className="py-3 font-mono text-slate-700">{err.statusCode}</td>
                       <td className="py-3 font-mono text-slate-700">{formatLatency(err.totalLatencyMs)}</td>

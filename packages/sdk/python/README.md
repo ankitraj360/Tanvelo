@@ -20,9 +20,9 @@ client = Tanvelo(
 
 # Chat completion with automatic routing and fallbacks
 response = client.chat.completions.create(
-    model="gpt-4o",
+    model="your-model",
     messages=[{"role": "user", "content": "Hello Tanvelo!"}],
-    fallbacks=["claude-3-5-sonnet", "gemini-1.5-pro"]
+    fallbacks=["your-fallback-model"]
 )
 
 print(response.content)

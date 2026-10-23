@@ -35,11 +35,16 @@ export interface ChatMessage {
 
 export interface ChatCompletionCreateParams {
   /**
-   * Model identifier or provider prefixed string.
-   * Examples: 'gpt-4o', 'claude-3-5-sonnet', 'gemini-1.5-pro',
-   * 'openai/gpt-4o', 'anthropic/claude-3-5-sonnet', 'deepseek/deepseek-chat', 'ollama/llama3.1'
+   * Target upstream provider.
+   * Examples: 'anthropic', 'openai', 'google', 'deepseek', 'groq', 'mistral'
    */
-  model: string;
+  provider?: string;
+
+  /**
+   * Target provider or model identifier.
+   * Examples: 'anthropic', 'openai', 'google', 'deepseek', 'groq'
+   */
+  model?: string;
 
   /**
    * Array of chat messages
@@ -72,8 +77,8 @@ export interface ChatCompletionCreateParams {
   stop?: string | string[];
 
   /**
-   * Optional ordered list of fallback models or providers to try if the primary fails.
-   * e.g. ['claude-3-5-sonnet', 'gemini-1.5-pro']
+   * Optional ordered list of fallback providers to try if the primary fails.
+   * e.g. ['google', 'deepseek', 'openai']
    */
   fallbacks?: string[];
 

@@ -35,9 +35,9 @@ export default function RoutingPage() {
   const [isOpen, setIsOpen] = useState(false);
   const [pattern, setPattern] = useState('*');
   const [primaryProvider, setPrimaryProvider] = useState('openai');
-  const [primaryModel, setPrimaryModel] = useState('gpt-4o');
+  const [primaryModel, setPrimaryModel] = useState('your-model');
   const [secondaryProvider, setSecondaryProvider] = useState('anthropic');
-  const [secondaryModel, setSecondaryModel] = useState('claude-3-5-sonnet-20241022');
+  const [secondaryModel, setSecondaryModel] = useState('your-fallback-model');
   const [timeoutMs, setTimeoutMs] = useState('20000');
   const [maxRetries, setMaxRetries] = useState('2');
   const [submitting, setSubmitting] = useState(false);
@@ -133,7 +133,7 @@ export default function RoutingPage() {
         <CardContent>
           {rules.length === 0 ? (
             <div className="py-8 text-center text-slate-500 text-xs">
-              No custom routing rules for this environment. Default model name matching applies.
+              No custom routing rules for this environment. Default model matching applies.
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -158,7 +158,9 @@ export default function RoutingPage() {
                         <div className="font-semibold text-slate-900 capitalize">
                           {rule.primaryProvider}
                         </div>
-                        <div className="text-[11px] font-mono text-slate-500">{rule.primaryModel}</div>
+                        {rule.primaryModel && (
+                          <div className="text-[11px] font-mono text-slate-500">{rule.primaryModel}</div>
+                        )}
                       </td>
                       <td className="py-3 px-3">
                         {rule.secondaryProvider ? (
@@ -166,9 +168,11 @@ export default function RoutingPage() {
                             <div className="font-semibold text-slate-900 capitalize">
                               {rule.secondaryProvider}
                             </div>
-                            <div className="text-[11px] font-mono text-slate-500">
-                              {rule.secondaryModel}
-                            </div>
+                            {rule.secondaryModel && (
+                              <div className="text-[11px] font-mono text-slate-500">
+                                {rule.secondaryModel}
+                              </div>
+                            )}
                           </>
                         ) : (
                           <span className="text-slate-400 font-mono">None</span>
@@ -207,12 +211,12 @@ export default function RoutingPage() {
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
         title="Create Routing Rule"
-        description="Route models matching a specific name or wildcard with automated failover."
+        description="Route models matching a specific pattern with automated failover."
       >
         <form onSubmit={handleCreate} className="space-y-4">
           <div>
             <label className="block text-xs font-medium text-slate-700 mb-1">
-              Model Pattern (e.g. *, gpt-*, claude-*)
+              Model Pattern (e.g. *, your-model, custom-*)
             </label>
             <input
               type="text"

@@ -140,7 +140,7 @@ export default function RequestInspectorPage() {
             <div className="text-xl font-bold text-slate-900 mt-1 font-mono">
               {formatCurrency(request.estimatedCost)}
             </div>
-            <p className="text-[10px] text-slate-500 mt-0.5">Calculated from model token rates</p>
+            <p className="text-[10px] text-slate-500 mt-0.5">Calculated from provider token rates</p>
           </CardContent>
         </Card>
 
@@ -148,7 +148,7 @@ export default function RequestInspectorPage() {
           <CardContent className="p-4">
             <span className="text-[11px] text-slate-500 block font-medium">Routing Target</span>
             <div className="text-xl font-bold text-slate-900 mt-1 capitalize">{request.provider}</div>
-            <p className="text-[10px] font-mono text-slate-500 mt-0.5">{request.model}</p>
+            {request.model && <p className="text-[10px] font-mono text-slate-500 mt-0.5">{request.model}</p>}
           </CardContent>
         </Card>
       </div>
@@ -191,7 +191,7 @@ export default function RequestInspectorPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-slate-800 capitalize">{att.provider}</span>
-                        <span className="font-mono text-[11px] text-slate-500">{att.model}</span>
+                        {att.model && <span className="font-mono text-[11px] text-slate-500">{att.model}</span>}
                         <Badge variant={att.isSuccess ? 'success' : 'destructive'}>
                           HTTP {att.statusCode}
                         </Badge>

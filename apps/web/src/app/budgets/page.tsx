@@ -175,7 +175,7 @@ export default function BudgetsPage() {
             <div>
               <CardTitle>Current Spend vs Limit</CardTitle>
               <CardDescription>
-                Calculated from actual completed request token usage and model pricing
+                Calculated from actual completed request token usage and provider pricing
               </CardDescription>
             </div>
             {budget?.hardLimitEnabled ? (

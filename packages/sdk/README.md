@@ -30,9 +30,9 @@ const tanvelo = new Tanvelo({
 });
 
 async function main() {
-  // Call any provider by model name or provider prefix
+  // Call any model through Tanvelo
   const response = await tanvelo.chat.completions.create({
-    model: 'gpt-4o', // or 'claude-3-5-sonnet', 'gemini-1.5-pro', 'deepseek/deepseek-chat'
+    model: 'your-model',
     messages: [
       { role: 'system', content: 'You are an expert AI assistant.' },
       { role: 'user', content: 'Write a quick introduction to Tanvelo.' },
@@ -52,7 +52,7 @@ main();
 
 ```typescript
 const stream = await tanvelo.chat.completions.create({
-  model: 'claude-3-5-sonnet',
+  model: 'your-model',
   messages: [{ role: 'user', content: 'Explain quantum computing in 3 sentences.' }],
   stream: true,
 });
@@ -68,9 +68,9 @@ If your primary model hits a rate limit or outage, Tanvelo can failover instantl
 
 ```typescript
 const response = await tanvelo.chat.completions.create({
-  model: 'gpt-4o',
-  fallbacks: ['claude-3-5-sonnet', 'gemini-1.5-pro'],
-  messages: [{ role: 'user', content: 'Summarize today\'s financial news.' }],
+  model: 'your-model',
+  fallbacks: ['your-fallback-model'],
+  messages: [{ role: 'user', content: "Summarize today's financial news." }],
 });
 ```
 
@@ -101,7 +101,7 @@ client = Tanvelo(
 
 # 1. Non-streaming call
 response = client.chat.completions.create(
-    model="gpt-4o",  # or "claude-3-5-sonnet", "gemini-1.5-pro", "deepseek-chat"
+    model="your-model",
     messages=[
         {"role": "user", "content": "Hello Tanvelo!"}
     ]
@@ -112,7 +112,7 @@ print("Tokens used:", response.usage.total_tokens)
 
 # 2. Streaming response
 for chunk in client.chat.completions.create(
-    model="claude-3-5-sonnet",
+    model="your-model",
     messages=[{"role": "user", "content": "Stream a short haiku."}],
     stream=True
 ):
@@ -120,8 +120,8 @@ for chunk in client.chat.completions.create(
 
 # 3. Model fallbacks
 response = client.chat.completions.create(
-    model="gpt-4o",
-    fallbacks=["claude-3-5-sonnet", "gemini-1.5-pro"],
+    model="your-model",
+    fallbacks=["your-fallback-model"],
     messages=[{"role": "user", "content": "High availability request."}]
 )
 ```
@@ -130,17 +130,17 @@ response = client.chat.completions.create(
 
 ## Supported Providers
 
-| Provider | Model Examples |
-|---|---|
-| **OpenAI** | `gpt-4o`, `gpt-4o-mini`, `o1`, `o3-mini` |
-| **Anthropic Claude** | `claude-3-5-sonnet`, `claude-3-5-haiku`, `claude-3-opus` |
-| **Google Gemini** | `gemini-2.0-flash`, `gemini-1.5-pro`, `gemini-1.5-flash` |
-| **DeepSeek** | `deepseek-chat`, `deepseek-reasoner` |
-| **Groq** | `llama-3.3-70b-versatile`, `mixtral-8x7b-32768` |
-| **Mistral AI** | `mistral-large-latest`, `codestral-latest` |
-| **OpenRouter** | `openrouter/anthropic/claude-3.5-sonnet` |
-| **Ollama / Local** | `ollama/llama3.1`, `ollama/mistral`, `ollama/qwen2.5-coder` |
-| **Custom / vLLM** | Any OpenAI-compatible self-hosted inference server |
+| Provider | Integration Type | Description |
+|---|---|---|
+| **OpenAI** | Native / Direct | Frontier reasoning and high-concurrency endpoints |
+| **Anthropic** | Native / Direct | Safety-first reasoning and coding models |
+| **Google Gemini** | Native / Direct | High-throughput multimodal intelligence |
+| **DeepSeek** | OpenAI-Compatible | Advanced reasoning and high-efficiency intelligence |
+| **Groq** | OpenAI-Compatible | Ultra-low latency LPU-accelerated inference |
+| **Mistral AI** | OpenAI-Compatible | Frontier European multilingual intelligence |
+| **OpenRouter** | OpenAI-Compatible | Aggregated multi-provider gateway network |
+| **Ollama / Local** | OpenAI-Compatible | Self-hosted local inference on private infrastructure |
+| **Custom / vLLM** | OpenAI-Compatible | Any OpenAI-compatible self-hosted server |
 
 ---
 

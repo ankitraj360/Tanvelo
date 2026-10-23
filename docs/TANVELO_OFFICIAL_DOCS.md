@@ -90,7 +90,7 @@ const tanvelo = new Tanvelo({
 
 async function main() {
   const response = await tanvelo.chat.completions.create({
-    model: 'claude-3-5-sonnet',
+    model: 'your-model',
     messages: [
       { role: 'system', content: 'You are a concise production AI engineer.' },
       { role: 'user', content: 'Explain deterministic circuit breakers in distributed systems.' },
@@ -113,7 +113,7 @@ main();
 
 ### Real-Time Streaming with Multi-Provider Fallbacks
 
-If the primary provider hits a 429 rate limit or unexpected 5xx outage, Tanvelo immediately and transparently fails over to your ordered fallback targets:
+If the primary model hits a 429 rate limit or unexpected 5xx outage, Tanvelo immediately and transparently fails over to your ordered fallback targets:
 
 ```typescript
 import { Tanvelo } from 'tanvelo';
@@ -124,8 +124,8 @@ const tanvelo = new Tanvelo({
 
 async function streamResponse() {
   const stream = await tanvelo.chat.completions.create({
-    model: 'gpt-4o',
-    fallbacks: ['claude-3-5-sonnet', 'gemini-1.5-pro', 'deepseek-chat'],
+    model: 'your-model',
+    fallbacks: ['your-fallback-model'],
     messages: [
       { role: 'user', content: 'Write a comprehensive high-availability checklist.' },
     ],
@@ -173,8 +173,8 @@ from tanvelo import Tanvelo
 client = Tanvelo(api_key="tv_live_...")
 
 response = client.chat.completions.create(
-    model="claude-3-5-sonnet",
-    fallbacks=["gemini-1.5-pro", "deepseek-chat"],
+    model="your-model",
+    fallbacks=["your-fallback-model"],
     messages=[
         {"role": "system", "content": "You are a senior systems architect."},
         {"role": "user", "content": "How do distributed rate limiters handle clock drift?"}
@@ -199,8 +199,8 @@ from tanvelo import Tanvelo
 client = Tanvelo()
 
 stream = client.chat.completions.create(
-    model="gemini-1.5-flash",
-    fallbacks=["claude-3-haiku", "gpt-4o-mini"],
+    model="your-model",
+    fallbacks=["your-fallback-model"],
     messages=[{"role": "user", "content": "List 5 principles of distributed microservices."}],
     stream=True
 )
@@ -219,7 +219,7 @@ client = Tanvelo()
 
 try:
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model="your-model",
         messages=[{"role": "user", "content": "Test"}]
     )
 except TanveloError as e:
@@ -246,18 +246,18 @@ POST https://tanvelo-backend-zgyc.onrender.com/v1/chat/completions
 |---|---|---|
 | `Authorization` | string | `Bearer <YOUR_TANVELO_API_KEY>` (e.g. `tv_live_...`) |
 | `Content-Type` | string | `application/json` |
-| `X-Tanvelo-Fallbacks` | string | *(Optional)* Comma-separated list of fallback models (e.g., `claude-3-5-sonnet,gemini-1.5-pro`) |
+| `X-Tanvelo-Fallbacks` | string | *(Optional)* Comma-separated list of fallback models (e.g., `your-fallback-model`) |
 
 ### Request Body Parameters
 
 ```json
 {
-  "model": "claude-3-5-sonnet",
+  "model": "your-model",
   "messages": [
     { "role": "system", "content": "You are a helpful assistant." },
     { "role": "user", "content": "Summarize distributed systems." }
   ],
-  "fallbacks": ["gemini-1.5-pro", "gpt-4o"],
+  "fallbacks": ["your-fallback-model"],
   "temperature": 0.7,
   "max_tokens": 1024,
   "stream": false
@@ -266,9 +266,9 @@ POST https://tanvelo-backend-zgyc.onrender.com/v1/chat/completions
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
-| `model` | string | Yes | Primary model identifier (e.g., `claude-3-5-sonnet`, `gemini-1.5-pro`, `deepseek-chat`, `gpt-4o`) |
+| `model` | string | Yes | Primary model identifier (e.g., `your-model`) |
 | `messages` | array | Yes | Array of conversation messages with `role` and `content` |
-| `fallbacks` | array | No | Ordered list of models to execute if primary model fails |
+| `fallbacks` | array | No | Ordered list of backup models to execute if primary model fails |
 | `temperature` | number | No | Sampling temperature between `0.0` and `2.0` |
 | `max_tokens` | integer | No | Maximum tokens to generate |
 | `stream` | boolean | No | If `true`, response is streamed as Server-Sent Events (`text/event-stream`) |
@@ -279,7 +279,6 @@ POST https://tanvelo-backend-zgyc.onrender.com/v1/chat/completions
 |---|---|
 | `X-Tanvelo-Request-Id` | Unique UUID assigned to the request for audit logs |
 | `X-Tanvelo-Provider` | Upstream provider that fulfilled the response (`anthropic`, `gemini`, `deepseek`, etc.) |
-| `X-Tanvelo-Model` | Exact model name executed |
 | `X-Tanvelo-Latency-Ms` | Total duration from request ingress to completion |
 | `X-Tanvelo-Cost-Usd` | Computed cost based on input/output token pricing |
 | `X-RateLimit-Limit` | Maximum allowed requests per window |
@@ -293,8 +292,8 @@ curl -X POST https://tanvelo-backend-zgyc.onrender.com/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_TANVELO_API_KEY" \
   -d '{
-    "model": "claude-3-5-sonnet",
-    "fallbacks": ["gemini-1.5-pro"],
+    "model": "your-model",
+    "fallbacks": ["your-fallback-model"],
     "messages": [
       {"role": "user", "content": "What is Tanvelo Gateway?"}
     ]
@@ -318,7 +317,7 @@ When Tanvelo detects an upstream failure, its circuit breaker kicks in:
 3. It retains the client connection and streams back the fallback response without breaking client logic.
 
 ```
-Client Request -> [ gpt-4o ] --(429 Too Many Requests)--> Failover (142ms) -> [ claude-3-5-sonnet ] -> Success
+Client Request -> [ Primary Model ] --(429 Too Many Requests)--> Failover (142ms) -> [ Fallback Model ] -> Success
 ```
 
 ---

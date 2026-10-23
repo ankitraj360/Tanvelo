@@ -98,11 +98,16 @@ export class Tanvelo {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
+    const payload = {
+      ...params,
+      model: params.model || params.provider || 'your-model',
+    };
+
     try {
       const response = await this.fetchFn(url, {
         method: 'POST',
         headers,
-        body: JSON.stringify(params),
+        body: JSON.stringify(payload),
         signal: controller.signal,
       });
 

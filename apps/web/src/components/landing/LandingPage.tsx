@@ -44,11 +44,11 @@ function XSocialIcon({ className = 'w-3.5 h-3.5' }: { className?: string }) {
 }
 
 const PROVIDERS = [
-  'Anthropic Claude',
+  'Anthropic',
   'Google Gemini',
-  'DeepSeek R1 / V3',
+  'DeepSeek',
   'OpenAI',
-  'Groq LPU',
+  'Groq',
   'Mistral AI',
   'Ollama / Local',
   'OpenRouter',
@@ -107,8 +107,8 @@ const tanvelo = new Tanvelo({
 
 // Automatic multi-provider fallback failover
 const stream = await tanvelo.chat.completions.create({
-  model: "claude-3-5-sonnet",
-  fallbacks: ["gemini-1.5-pro", "deepseek-chat"],
+  model: "your-model",
+  fallbacks: ["your-fallback-model"],
   messages: [{ role: "user", content: "Ship to production with zero downtime." }],
   stream: true,
 });
@@ -124,8 +124,8 @@ client = Tanvelo(
 
 # Automated sub-180ms multi-provider fallback
 stream = client.chat.completions.create(
-    model="claude-3-5-sonnet",
-    fallbacks=["gemini-1.5-pro", "deepseek-chat"],
+    model="your-model",
+    fallbacks=["your-fallback-model"],
     messages=[{"role": "user", "content": "Ship to production with zero downtime."}],
     stream=True,
 )
@@ -136,8 +136,8 @@ for chunk in stream:
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $TANVELO_API_KEY" \\
   -d '{
-    "model": "claude-3-5-sonnet",
-    "fallbacks": ["gemini-1.5-pro", "deepseek-chat"],
+    "model": "your-model",
+    "fallbacks": ["your-fallback-model"],
     "messages": [{"role": "user", "content": "Ship to production with zero downtime."}],
     "stream": true
   }'`,
@@ -288,7 +288,7 @@ for chunk in stream:
             </h1>
 
             <p className="text-slate-600 text-base sm:text-lg leading-relaxed mb-7 max-w-lg mx-auto lg:mx-0">
-              Route Anthropic Claude, Google Gemini, DeepSeek, and custom models through a single typed client. Automated sub-180ms failover, atomic Redis rate limits, and real-time cost telemetry.
+              Route any model across OpenAI, Anthropic, Google Gemini, DeepSeek, Groq, and custom providers through a single typed client. Automated sub-180ms failover, atomic Redis rate limits, and real-time cost telemetry.
             </p>
 
             {/* Quick Install Pill */}
@@ -478,7 +478,7 @@ for chunk in stream:
               </div>
               <h3 className="font-semibold text-slate-900 text-xs">Client Request Initiated</h3>
               <p className="text-xs text-slate-500 font-mono">
-                model: &quot;gpt-4o&quot;, fallbacks: [&quot;claude-3-5-sonnet&quot;]
+                model: &quot;your-model&quot;, fallbacks: [&quot;your-fallback-model&quot;]
               </p>
               <div className="text-[11px] text-slate-400 font-mono pt-1">
                 Active SSE connection maintained
@@ -520,7 +520,7 @@ for chunk in stream:
                   <span className="w-2 h-2 rounded-full bg-slate-300" />
                 )}
               </div>
-              <h3 className="font-semibold text-slate-900 text-xs">Fulfilled by Claude 3.5 Sonnet</h3>
+              <h3 className="font-semibold text-slate-900 text-xs">Fulfilled by Fallback Model</h3>
               <p className="text-xs text-slate-500 font-mono">
                 {simStep === 2 ? 'Delivered with 0 dropped tokens to client.' : 'Secondary model takes over seamlessly.'}
               </p>
@@ -896,7 +896,7 @@ for chunk in stream:
                 <span>tanvelo</span>
               </div>
               <p className="text-[11px] text-slate-400 leading-relaxed">
-                The unified LLM gateway for Claude, Gemini, DeepSeek, and custom models with deterministic fallbacks and atomic telemetry.
+                The unified LLM gateway for Anthropic, OpenAI, Google Gemini, DeepSeek, Groq, and custom providers with deterministic fallbacks and atomic telemetry.
               </p>
             </div>
 

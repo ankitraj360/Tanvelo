@@ -87,7 +87,7 @@ export default function PrivacyPolicyPage() {
               By default, Tanvelo does not store or retain prompt payloads or model completion bodies in the database (<code className="text-slate-800 font-mono">LOG_PAYLOADS=false</code>). In-flight streams are processed in transient RAM and piped directly back to the client application via Server-Sent Events (SSE) or chunked HTTP responses.
             </p>
             <ul className="list-disc pl-5 space-y-1 text-slate-600">
-              <li><strong>Metadata Logging:</strong> Only operational execution metadata is logged (request ID, model name, provider target, token counts, total latency, and HTTP status code).</li>
+              <li><strong>Metadata Logging:</strong> Only operational execution metadata is logged (request ID, provider target, token counts, total latency, and HTTP status code).</li>
               <li><strong>Payload Redaction:</strong> In environments where operator payload debugging is explicitly enabled, sensitive authorization headers (including <code className="text-slate-800 font-mono">Authorization</code>, <code className="text-slate-800 font-mono">x-api-key</code>) are permanently sanitized before write.</li>
               <li><strong>No Data Sales:</strong> We do not sell, rent, or monetize your requests or completions.</li>
             </ul>

@@ -174,7 +174,7 @@ export default function RequestsPage() {
                       </td>
                       <td className="py-3.5 px-4">
                         <span className="capitalize font-semibold text-slate-800">{r.provider}</span>
-                        <span className="block text-[11px] font-mono text-slate-500">{r.model}</span>
+                        {r.model && <span className="block text-[11px] font-mono text-slate-500">{r.model}</span>}
                       </td>
                       <td className="py-3.5 px-4">
                         <Badge

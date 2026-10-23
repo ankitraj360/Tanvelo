@@ -52,7 +52,7 @@ export async function gatewayRoutes(fastify: FastifyInstance) {
       method: 'POST',
       message: 'The Tanvelo chat completions endpoint is operational. Send an HTTP POST request with an Authorization header (Bearer YOUR_TANVELO_API_KEY) and JSON body to execute completions.',
       usage: {
-        curl: 'curl -X POST https://tanvelo-backend-zgyc.onrender.com/v1/chat/completions -H "Content-Type: application/json" -H "Authorization: Bearer YOUR_TANVELO_API_KEY" -d \'{"model": "claude-3-5-sonnet", "messages": [{"role": "user", "content": "Hello Tanvelo"}]}\'',
+        curl: 'curl -X POST https://tanvelo-backend-zgyc.onrender.com/v1/chat/completions -H "Content-Type: application/json" -H "Authorization: Bearer YOUR_TANVELO_API_KEY" -d \'{"model": "your-model", "messages": [{"role": "user", "content": "Hello Tanvelo"}]}\'',
         npm: 'npm install tanvelo',
         pip: 'pip install tanvelo',
       },
@@ -289,6 +289,9 @@ export async function gatewayRoutes(fastify: FastifyInstance) {
     }
 
     const body = request.body as any;
+    if (body && !body.model && body.provider) {
+      body.model = body.provider;
+    }
     if (!body || !body.model || !body.messages || !Array.isArray(body.messages)) {
       const gErr = new GatewayError(
         'Invalid request body. "model" and "messages" array are required.',

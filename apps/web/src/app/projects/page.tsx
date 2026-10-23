@@ -261,7 +261,7 @@ export default function ProjectsPage() {
           <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-1">
             <span className="font-semibold text-slate-800 block">Default Setup:</span>
             <p>• Automatically creates Production, Staging, and Development environments.</p>
-            <p>• Configures default OpenAI, Anthropic, and Gemini model pricing definitions.</p>
+            <p>• Configures default OpenAI, Anthropic, and Google Gemini provider routing and pricing definitions.</p>
           </div>
 
           <div className="flex justify-end gap-2 pt-2">

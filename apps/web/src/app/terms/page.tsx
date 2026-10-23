@@ -110,12 +110,12 @@ export default function TermsOfServicePage() {
           <section className="space-y-3">
             <h2 className="text-base sm:text-lg font-bold text-slate-900">4. Multi-Provider Routing & Upstream Dependencies</h2>
             <p>
-              Tanvelo facilitates automated load balancing, retries, and fallback routing across multiple third-party model providers. You understand and agree that:
+              Tanvelo facilitates automated load balancing, retries, and fallback routing across multiple third-party providers. You understand and agree that:
             </p>
             <ul className="list-disc pl-5 space-y-1 text-slate-600">
               <li>Upstream providers operate independently and are subject to their own rate limits, system outages, maintenance windows, and content moderation filters.</li>
               <li>Tanvelo does not warrant that upstream providers will maintain continuous, uninterrupted availability.</li>
-              <li>When a fallback rule triggers (e.g. from GPT-4o to Claude 3.5 Sonnet), token consumption and pricing reflect the rates of the executing model.</li>
+              <li>When a fallback rule triggers across providers, token consumption and pricing reflect the rates of the executing provider.</li>
             </ul>
           </section>
 
