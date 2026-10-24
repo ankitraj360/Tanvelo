@@ -58,7 +58,7 @@ await pruneHistoricalRecords({
 ## 3. Rollback Procedures
 
 ### Frontend (Vercel)
-If a faulty deployment occurs on `www.tanvelo.in`:
+If a faulty deployment occurs on `www.tanvelo.xyz`:
 1. Navigate to the Vercel Dashboard -> Project `tanvelo` -> Deployments.
 2. Locate the previous healthy deployment and click **Promote to Production** (instant zero-downtime DNS rollback).
 3. Or via Vercel CLI:

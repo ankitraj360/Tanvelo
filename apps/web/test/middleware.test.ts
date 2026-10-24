@@ -11,7 +11,9 @@ function evaluateMiddleware(pathname: string, userId: string | null = null, orig
     '/privacy',
     '/terms',
     '/sitemap.xml',
+    '/sitemap.txt',
     '/robots.txt',
+    '/robot.txt',
     '/v1',
     '/api/v1',
   ];

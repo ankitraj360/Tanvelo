@@ -24,7 +24,7 @@ export async function gatewayRoutes(fastify: FastifyInstance) {
         metrics: '/metrics',
         chatCompletions: '/v1/chat/completions',
         models: '/v1/models',
-        documentation: 'https://www.tanvelo.in/docs',
+        documentation: 'https://www.tanvelo.xyz/docs',
       },
     });
   });
@@ -38,7 +38,7 @@ export async function gatewayRoutes(fastify: FastifyInstance) {
       endpoints: {
         chatCompletions: '/v1/chat/completions',
         models: '/v1/models',
-        documentation: 'https://www.tanvelo.in/docs',
+        documentation: 'https://www.tanvelo.xyz/docs',
       },
     });
   });
@@ -56,7 +56,7 @@ export async function gatewayRoutes(fastify: FastifyInstance) {
         npm: 'npm install tanvelo',
         pip: 'pip install tanvelo',
       },
-      documentation: 'https://www.tanvelo.in/docs',
+      documentation: 'https://www.tanvelo.xyz/docs',
     });
   });
 

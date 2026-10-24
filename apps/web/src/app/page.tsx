@@ -5,8 +5,38 @@ export const metadata: Metadata = {
   title: 'Tanvelo — Universal LLM Gateway for 147+ AI Providers & Custom APIs',
   description:
     'Production-grade LLM gateway supporting 147+ AI providers and custom OpenAI-compatible endpoints with sub-180ms automated failover, atomic Redis rate limits, zero prompt retention, and official TypeScript & Python SDKs.',
+  keywords: [
+    'Tanvelo',
+    'tanvelo.xyz',
+    'www.tanvelo.xyz',
+    'LLM Gateway',
+    'AI Gateway',
+    'OpenAI Compatible Gateway',
+    'Multi-Provider LLM Routing',
+    'LLM Failover Circuit Breaker',
+    'Redis Rate Limiter',
+    'Zero Prompt Retention',
+    'High Availability AI Proxy',
+    'AI Cost Telemetry',
+    'Enterprise AI Gateway',
+  ],
   alternates: {
-    canonical: 'https://tanvelo.in',
+    canonical: 'https://www.tanvelo.xyz',
+  },
+  openGraph: {
+    title: 'Tanvelo — Universal LLM Gateway for 147+ AI Providers & Custom APIs',
+    description:
+      'Production-grade LLM gateway supporting 147+ AI providers with sub-180ms automated failover, atomic Redis rate limits, and zero prompt retention.',
+    url: 'https://www.tanvelo.xyz',
+    siteName: 'Tanvelo',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Tanvelo — Universal LLM Gateway for 147+ AI Providers & Custom APIs',
+    description:
+      'Production-grade LLM gateway with sub-180ms automated failovers, atomic Redis rate limits, and zero prompt retention.',
+    site: '@tanvelo_xyz',
+    creator: '@tanvelo_xyz',
   },
 };
 

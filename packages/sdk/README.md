@@ -146,5 +146,5 @@ response = client.chat.completions.create(
 
 ## 📚 Full Documentation
 
-For full API endpoint specifications, webhook signature verifications, and deterministic fallback mechanics, see [Official Tanvelo Documentation](../../docs/TANVELO_OFFICIAL_DOCS.md) or visit [https://www.tanvelo.in/docs](https://www.tanvelo.in/docs).
+For full API endpoint specifications, webhook signature verifications, and deterministic fallback mechanics, see [Official Tanvelo Documentation](../../docs/TANVELO_OFFICIAL_DOCS.md) or visit [https://www.tanvelo.xyz/docs](https://www.tanvelo.xyz/docs).
 

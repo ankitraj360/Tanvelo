@@ -167,7 +167,7 @@ res = client.chat.completions.create(
 print(res.content)
 ```
 
-For complete SDK, REST API, and gateway documentation, see [Official Documentation](docs/TANVELO_OFFICIAL_DOCS.md) or visit [/docs](https://www.tanvelo.in/docs).
+For complete SDK, REST API, and gateway documentation, see [Official Documentation](docs/TANVELO_OFFICIAL_DOCS.md) or visit [/docs](https://www.tanvelo.xyz/docs).
 
 ### Response Headers
 Every gateway response returns rich operational telemetry:

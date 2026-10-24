@@ -10,9 +10,9 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = { text = "MIT" }
 authors = [
-    { name = "Tanvelo", email = "support@tanvelo.in" }
+    { name = "Tanvelo", email = "support@tanvelo.xyz" }
 ]
-keywords = ["tanvelo", "llm", "gateway", "ai", "openai", "anthropic", "gemini"]
+keywords = ["tanvelo", "llm", "gateway", "ai", "openai", "anthropic", "gemini", "tanvelo-xyz"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -20,8 +20,8 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://www.tanvelo.in"
-Documentation = "https://www.tanvelo.in/docs"
+Homepage = "https://www.tanvelo.xyz"
+Documentation = "https://www.tanvelo.xyz/docs"
 Repository = "https://github.com/ankitraj360/Tanvelo"
 
 [tool.setuptools]

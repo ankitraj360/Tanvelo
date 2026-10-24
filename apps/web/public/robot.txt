@@ -27,5 +27,6 @@ Disallow: /settings
 Disallow: /_next/
 
 # Host & Sitemap specification
-Host: https://tanvelo.in
-Sitemap: https://tanvelo.in/sitemap.xml
+Host: https://www.tanvelo.xyz
+Sitemap: https://www.tanvelo.xyz/sitemap.xml
+Sitemap: https://www.tanvelo.xyz/sitemap.txt

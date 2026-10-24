@@ -24,12 +24,12 @@ const nextConfig = {
   async rewrites() {
     const gateway = getGatewayUrl();
     return [
-      // 1. Any request with Host: api.tanvelo.in forwards directly to the gateway
+      // 1. Any request with Host: api.tanvelo.xyz forwards directly to the gateway
       {
         has: [
           {
             type: 'host',
-            value: 'api.tanvelo.in',
+            value: 'api.tanvelo.xyz',
           },
         ],
         source: '/:path*',

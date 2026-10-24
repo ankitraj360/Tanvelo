@@ -445,4 +445,4 @@ All error responses from Tanvelo adhere to the standard JSON error schema:
 - **Email**: [tanvelo@zohomail.in](mailto:tanvelo@zohomail.in)
 - **X (formerly Twitter)**: [@tanvelo_xyz](https://x.com/tanvelo_xyz)
 - **Instagram**: [@tanvelo_xyz](https://instagram.com/tanvelo_xyz)
-- **Web Console**: [https://www.tanvelo.in](https://www.tanvelo.in)
+- **Web Console**: [https://www.tanvelo.xyz](https://www.tanvelo.xyz)
