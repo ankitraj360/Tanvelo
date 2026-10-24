@@ -19,7 +19,13 @@ export default function SignInPage() {
           </div>
         </ClerkLoading>
         <ClerkLoaded>
-          <SignIn routing="path" path="/sign-in" fallbackRedirectUrl="/overview" />
+          <SignIn
+            routing="path"
+            path="/sign-in"
+            fallbackRedirectUrl="/overview"
+            signUpFallbackRedirectUrl="/overview"
+            oauthFlow="redirect"
+          />
         </ClerkLoaded>
       </div>
     </div>

@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
-import { usePathname } from 'next/navigation';
+import React, { useEffect } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useAuth } from '@clerk/nextjs';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { ProjectProvider } from '@/context/ProjectContext';
@@ -31,17 +32,33 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
 
 export function ShellWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { userId, isLoaded } = useAuth();
+
   const isStandalonePage =
     pathname === '/' ||
     pathname?.startsWith('/sign-in') ||
     pathname?.startsWith('/sign-up') ||
+    pathname?.startsWith('/sso-callback') ||
     pathname === '/privacy' ||
     pathname === '/terms' ||
     pathname === '/docs' ||
     pathname?.startsWith('/docs');
 
+  // If user signs out while on a dashboard route, automatically redirect to landing page
+  useEffect(() => {
+    if (isLoaded && !userId && !isStandalonePage) {
+      router.replace('/');
+    }
+  }, [isLoaded, userId, isStandalonePage, router]);
+
   if (isStandalonePage) {
     return <>{children}</>;
+  }
+
+  // Prevent loading queries or flashing dashboard UI when signing out or unauthenticated
+  if (isLoaded && !userId) {
+    return null;
   }
 
   return (

@@ -156,9 +156,22 @@ const structuredData = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      afterSignOutUrl="/"
+      signInFallbackRedirectUrl="/overview"
+      signUpFallbackRedirectUrl="/overview"
+      telemetry={{ disabled: true }}
+    >
       <html lang="en">
         <head>
+          <link rel="preconnect" href="https://clerk.tanvelo.xyz" />
+          <link rel="dns-prefetch" href="https://clerk.tanvelo.xyz" />
+          <link rel="preconnect" href="https://accounts.google.com" />
+          <link rel="dns-prefetch" href="https://accounts.google.com" />
+          <link rel="preconnect" href="https://github.com" />
+          <link rel="dns-prefetch" href="https://github.com" />
+          <link rel="preconnect" href="https://img.clerk.com" crossOrigin="anonymous" />
+          <link rel="dns-prefetch" href="https://img.clerk.com" />
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
