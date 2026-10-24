@@ -1225,9 +1225,9 @@ for chunk in stream:
                   </a>
                 </li>
                 <li className="pt-2 flex items-center gap-3 text-[11px] text-slate-400">
-                  <Link href="/privacy" className="hover:text-white transition">Privacy</Link>
+                  <Link href="/privacy" className="hover:text-white transition">Privacy Policy</Link>
                   <span>·</span>
-                  <Link href="/terms" className="hover:text-white transition">Terms</Link>
+                  <Link href="/terms" className="hover:text-white transition">Terms of Service</Link>
                 </li>
               </ul>
             </div>

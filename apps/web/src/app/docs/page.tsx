@@ -689,10 +689,10 @@ model: "vllm/your-model-name"`}
               <span>@tanvelo_xyz</span>
             </a>
             <Link href="/privacy" className="hover:text-slate-900 transition font-sans">
-              Privacy
+              Privacy Policy
             </Link>
             <Link href="/terms" className="hover:text-slate-900 transition font-sans">
-              Terms
+              Terms of Service
             </Link>
           </div>
         </div>

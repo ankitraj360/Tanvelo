@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy & Zero Retention Guarantee',
+  title: 'Privacy Policy & Google API Data Compliance | Tanvelo',
   description:
-    'Tanvelo (tanvelo.xyz) Privacy Policy: our Zero Body Retention guarantee, data handling principles, and commitment to never persisting your prompts or AI completion outputs.',
+    'Tanvelo (tanvelo.xyz) Privacy Policy: detailed Google API Services User Data Policy compliance, Zero Body Retention guarantee, AES-256 encryption, and user data rights.',
   keywords: [
     'Tanvelo Privacy Policy',
+    'Google API Services User Data Policy',
+    'Google OAuth Compliance',
     'Zero Retention AI Gateway',
     'HIPAA GDPR AI Proxy',
     'Zero Prompt Logging',
@@ -15,16 +17,16 @@ export const metadata: Metadata = {
     canonical: 'https://www.tanvelo.xyz/privacy',
   },
   openGraph: {
-    title: 'Privacy Policy & Zero Retention Guarantee | Tanvelo',
+    title: 'Privacy Policy & Google API Data Compliance | Tanvelo',
     description:
-      'Tanvelo Privacy Policy: our Zero Body Retention guarantee and commitment to never persisting your prompts or completions.',
+      'Tanvelo Privacy Policy: Google API Services User Data Policy compliance, Zero Body Retention guarantee, and data privacy principles.',
     url: 'https://www.tanvelo.xyz/privacy',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Privacy Policy & Zero Retention Guarantee | Tanvelo',
+    title: 'Privacy Policy & Google API Data Compliance | Tanvelo',
     description:
-      'Tanvelo Zero Body Retention guarantee and privacy compliance principles.',
+      'Tanvelo Privacy Policy: Google API Services User Data Policy compliance and Zero Body Retention guarantee.',
     site: '@tanvelo_xyz',
     creator: '@tanvelo_xyz',
   },
